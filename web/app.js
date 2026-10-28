@@ -12,6 +12,46 @@ let paramK = 1500.0; // Parâmetro de escala k (R$/ha) da dimensão produtiva
 let geoBounds = new Map(); // código IBGE -> { x0, y0, width, height }
 let zoomAnim = null;
 
+// Camada ativa de tendência territorial (R por padrão, com alternância para E, P, S)
+let layer = 'resiliencia';
+
+// Paleta de gradiente SisTer/Morfo para expressar a tendência espacial contínua
+const palette = ['#08203e', '#0b406e', '#087f8c', '#109789', '#2ea8e8', '#38bdf8', '#7dd3fc'];
+
+// Contrato de campos, limites de escala e rótulos
+const fields = {
+  resiliencia: ['resiliencia', 0, 90, 'Resiliência Experimental (R)'],
+  ecologica: ['ecologica_multiplicador', 0.5, 1.5, 'Multiplicador Ecológico (E)'],
+  produtiva: ['produtiva', 0, 50, 'Densidade Produtiva P(k)'],
+  social: ['social', 0, 50, 'Dimensão Social (S)']
+};
+
+function getValue(d) {
+  if (!d || d.status !== 'experimental') return null;
+  const col = fields[layer][0];
+  const v = d[col];
+  return Number.isFinite(v) ? v : null;
+}
+
+function colorForValue(v) {
+  if (v == null) return '#1e293b'; // dados incompletos ou ausentes
+  const [_, min, max] = fields[layer];
+  const t = Math.max(0, Math.min(1, (v - min) / (max - min)));
+  const idx = Math.min(palette.length - 1, Math.floor(t * palette.length));
+  return palette[idx];
+}
+
+function recomputeScoresForK(k) {
+  for (const [code, d] of scores) {
+    if (d.status === 'experimental') {
+      const dm = d.densidade_monetaria_ha;
+      const p = calculateP(dm, k);
+      d.produtiva = p;
+      d.resiliencia = calculateR(d.ecologica_multiplicador, p, d.social);
+    }
+  }
+}
+
 function csvRows(text) {
   const rows = [];
   let row = [], cur = '', quoted = false;
@@ -183,7 +223,7 @@ function resetZoom() {
   if ($('btn-reset-zoom')) $('btn-reset-zoom').style.display = 'none';
 }
 
-// Renderizar mapa territorial (sem mapas coropléticos nem indução a ranking)
+// Renderizar mapa territorial caracterizado por R (ou E, P, S) para revelar a tendência estadual
 function renderMap() {
   const svg = $('map');
   if (!svg) return;
@@ -197,10 +237,17 @@ function renderMap() {
 
   const legend = $('legend');
   if (legend) {
+    const [_, min, max, label] = fields[layer];
+    const swatchesHtml = palette.map(c => `<span class="swatch" style="background:${c}"></span>`).join('');
     legend.innerHTML = `
+      <div class="legend-item">
+        <strong>${label}:</strong>
+        <span style="opacity: 0.85;">${fmt(min, 1)}</span>
+        <div class="swatch-group">${swatchesHtml}</div>
+        <span style="opacity: 0.85;">${fmt(max, 1)}</span>
+      </div>
       <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
-      <div class="legend-item"><span class="legend-dot valid"></span><span>Válido</span></div>
-      <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto na fonte</span></div>
+      <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
     `;
   }
   if (!geometry) return;
@@ -251,8 +298,10 @@ function renderMap() {
       });
     }
 
+    const val = getValue(d);
     const el = document.createElementNS(ns, 'path');
     el.setAttribute('d', path);
+    el.setAttribute('fill', colorForValue(val));
 
     let cls = 'map-municipality';
     if (current === code) cls += ' active';
@@ -263,8 +312,8 @@ function renderMap() {
 
     const title = document.createElementNS(ns, 'title');
     const munName = getName(f.properties || {});
-    const statusText = d ? (d.status === 'dados_incompletos' ? 'dados incompletos' : 'dados oficiais homologados') : 'sem dados';
-    title.textContent = `${munName} (${code}) · ${statusText}`;
+    const valText = d ? (d.status === 'dados_incompletos' ? 'dados incompletos na fonte' : fmt(val)) : 'sem dados';
+    title.textContent = `${munName} (${code}) · ${fields[layer][3]}: ${valText}`;
     el.append(title);
 
     el.addEventListener('click', () => choose(code, munName));
@@ -432,7 +481,9 @@ function updateComponentDetail(code) {
         if (slider) slider.value = String(num);
         if (input) input.value = String(num);
         if (display) display.textContent = `${fmt(num, 0)} R$/ha`;
+        recomputeScoresForK(num);
         updateComponentDetail(code);
+        renderMap();
       }
     };
 
@@ -602,6 +653,19 @@ const btnResetZoom = $('btn-reset-zoom');
 if (btnResetZoom) {
   btnResetZoom.addEventListener('click', () => resetZoom());
 }
+
+// Alternância de camadas de tendência territorial (R por padrão, ou E, P, S)
+document.querySelectorAll('[data-layer]').forEach(b => {
+  b.addEventListener('click', () => {
+    layer = b.dataset.layer;
+    document.querySelectorAll('[data-layer]').forEach(x => x.classList.toggle('selected', x === b));
+    renderMap();
+    if (current) {
+      const activeEl = $('mun-' + current);
+      if (activeEl) activeEl.classList.add('active');
+    }
+  });
+});
 
 // Abas do ambiente analítico municipal (Áreas D, A, B, C)
 document.querySelectorAll('.comp-tab-btn').forEach(b => {

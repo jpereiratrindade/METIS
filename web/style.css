@@ -772,26 +772,24 @@ main#app {
 }
 
 .map-municipality {
-  fill: #0c2844;
-  stroke: #163e66;
+  stroke: rgba(255, 255, 255, 0.15);
   stroke-width: 0.55;
   cursor: pointer;
-  transition: fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
+  transition: fill 0.2s ease, stroke 0.15s ease, stroke-width 0.15s ease;
   vector-effect: non-scaling-stroke;
 }
 .map-municipality:hover {
-  fill: #1d4ed8;
-  stroke: #7dd3fc;
+  stroke: #ffffff;
   stroke-width: 1.8;
+  filter: brightness(1.28);
 }
 .map-municipality.active {
-  fill: #087f8c !important;
   stroke: #38bdf8 !important;
   stroke-width: 2.8;
-  filter: drop-shadow(0 0 8px #38bdf8);
+  filter: drop-shadow(0 0 10px #38bdf8) brightness(1.35);
 }
 .map-municipality.incomplete {
-  fill: #1e293b;
+  fill: #1e293b !important;
   stroke: #334155;
   stroke-width: 0.45;
 }
@@ -831,17 +829,18 @@ main#app {
   position: absolute;
   left: 20px;
   bottom: 16px;
-  background: rgba(7, 30, 56, 0.88);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(7, 30, 56, 0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-md);
   padding: 8px 14px;
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   color: #e2e8f0;
   display: flex;
   align-items: center;
   gap: 14px;
   z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
 }
 .legend-item {
   display: flex;
@@ -855,18 +854,27 @@ main#app {
   border-radius: 50%;
   display: inline-block;
 }
-.legend-dot.valid {
-  background: #0c2844;
-  border: 1px solid #38bdf8;
-}
 .legend-dot.active {
-  background: #087f8c;
+  background: #38bdf8;
   border: 1px solid #7dd3fc;
   box-shadow: 0 0 6px #38bdf8;
 }
 .legend-dot.incomplete {
   background: #1e293b;
   border: 1px solid #64748b;
+}
+
+.swatch-group {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+.swatch {
+  width: 16px;
+  height: 10px;
+  display: inline-block;
 }
 
 /* CONTROLE DE PARÂMETRO EXPERIMENTAL (ÁREA B) */
