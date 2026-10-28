@@ -215,6 +215,13 @@
 
         <div class="cartography-body">
           <div class="map-view-container">
+            <button id="btn-reset-zoom" class="map-reset-zoom-btn" style="display: none;" title="Restaurar visão estadual do Rio Grande do Sul">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>↺ Visão Estadual</span>
+            </button>
             <svg id="map" viewBox="0 0 740 590" preserveAspectRatio="xMidYMid meet" aria-label="Mapa dos municípios do RS"></svg>
             <div id="map-placeholder" class="map-empty-state">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -233,6 +240,7 @@
             <div class="side-panel-eyebrow">DIAGNÓSTICO TERRITORIAL</div>
             <h3 class="side-panel-name" id="detail-name">Selecione um município</h3>
             <div class="side-panel-code" id="detail-code">Clique na malha territorial ou busque acima</div>
+            <div id="status-alert" class="status-alert" style="display: none;"></div>
 
             <div class="breakdown-list" id="breakdown-list">
               <div class="breakdown-item">
@@ -276,15 +284,22 @@
               </div>
             </div>
 
-            <div class="raw-data-card" id="raw-card">
-              <h4>Dados Censitários 2017 (IBGE)</h4>
-              <div class="raw-data-row"><span>Área dos estabelecimentos:</span> <b id="raw-area">—</b></div>
-              <div class="raw-data-row"><span>Pastagens naturais:</span> <b id="raw-pastagem">—</b></div>
-              <div class="raw-data-row"><span>Matas &amp; florestas naturais:</span> <b id="raw-mata">—</b></div>
-              <div class="raw-data-row"><span>Valor total da produção:</span> <b id="raw-vp">—</b></div>
-              <div class="raw-data-row"><span>Estabelecimentos:</span> <b id="raw-estab">—</b></div>
-              <div class="raw-data-row"><span>Com assistência técnica:</span> <b id="raw-assist">—</b></div>
-              <div class="raw-data-row"><span>Associados a cooperativa:</span> <b id="raw-assoc">—</b></div>
+            <!-- NAVEGADOR MODULAR DE COMPONENTES -->
+            <div class="comp-section">
+              <div class="comp-section-header">
+                <span class="comp-section-title">EXPLORAR COMPONENTES</span>
+                <div class="comp-tabs" id="comp-tabs">
+                  <button class="comp-tab-btn active" data-comp="P">P</button>
+                  <button class="comp-tab-btn" data-comp="E">E</button>
+                  <button class="comp-tab-btn" data-comp="S">S</button>
+                  <button class="comp-tab-btn" data-comp="R">R</button>
+                  <button class="comp-tab-btn" data-comp="RAW">Insumos</button>
+                </div>
+              </div>
+
+              <div id="comp-detail-box" class="comp-detail-box">
+                <p class="comp-empty-hint">Selecione um município no mapa para inspecionar as equações e os dados censitários abertos.</p>
+              </div>
             </div>
           </aside>
         </div>

@@ -4,9 +4,13 @@ const $ = id => document.getElementById(id);
 
 let scores = new Map();
 let rawData = new Map();
+let manifest = null;
 let geometry = null;
 let layer = 'resiliencia';
 let current = null; // Nenhum município selecionado inicialmente
+let activeCompTab = 'P'; // Iniciar com Produtiva (P) em foco
+let geoBounds = new Map(); // código IBGE -> { x0, y0, width, height }
+let zoomAnim = null;
 
 // Paleta de cores idêntica à escala Morfo/SisTer (marinho -> teal -> sky -> verde)
 const palette = ['#0c2844', '#087f8c', '#14805e', '#2ea8e8', '#7dd3fc'];
@@ -137,6 +141,72 @@ function pathOf(g, project) {
   return out;
 }
 
+// Animação de viewBox do mapa SVG
+function animateViewBox(targetX, targetY, targetW, targetH, duration = 350) {
+  const svg = $('map');
+  if (!svg) return;
+  if (zoomAnim) cancelAnimationFrame(zoomAnim);
+
+  let startX = 0, startY = 0, startW = 740, startH = 590;
+  const vb = svg.getAttribute('viewBox');
+  if (vb) {
+    const parts = vb.trim().split(/\s+/).map(Number);
+    if (parts.length === 4 && parts.every(Number.isFinite)) {
+      [startX, startY, startW, startH] = parts;
+    }
+  }
+
+  const startTime = performance.now();
+  function step(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(1, elapsed / duration);
+    const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+
+    const curX = startX + (targetX - startX) * ease;
+    const curY = startY + (targetY - startY) * ease;
+    const curW = startW + (targetW - startW) * ease;
+    const curH = startH + (targetH - startH) * ease;
+
+    svg.setAttribute('viewBox', `${curX.toFixed(2)} ${curY.toFixed(2)} ${curW.toFixed(2)} ${curH.toFixed(2)}`);
+
+    if (t < 1) {
+      zoomAnim = requestAnimationFrame(step);
+    } else {
+      zoomAnim = null;
+    }
+  }
+  zoomAnim = requestAnimationFrame(step);
+}
+
+function zoomToMunicipality(code) {
+  const b = geoBounds.get(code);
+  if (!b) return;
+
+  const padW = b.width * 0.32;
+  const padH = b.height * 0.32;
+
+  let targetW = b.width + 2 * padW;
+  let targetH = b.height + 2 * padH;
+
+  const minDim = 45;
+  if (targetW < minDim) targetW = minDim;
+  if (targetH < minDim) targetH = minDim;
+
+  const cx = b.x0 + b.width / 2;
+  const cy = b.y0 + b.height / 2;
+
+  const targetX = Math.max(0, Math.min(740 - targetW, cx - targetW / 2));
+  const targetY = Math.max(0, Math.min(590 - targetH, cy - targetH / 2));
+
+  animateViewBox(targetX, targetY, targetW, targetH, 350);
+  if ($('btn-reset-zoom')) $('btn-reset-zoom').style.display = 'inline-flex';
+}
+
+function resetZoom() {
+  animateViewBox(0, 0, 740, 590, 350);
+  if ($('btn-reset-zoom')) $('btn-reset-zoom').style.display = 'none';
+}
+
 function renderMap() {
   const svg = $('map');
   if (!svg) return;
@@ -171,11 +241,34 @@ function renderMap() {
   const ns = 'http://www.w3.org/2000/svg';
   let match = 0;
 
+  geoBounds.clear();
+
   for (const f of geometry.features) {
     const code = getCode(f.properties || {});
     const d = scores.get(code);
+    const coords = coordinatesOf(f.geometry);
     const path = pathOf(f.geometry, project);
     if (!path) continue;
+
+    // Calcular bounding box projetado para zoom suave
+    let bx0 = Infinity, bx1 = -Infinity, by0 = Infinity, by1 = -Infinity;
+    for (const p of coords) {
+      const [px, py] = project(p);
+      if (px < bx0) bx0 = px;
+      if (px > bx1) bx1 = px;
+      if (py < by0) by0 = py;
+      if (py > by1) by1 = py;
+    }
+    if (Number.isFinite(bx0) && Number.isFinite(bx1)) {
+      geoBounds.set(code, {
+        x0: bx0,
+        y0: by0,
+        x1: bx1,
+        y1: by1,
+        width: Math.max(1, bx1 - bx0),
+        height: Math.max(1, by1 - by0)
+      });
+    }
 
     const el = document.createElementNS(ns, 'path');
     el.setAttribute('d', path);
@@ -212,11 +305,185 @@ function renderMap() {
   }
 }
 
+function updateComponentDetail(code) {
+  const box = $('comp-detail-box');
+  if (!box) return;
+
+  if (!code) {
+    box.innerHTML = '<p class="comp-empty-hint">Selecione um município no mapa para inspecionar as equações e os dados censitários abertos.</p>';
+    return;
+  }
+
+  const d = scores.get(code);
+  const raw = rawData.get(code);
+  const q10 = manifest?.calibracao?.q10 ?? 7.272989;
+  const q90 = manifest?.calibracao?.q90 ?? 8.932076;
+  const q10Val = Math.expm1(q10);
+  const q90Val = Math.expm1(q90);
+  const modelId = manifest?.model_id || 'EPS-REF-001/0.1.0';
+
+  if (activeCompTab === 'P') {
+    const vp = raw?.valor_producao_reais;
+    const area = raw?.area_estabelecimentos_ha;
+    const prodHa = (vp != null && area != null && area > 0) ? (vp / area) : null;
+    const pVal = d?.produtiva;
+
+    let noteClass = 'comp-note-box';
+    let noteText = '';
+    if (pVal === 0) {
+      noteClass += ' warning';
+      noteText = `A pontuação zero (P = 0,00) resulta do corte pelo percentil inferior q10 (${fmt(q10Val, 2)} R$/ha) na distribuição de densidade monetária estadual. Não significa ausência de produção ou terra improdutiva, mas reflete sistemas com menor faturamento bruto por hectare (como pecuária pastoril extensiva).`;
+    } else if (pVal >= 50) {
+      noteText = `A pontuação atinge o teto calibrado do estado (P = 50,00), situando-se no percentil superior q90 (${fmt(q90Val, 2)} R$/ha) da produção por hectare.`;
+    } else if (pVal != null) {
+      noteText = `Pontuação normalizada linearmente entre os percentis q10 (${fmt(q10Val, 2)} R$/ha) e q90 (${fmt(q90Val, 2)} R$/ha) dos municípios do Rio Grande do Sul.`;
+    } else {
+      noteClass += ' warning';
+      noteText = `Variáveis de valor da produção ou área não reportadas para este município no Censo 2017.`;
+    }
+
+    box.innerHTML = `
+      <div class="comp-title-bar">
+        <strong>Dimensão Produtiva (P)</strong>
+        <span class="score-tag">${pVal != null ? fmt(pVal, 2) + ' / 50' : 'Incompleto'}</span>
+      </div>
+      <table class="comp-table">
+        <tr><td>Valor da produção agropecuária</td><td class="val">${vp != null ? 'R$ ' + vp.toLocaleString('pt-BR') : '—'}</td></tr>
+        <tr><td>Área dos estabelecimentos</td><td class="val">${area != null ? area.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Produção monetária por hectare</td><td class="val">${prodHa != null ? 'R$ ' + fmt(prodHa, 2) + '/ha' : '—'}</td></tr>
+        <tr><td>Limite inferior normalizado (q10)</td><td class="val">R$ ${fmt(q10Val, 2)}/ha</td></tr>
+        <tr><td>Limite superior normalizado (q90)</td><td class="val">R$ ${fmt(q90Val, 2)}/ha</td></tr>
+      </table>
+      <div class="comp-formula-box">
+        P = 50 × clamp((ln(1 + VP/área) - q10) / (q90 - q10), 0, 1)
+      </div>
+      <div class="${noteClass}">
+        ${noteText}
+      </div>
+      <div class="comp-provenance-box">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>IBGE/SIDRA · Censo Agro 2017 · Tabela 6898 · Modelo ${modelId}</span>
+      </div>
+    `;
+  } else if (activeCompTab === 'E') {
+    const pastagem = raw?.pastagem_natural_ha;
+    const mata = raw?.mata_natural_ha;
+    const area = raw?.area_estabelecimentos_ha;
+    const natTot = (pastagem != null && mata != null) ? pastagem + mata : null;
+    const natPerc = (natTot != null && area != null && area > 0) ? (natTot / area * 100) : null;
+    const eVal = d?.ecologica_multiplicador;
+    const isAmp = eVal != null && eVal >= 1.0;
+
+    box.innerHTML = `
+      <div class="comp-title-bar">
+        <strong>Multiplicador Ecológico (E)</strong>
+        <span class="score-tag">${eVal != null ? fmt(eVal, 3) + '× (' + (isAmp ? 'Amplificador' : 'Atenuador') + ')' : 'Incompleto'}</span>
+      </div>
+      <table class="comp-table">
+        <tr><td>Pastagens naturais</td><td class="val">${pastagem != null ? pastagem.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Matas & florestas naturais</td><td class="val">${mata != null ? mata.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Vegetação natural combinada</td><td class="val">${natTot != null ? natTot.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Área dos estabelecimentos</td><td class="val">${area != null ? area.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Proporção de vegetação natural (e)</td><td class="val">${natPerc != null ? fmt(natPerc, 1) + '%' : '—'}</td></tr>
+      </table>
+      <div class="comp-formula-box">
+        E = 0.5 + clamp((pastagem_natural + mata_natural) / área_total, 0, 1)
+      </div>
+      <div class="comp-note-box">
+        Integra pastagens naturais e matas preservadas em estabelecimentos agropecuários. O ponto neutro é E = 1,0 (50% de cobertura natural). Valores &gt; 1,0 atuam como multiplicador amplificador sobre a base produtiva e social.
+      </div>
+      <div class="comp-provenance-box">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>IBGE/SIDRA · Censo Agro 2017 · Tabela 6881 · Malha IBGE 2022</span>
+      </div>
+    `;
+  } else if (activeCompTab === 'S') {
+    const nTot = raw?.estabelecimentos_total;
+    const nAss = raw?.estabelecimentos_orientacao_tecnica;
+    const nCoop = raw?.estabelecimentos_associados;
+    const sVal = d?.social;
+    const pAss = (nAss != null && nTot != null && nTot > 0) ? (nAss / nTot * 100) : null;
+    const pCoop = (nCoop != null && nTot != null && nTot > 0) ? (nCoop / nTot * 100) : null;
+
+    box.innerHTML = `
+      <div class="comp-title-bar">
+        <strong>Dimensão Social (S)</strong>
+        <span class="score-tag">${sVal != null ? fmt(sVal, 2) + ' / 50' : 'Incompleto'}</span>
+      </div>
+      <table class="comp-table">
+        <tr><td>Total de estabelecimentos</td><td class="val">${nTot != null ? nTot.toLocaleString('pt-BR') : '—'}</td></tr>
+        <tr><td>Com orientação técnica</td><td class="val">${nAss != null ? nAss.toLocaleString('pt-BR') + (pAss != null ? ' (' + fmt(pAss, 1) + '%)' : '') : '—'}</td></tr>
+        <tr><td>Associados a cooperativas</td><td class="val">${nCoop != null ? nCoop.toLocaleString('pt-BR') + (pCoop != null ? ' (' + fmt(pCoop, 1) + '%)' : '') : '—'}</td></tr>
+      </table>
+      <div class="comp-formula-box">
+        S = 25 × (assistência/total + associados/total)
+      </div>
+      <div class="comp-note-box">
+        Avalia a capilaridade da assistência técnica agronômica e o engajamento cooperativo como medidas de articulação agroinstitucional e coesão dos produtores no território.
+      </div>
+      <div class="comp-provenance-box">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>IBGE/SIDRA · Censo Agro 2017 · Tabelas 6780 e 6773</span>
+      </div>
+    `;
+  } else if (activeCompTab === 'R') {
+    const rVal = d?.resiliencia;
+    const eVal = d?.ecologica_multiplicador;
+    const pVal = d?.produtiva;
+    const sVal = d?.social;
+    const basePS = (pVal != null && sVal != null) ? pVal + sVal : null;
+
+    box.innerHTML = `
+      <div class="comp-title-bar">
+        <strong>Síntese do Estado de Resiliência (R)</strong>
+        <span class="score-tag">${rVal != null ? fmt(rVal, 2) : 'Incompleto'}</span>
+      </div>
+      <table class="comp-table">
+        <tr><td>Base Produtiva + Social (P + S)</td><td class="val">${basePS != null ? fmt(basePS, 2) + ' / 100' : '—'}</td></tr>
+        <tr><td>Multiplicador Ecológico (E)</td><td class="val">${eVal != null ? fmt(eVal, 3) + '×' : '—'}</td></tr>
+        <tr><td>Estado de Resiliência Composto (R)</td><td class="val">${rVal != null ? fmt(rVal, 2) : '—'}</td></tr>
+        <tr><td>Status de integridade amostral</td><td class="val">${d?.status || 'desconhecido'}</td></tr>
+      </table>
+      <div class="comp-formula-box">
+        R = E × (P + S)
+      </div>
+      <div class="comp-note-box">
+        O sistema opera em leitura relacional: a resiliência não decorre de variáveis isoladas, mas da capacidade de sustentação socioeconômica (P+S) atenuada ou amplificada pelas condições ecológicas (E).
+      </div>
+      <div class="comp-provenance-box">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Manifesto: results/RS_497_RESULTADOS.manifest.json</span>
+      </div>
+    `;
+  } else if (activeCompTab === 'RAW') {
+    box.innerHTML = `
+      <div class="comp-title-bar">
+        <strong>Insumos Censitários Originais</strong>
+        <span class="score-tag">IBGE 2017</span>
+      </div>
+      <table class="comp-table">
+        <tr><td>Área dos estabelecimentos</td><td class="val">${raw?.area_estabelecimentos_ha ? raw.area_estabelecimentos_ha.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Pastagens naturais</td><td class="val">${raw?.pastagem_natural_ha ? raw.pastagem_natural_ha.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Matas & florestas naturais</td><td class="val">${raw?.mata_natural_ha ? raw.mata_natural_ha.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Valor total da produção</td><td class="val">${raw?.valor_producao_reais ? 'R$ ' + raw.valor_producao_reais.toLocaleString('pt-BR') : '—'}</td></tr>
+        <tr><td>Estabelecimentos agropecuários</td><td class="val">${raw?.estabelecimentos_total ? raw.estabelecimentos_total.toLocaleString('pt-BR') : '—'}</td></tr>
+        <tr><td>Com orientação técnica</td><td class="val">${raw?.estabelecimentos_orientacao_tecnica ? raw.estabelecimentos_orientacao_tecnica.toLocaleString('pt-BR') : '—'}</td></tr>
+        <tr><td>Associados a cooperativa</td><td class="val">${raw?.estabelecimentos_associados ? raw.estabelecimentos_associados.toLocaleString('pt-BR') : '—'}</td></tr>
+      </table>
+      <div class="comp-provenance-box">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>data/gerados/municipios_rs_2017_homologado.csv</span>
+      </div>
+    `;
+  }
+}
+
 function choose(code, name) {
   current = code;
   if (!code) {
     if ($('detail-name')) $('detail-name').textContent = 'Selecione um município';
     if ($('detail-code')) $('detail-code').textContent = 'Clique na malha territorial ou busque acima';
+    if ($('status-alert')) $('status-alert').style.display = 'none';
     if ($('detail-r')) $('detail-r').textContent = '—';
     if ($('detail-e')) $('detail-e').textContent = '—';
     if ($('detail-p')) $('detail-p').textContent = '—';
@@ -225,22 +492,28 @@ function choose(code, name) {
     if ($('bar-e')) $('bar-e').style.width = '0%';
     if ($('bar-p')) $('bar-p').style.width = '0%';
     if ($('bar-s')) $('bar-s').style.width = '0%';
-    if ($('raw-area')) $('raw-area').textContent = '—';
-    if ($('raw-pastagem')) $('raw-pastagem').textContent = '—';
-    if ($('raw-mata')) $('raw-mata').textContent = '—';
-    if ($('raw-vp')) $('raw-vp').textContent = '—';
-    if ($('raw-estab')) $('raw-estab').textContent = '—';
-    if ($('raw-assist')) $('raw-assist').textContent = '—';
-    if ($('raw-assoc')) $('raw-assoc').textContent = '—';
+    updateComponentDetail(null);
     document.querySelectorAll('.map-municipality').forEach(el => el.classList.remove('active'));
+    resetZoom();
     return;
   }
+
   const d = scores.get(code);
   const raw = rawData.get(code);
 
   const munName = name || d?.municipio || raw?.municipio || 'Município';
   if ($('detail-name')) $('detail-name').textContent = munName;
   if ($('detail-code')) $('detail-code').textContent = `Código IBGE: ${code} ${d ? '· ' + d.status : ''}`;
+
+  const statusAlert = $('status-alert');
+  if (statusAlert) {
+    if (d && d.status === 'dados_incompletos') {
+      statusAlert.style.display = 'block';
+      statusAlert.innerHTML = '⚠️ <strong>Dados Incompletos no Censo 2017:</strong> Variáveis essenciais não foram reportadas pelo IBGE para este município (por sigilo amostral ou omissão na fonte). Por rigor científico, o MÉTIS não realiza imputação fictícia e mantém o registro auditável.';
+    } else {
+      statusAlert.style.display = 'none';
+    }
+  }
 
   if (d && d.status === 'experimental') {
     const r = d.resiliencia ?? 0;
@@ -269,25 +542,16 @@ function choose(code, name) {
     if ($('bar-s')) $('bar-s').style.width = '0%';
   }
 
-  // Dados brutos
-  if (raw) {
-    if ($('raw-area')) $('raw-area').textContent = raw.area_estabelecimentos_ha ? raw.area_estabelecimentos_ha.toLocaleString('pt-BR') + ' ha' : '—';
-    if ($('raw-pastagem')) $('raw-pastagem').textContent = raw.pastagem_natural_ha ? raw.pastagem_natural_ha.toLocaleString('pt-BR') + ' ha' : '—';
-    if ($('raw-mata')) $('raw-mata').textContent = raw.mata_natural_ha ? raw.mata_natural_ha.toLocaleString('pt-BR') + ' ha' : '—';
-    if ($('raw-vp')) $('raw-vp').textContent = raw.valor_producao_reais ? 'R$ ' + raw.valor_producao_reais.toLocaleString('pt-BR') : '—';
-    if ($('raw-estab')) $('raw-estab').textContent = raw.estabelecimentos_total ? raw.estabelecimentos_total.toLocaleString('pt-BR') + ' total' : '—';
-    
-    let nTot = raw.estabelecimentos_total || 1;
-    let nAss = raw.estabelecimentos_orientacao_tecnica || 0;
-    let nCoop = raw.estabelecimentos_associados || 0;
-    if ($('raw-assist')) $('raw-assist').textContent = `${nAss.toLocaleString('pt-BR')} (${(nAss/nTot*100).toFixed(1)}%)`;
-    if ($('raw-assoc')) $('raw-assoc').textContent = `${nCoop.toLocaleString('pt-BR')} (${(nCoop/nTot*100).toFixed(1)}%)`;
-  }
+  // Atualizar detalhamento analítico do componente ativo
+  updateComponentDetail(code);
 
   // Atualizar classe ativa no mapa
   document.querySelectorAll('.map-municipality').forEach(el => {
     el.classList.toggle('active', el.id === 'mun-' + code);
   });
+
+  // Executar zoom suave no município selecionado
+  zoomToMunicipality(code);
 }
 
 // Inicialização automática dos dados
@@ -298,6 +562,12 @@ async function autoLoadAll() {
       btnQuick.disabled = true;
       btnQuick.textContent = 'Carregando resultados oficiais...';
     }
+
+    // Carregar manifesto oficial
+    try {
+      const rMan = await fetch('/results/RS_497_RESULTADOS.manifest.json');
+      if (rMan.ok) manifest = await rMan.json();
+    } catch (_) {}
 
     // Carregar CSV calculado
     const rScores = await fetch('/results/RS_497_RESULTADOS.csv');
@@ -368,6 +638,21 @@ document.querySelectorAll('[data-layer]').forEach(b => {
     document.querySelectorAll('[data-layer]').forEach(x => x.classList.toggle('selected', x === b));
     renderMap();
     choose(current, $('detail-name') ? $('detail-name').textContent : '');
+  });
+});
+
+// Botão de restaurar enquadramento do estado (reset zoom)
+const btnResetZoom = $('btn-reset-zoom');
+if (btnResetZoom) {
+  btnResetZoom.addEventListener('click', () => resetZoom());
+}
+
+// Abas de exploração dos componentes (P, E, S, R, RAW)
+document.querySelectorAll('.comp-tab-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    activeCompTab = b.dataset.comp;
+    document.querySelectorAll('.comp-tab-btn').forEach(x => x.classList.toggle('active', x === b));
+    updateComponentDetail(current);
   });
 });
 
