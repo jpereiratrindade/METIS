@@ -6,21 +6,11 @@ let scores = new Map();
 let rawData = new Map();
 let manifest = null;
 let geometry = null;
-let layer = 'resiliencia';
 let current = null; // Nenhum município selecionado inicialmente
-let activeCompTab = 'P'; // Iniciar com Produtiva (P) em foco
+let activeArea = 'D'; // Área D (Resultados e Confronto) padrão
+let paramK = 1500.0; // Parâmetro de escala k (R$/ha) da dimensão produtiva
 let geoBounds = new Map(); // código IBGE -> { x0, y0, width, height }
 let zoomAnim = null;
-
-// Paleta de cores idêntica à escala Morfo/SisTer (marinho -> teal -> sky -> verde)
-const palette = ['#0c2844', '#087f8c', '#14805e', '#2ea8e8', '#7dd3fc'];
-
-const fields = {
-  resiliencia: ['resiliencia', 0, 100, 'Índice Composto R'],
-  ecologica: ['ecologica_multiplicador', 0.5, 1.5, 'Multiplicador E'],
-  produtiva: ['produtiva', 0, 50, 'Dimensão Produtiva P'],
-  social: ['social', 0, 50, 'Dimensão Social S']
-};
 
 function csvRows(text) {
   const rows = [];
@@ -51,7 +41,7 @@ function parseScores(text) {
   for (const rr of rows) {
     const d = Object.fromEntries(hdr.map((h, i) => [h, rr[i] || '']));
     if (!d.codigo_ibge) continue;
-    for (const col of ['resiliencia', 'ecologica_multiplicador', 'produtiva', 'social', 'ecologica_indice']) {
+    for (const col of ['densidade_monetaria_ha', 'ecologica_multiplicador', 'produtiva', 'social', 'resiliencia', 'ecologica_indice']) {
       d[col] = d[col] === '' || d[col] == null ? null : Number(d[col]);
     }
     m.set(String(d.codigo_ibge).trim(), d);
@@ -83,34 +73,20 @@ function getName(p) {
   return String(p.NM_MUN ?? p.NM_MUN_22 ?? p.nome ?? p.NOME ?? 'Município').trim();
 }
 
-function getValue(d) {
-  let k = fields[layer][0];
-  return d && d.status === 'experimental' && Number.isFinite(d[k]) ? d[k] : null;
-}
-
-function color(v) {
-  if (v == null) return '#1e293b'; // sem dado / incompleto
-  let [_, min, max] = fields[layer];
-  let t = Math.max(0, Math.min(1, (v - min) / (max - min)));
-  return palette[Math.min(4, Math.floor(t * 5))];
-}
-
 function fmt(v, d = 2) {
   return v == null || !Number.isFinite(v) ? 'Sem dado' : v.toLocaleString('pt-BR', { maximumFractionDigits: d, minimumFractionDigits: d });
 }
 
 function refreshMetrics() {
   let a = [...scores.values()];
-  let valid = a.filter(x => x.status === 'experimental' && Number.isFinite(x.resiliencia));
-  let mean = valid.length ? valid.reduce((s, x) => s + x.resiliencia, 0) / valid.length : null;
+  let valid = a.filter(x => x.status === 'experimental');
 
   if ($('metric-total')) $('metric-total').textContent = scores.size || '497';
   if ($('metric-valid')) $('metric-valid').textContent = valid.length || '492';
-  if ($('metric-mean')) $('metric-mean').textContent = mean == null ? '44,3' : fmt(mean, 1);
   if ($('metric-year')) $('metric-year').textContent = '2017';
 
   if ($('source-state')) {
-    $('source-state').textContent = `Resultados: ${scores.size} registros. Malha: ${geometry ? geometry.features.length + ' municípios' : 'carregando...'}. Operação local, sem envio externo de dados.`;
+    $('source-state').textContent = `Resultados: ${scores.size} registros. Malha: ${geometry ? geometry.features.length + ' municípios' : 'carregando...'}. Metodologia METIS-DIR-MUN-001 (análise individual autônoma).`;
   }
 }
 
@@ -141,7 +117,7 @@ function pathOf(g, project) {
   return out;
 }
 
-// Animação de viewBox do mapa SVG
+// Animação suave do viewBox no SVG
 function animateViewBox(targetX, targetY, targetW, targetH, duration = 350) {
   const svg = $('map');
   if (!svg) return;
@@ -160,7 +136,7 @@ function animateViewBox(targetX, targetY, targetW, targetH, duration = 350) {
   function step(now) {
     const elapsed = now - startTime;
     const t = Math.min(1, elapsed / duration);
-    const ease = 1 - Math.pow(1 - t, 3); // ease-out cubic
+    const ease = 1 - Math.pow(1 - t, 3); // cubic ease-out
 
     const curX = startX + (targetX - startX) * ease;
     const curY = startY + (targetY - startY) * ease;
@@ -207,6 +183,7 @@ function resetZoom() {
   if ($('btn-reset-zoom')) $('btn-reset-zoom').style.display = 'none';
 }
 
+// Renderizar mapa territorial (sem mapas coropléticos nem indução a ranking)
 function renderMap() {
   const svg = $('map');
   if (!svg) return;
@@ -219,7 +196,13 @@ function renderMap() {
   }
 
   const legend = $('legend');
-  if (legend) legend.replaceChildren();
+  if (legend) {
+    legend.innerHTML = `
+      <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
+      <div class="legend-item"><span class="legend-dot valid"></span><span>Válido</span></div>
+      <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto na fonte</span></div>
+    `;
+  }
   if (!geometry) return;
 
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -239,7 +222,6 @@ function renderMap() {
   const dy = (height - (y1 - y0) * s) / 2;
   const project = p => [dx + (p[0] - x0) * s, height - dy - (p[1] - y0) * s];
   const ns = 'http://www.w3.org/2000/svg';
-  let match = 0;
 
   geoBounds.clear();
 
@@ -250,7 +232,6 @@ function renderMap() {
     const path = pathOf(f.geometry, project);
     if (!path) continue;
 
-    // Calcular bounding box projetado para zoom suave
     let bx0 = Infinity, bx1 = -Infinity, by0 = Infinity, by1 = -Infinity;
     for (const p of coords) {
       const [px, py] = project(p);
@@ -272,207 +253,214 @@ function renderMap() {
 
     const el = document.createElementNS(ns, 'path');
     el.setAttribute('d', path);
-    el.setAttribute('fill', color(getValue(d)));
-    el.setAttribute('class', 'map-municipality' + (current === code ? ' active' : ''));
+
+    let cls = 'map-municipality';
+    if (current === code) cls += ' active';
+    if (d && d.status === 'dados_incompletos') cls += ' incomplete';
+    el.setAttribute('class', cls);
     el.setAttribute('tabindex', '0');
     el.setAttribute('id', 'mun-' + code);
 
     const title = document.createElementNS(ns, 'title');
     const munName = getName(f.properties || {});
-    const valText = d ? (d.status === 'dados_incompletos' ? 'dados incompletos' : fmt(getValue(d))) : 'sem dados';
-    title.textContent = `${munName} (${code}) · ${fields[layer][3]}: ${valText}`;
+    const statusText = d ? (d.status === 'dados_incompletos' ? 'dados incompletos' : 'dados oficiais homologados') : 'sem dados';
+    title.textContent = `${munName} (${code}) · ${statusText}`;
     el.append(title);
 
     el.addEventListener('click', () => choose(code, munName));
     svg.appendChild(el);
-    if (d) match++;
-  }
-
-  if (legend) {
-    const tx = document.createElement('span');
-    tx.textContent = `${fields[layer][3]}: ${fields[layer][1]} a ${fields[layer][2]} · (${match} municípios)`;
-    legend.append(tx);
-
-    const swGroup = document.createElement('div');
-    swGroup.className = 'swatch-group';
-    for (const c of palette) {
-      let e = document.createElement('span');
-      e.className = 'swatch';
-      e.style.background = c;
-      swGroup.append(e);
-    }
-    legend.append(swGroup);
   }
 }
 
+// Calcular P e R dinamicamente com base no parâmetro k atual
+function calculateP(dm, k) {
+  if (dm == null || !Number.isFinite(dm) || dm < 0 || k <= 0) return null;
+  return 50.0 * (dm / (dm + k));
+}
+
+function calculateR(e, p, s) {
+  if (e == null || p == null || s == null) return null;
+  return e * (p + s);
+}
+
+// Renderizador das 4 áreas do ambiente analítico municipal (METIS-DIR-MUN-001)
 function updateComponentDetail(code) {
   const box = $('comp-detail-box');
   if (!box) return;
 
   if (!code) {
-    box.innerHTML = '<p class="comp-empty-hint">Selecione um município no mapa para inspecionar as equações e os dados censitários abertos.</p>';
+    box.innerHTML = '<p class="comp-empty-hint">Selecione um município no mapa para abrir sua investigação analítica individual (METIS-DIR-MUN-001).</p>';
     return;
   }
 
   const d = scores.get(code);
   const raw = rawData.get(code);
-  const q10 = manifest?.calibracao?.q10 ?? 7.272989;
-  const q90 = manifest?.calibracao?.q90 ?? 8.932076;
-  const q10Val = Math.expm1(q10);
-  const q90Val = Math.expm1(q90);
-  const modelId = manifest?.model_id || 'EPS-REF-001/0.1.0';
+  const modelId = manifest?.model_id || 'EPS-DIR-MUN-001/0.2.0';
 
-  if (activeCompTab === 'P') {
-    const vp = raw?.valor_producao_reais;
-    const area = raw?.area_estabelecimentos_ha;
-    const prodHa = (vp != null && area != null && area > 0) ? (vp / area) : null;
-    const pVal = d?.produtiva;
+  const vp = raw?.valor_producao_reais;
+  const area = raw?.area_estabelecimentos_ha;
+  const dm = (vp != null && area != null && area > 0) ? (vp / area) : null;
+  const pastagem = raw?.pastagem_natural_ha;
+  const mata = raw?.mata_natural_ha;
+  const natTot = (pastagem != null && mata != null) ? (pastagem + mata) : null;
+  const natProp = (natTot != null && area != null && area > 0) ? Math.min(1, Math.max(0, natTot / area)) : null;
+  const eVal = natProp != null ? (0.5 + natProp) : null;
 
-    let noteClass = 'comp-note-box';
+  const nTot = raw?.estabelecimentos_total;
+  const nAss = raw?.estabelecimentos_orientacao_tecnica;
+  const nCoop = raw?.estabelecimentos_associados;
+  const sVal = (nTot != null && nTot > 0 && nAss != null && nCoop != null) ? (25.0 * ((nAss + nCoop) / nTot)) : null;
+
+  const pVal = calculateP(dm, paramK);
+  const rVal = calculateR(eVal, pVal, sVal);
+
+  // Atualizar barras de resumo no painel superior
+  if (rVal != null) {
+    if ($('detail-r')) $('detail-r').textContent = fmt(rVal, 2);
+    if ($('detail-e')) $('detail-e').textContent = `${fmt(eVal, 3)}× (${eVal >= 1.0 ? 'Amplificador' : 'Atenuador'})`;
+    if ($('detail-p')) $('detail-p').textContent = `${fmt(pVal, 2)} / 50`;
+    if ($('detail-s')) $('detail-s').textContent = `${fmt(sVal, 2)} / 50`;
+
+    if ($('bar-r')) $('bar-r').style.width = Math.min(100, (rVal / 100) * 100) + '%';
+    if ($('bar-e')) $('bar-e').style.width = Math.min(100, Math.max(0, (eVal - 0.5) / 1.0 * 100)) + '%';
+    if ($('bar-p')) $('bar-p').style.width = Math.min(100, (pVal / 50) * 100) + '%';
+    if ($('bar-s')) $('bar-s').style.width = Math.min(100, (sVal / 50) * 100) + '%';
+  }
+
+  // ÁREA D: RESULTADOS E CONFRONTO
+  if (activeArea === 'D') {
     let noteText = '';
-    if (pVal === 0) {
-      noteClass += ' warning';
-      noteText = `A pontuação zero (P = 0,00) resulta do corte pelo percentil inferior q10 (${fmt(q10Val, 2)} R$/ha) na distribuição de densidade monetária estadual. Não significa ausência de produção ou terra improdutiva, mas reflete sistemas com menor faturamento bruto por hectare (como pecuária pastoril extensiva).`;
-    } else if (pVal >= 50) {
-      noteText = `A pontuação atinge o teto calibrado do estado (P = 50,00), situando-se no percentil superior q90 (${fmt(q90Val, 2)} R$/ha) da produção por hectare.`;
-    } else if (pVal != null) {
-      noteText = `Pontuação normalizada linearmente entre os percentis q10 (${fmt(q10Val, 2)} R$/ha) e q90 (${fmt(q90Val, 2)} R$/ha) dos municípios do Rio Grande do Sul.`;
+    if (d && d.status === 'dados_incompletos') {
+      noteText = 'Variáveis essenciais estão ausentes no Censo 2017 para este município. Por rigor de governança, o sistema indica P e R como não calculados, sem substituição por zero fictício.';
     } else {
-      noteClass += ' warning';
-      noteText = `Variáveis de valor da produção ou área não reportadas para este município no Censo 2017.`;
+      noteText = `Densidade monetária observada dm = ${fmt(dm, 2)} R$/ha confrontada com parâmetro de escala k = ${fmt(paramK, 0)} R$/ha. A alteração de dados de qualquer outro município não afeta este cálculo (independência intermunicipal garantida).`;
     }
 
     box.innerHTML = `
       <div class="comp-title-bar">
-        <strong>Dimensão Produtiva (P)</strong>
-        <span class="score-tag">${pVal != null ? fmt(pVal, 2) + ' / 50' : 'Incompleto'}</span>
+        <strong>Área D · Resultados &amp; Diagnóstico</strong>
+        <span class="score-tag">${rVal != null ? 'R = ' + fmt(rVal, 2) : 'Não calculado'}</span>
       </div>
       <table class="comp-table">
-        <tr><td>Valor da produção agropecuária</td><td class="val">${vp != null ? 'R$ ' + vp.toLocaleString('pt-BR') : '—'}</td></tr>
-        <tr><td>Área dos estabelecimentos</td><td class="val">${area != null ? area.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
-        <tr><td>Produção monetária por hectare</td><td class="val">${prodHa != null ? 'R$ ' + fmt(prodHa, 2) + '/ha' : '—'}</td></tr>
-        <tr><td>Limite inferior normalizado (q10)</td><td class="val">R$ ${fmt(q10Val, 2)}/ha</td></tr>
-        <tr><td>Limite superior normalizado (q90)</td><td class="val">R$ ${fmt(q90Val, 2)}/ha</td></tr>
+        <tr><td>Densidade monetária da produção (dm)</td><td class="val">${dm != null ? 'R$ ' + fmt(dm, 2) + '/ha' : '—'}</td></tr>
+        <tr><td>Multiplicador Ecológico (E)</td><td class="val">${eVal != null ? fmt(eVal, 3) + '×' : '—'}</td></tr>
+        <tr><td>Dimensão Produtiva P(k=${fmt(paramK, 0)})</td><td class="val">${pVal != null ? fmt(pVal, 2) + ' / 50' : '—'}</td></tr>
+        <tr><td>Dimensão Social (S)</td><td class="val">${sVal != null ? fmt(sVal, 2) + ' / 50' : '—'}</td></tr>
+        <tr><td>Estado de Resiliência Hipotético (R)</td><td class="val">${rVal != null ? fmt(rVal, 2) : '—'}</td></tr>
       </table>
       <div class="comp-formula-box">
-        P = 50 × clamp((ln(1 + VP/área) - q10) / (q90 - q10), 0, 1)
+        R = E × (P + S) = ${eVal != null ? fmt(eVal, 3) : 'E'} × (${pVal != null ? fmt(pVal, 2) : 'P'} + ${sVal != null ? fmt(sVal, 2) : 'S'})
       </div>
-      <div class="${noteClass}">
+      <div class="comp-note-box">
         ${noteText}
       </div>
-      <div class="comp-provenance-box">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>IBGE/SIDRA · Censo Agro 2017 · Tabela 6898 · Modelo ${modelId}</span>
-      </div>
-    `;
-  } else if (activeCompTab === 'E') {
-    const pastagem = raw?.pastagem_natural_ha;
-    const mata = raw?.mata_natural_ha;
-    const area = raw?.area_estabelecimentos_ha;
-    const natTot = (pastagem != null && mata != null) ? pastagem + mata : null;
-    const natPerc = (natTot != null && area != null && area > 0) ? (natTot / area * 100) : null;
-    const eVal = d?.ecologica_multiplicador;
-    const isAmp = eVal != null && eVal >= 1.0;
-
-    box.innerHTML = `
-      <div class="comp-title-bar">
-        <strong>Multiplicador Ecológico (E)</strong>
-        <span class="score-tag">${eVal != null ? fmt(eVal, 3) + '× (' + (isAmp ? 'Amplificador' : 'Atenuador') + ')' : 'Incompleto'}</span>
-      </div>
-      <table class="comp-table">
-        <tr><td>Pastagens naturais</td><td class="val">${pastagem != null ? pastagem.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
-        <tr><td>Matas & florestas naturais</td><td class="val">${mata != null ? mata.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
-        <tr><td>Vegetação natural combinada</td><td class="val">${natTot != null ? natTot.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
-        <tr><td>Área dos estabelecimentos</td><td class="val">${area != null ? area.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
-        <tr><td>Proporção de vegetação natural (e)</td><td class="val">${natPerc != null ? fmt(natPerc, 1) + '%' : '—'}</td></tr>
-      </table>
-      <div class="comp-formula-box">
-        E = 0.5 + clamp((pastagem_natural + mata_natural) / área_total, 0, 1)
-      </div>
-      <div class="comp-note-box">
-        Integra pastagens naturais e matas preservadas em estabelecimentos agropecuários. O ponto neutro é E = 1,0 (50% de cobertura natural). Valores &gt; 1,0 atuam como multiplicador amplificador sobre a base produtiva e social.
+      <div class="comp-note-box warning" style="margin-top: 4px;">
+        <strong>Nota Epistêmica Obrigatória:</strong> R não constitui medida empiricamente validada de resiliência observada nem posição relativa frente a outros municípios. Trata-se de dedução matemática a partir da hipótese relacional declarada.
       </div>
       <div class="comp-provenance-box">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>IBGE/SIDRA · Censo Agro 2017 · Tabela 6881 · Malha IBGE 2022</span>
+        <span>Diretriz METIS-DIR-MUN-001 · Modelo ${modelId}</span>
       </div>
     `;
-  } else if (activeCompTab === 'S') {
-    const nTot = raw?.estabelecimentos_total;
-    const nAss = raw?.estabelecimentos_orientacao_tecnica;
-    const nCoop = raw?.estabelecimentos_associados;
-    const sVal = d?.social;
-    const pAss = (nAss != null && nTot != null && nTot > 0) ? (nAss / nTot * 100) : null;
-    const pCoop = (nCoop != null && nTot != null && nTot > 0) ? (nCoop / nTot * 100) : null;
-
+  }
+  // ÁREA A: OBSERVAÇÕES DO MUNICÍPIO
+  else if (activeArea === 'A') {
     box.innerHTML = `
       <div class="comp-title-bar">
-        <strong>Dimensão Social (S)</strong>
-        <span class="score-tag">${sVal != null ? fmt(sVal, 2) + ' / 50' : 'Incompleto'}</span>
+        <strong>Área A · Observações do Município</strong>
+        <span class="score-tag">Censo Agro 2017</span>
       </div>
       <table class="comp-table">
+        <tr><td>Área dos estabelecimentos agropecuários</td><td class="val">${area != null ? area.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Pastagens naturais declaradas</td><td class="val">${pastagem != null ? pastagem.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Matas e florestas naturais</td><td class="val">${mata != null ? mata.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
+        <tr><td>Valor da produção agropecuária (VP)</td><td class="val">${vp != null ? 'R$ ' + vp.toLocaleString('pt-BR') : '—'}</td></tr>
         <tr><td>Total de estabelecimentos</td><td class="val">${nTot != null ? nTot.toLocaleString('pt-BR') : '—'}</td></tr>
-        <tr><td>Com orientação técnica</td><td class="val">${nAss != null ? nAss.toLocaleString('pt-BR') + (pAss != null ? ' (' + fmt(pAss, 1) + '%)' : '') : '—'}</td></tr>
-        <tr><td>Associados a cooperativas</td><td class="val">${nCoop != null ? nCoop.toLocaleString('pt-BR') + (pCoop != null ? ' (' + fmt(pCoop, 1) + '%)' : '') : '—'}</td></tr>
+        <tr><td>Estabelecimentos com assistência técnica</td><td class="val">${nAss != null ? nAss.toLocaleString('pt-BR') : '—'}</td></tr>
+        <tr><td>Estabelecimentos associados a cooperativa</td><td class="val">${nCoop != null ? nCoop.toLocaleString('pt-BR') : '—'}</td></tr>
       </table>
-      <div class="comp-formula-box">
-        S = 25 × (assistência/total + associados/total)
-      </div>
       <div class="comp-note-box">
-        Avalia a capilaridade da assistência técnica agronômica e o engajamento cooperativo como medidas de articulação agroinstitucional e coesão dos produtores no território.
+        Observáveis originais estritamente circunscritos aos estabelecimentos agropecuários do município. Não incluem áreas urbanas nem atividades externas ao setor agropecuário.
       </div>
       <div class="comp-provenance-box">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>IBGE/SIDRA · Censo Agro 2017 · Tabelas 6780 e 6773</span>
+        <span>IBGE SIDRA · Tabelas 6881, 6898, 6780, 6773 · Malha 2022</span>
       </div>
     `;
-  } else if (activeCompTab === 'R') {
-    const rVal = d?.resiliencia;
-    const eVal = d?.ecologica_multiplicador;
-    const pVal = d?.produtiva;
-    const sVal = d?.social;
-    const basePS = (pVal != null && sVal != null) ? pVal + sVal : null;
+  }
+  // ÁREA B: PARAMETRIZAÇÃO EXPERIMENTAL
+  else if (activeArea === 'B') {
+    box.innerHTML = `
+      <div class="comp-title-bar">
+        <strong>Área B · Parametrização Experimental</strong>
+        <span class="score-tag">Sensibilidade em Tempo Real</span>
+      </div>
+      <div class="param-control-group">
+        <div class="param-control-header">
+          <strong>Parâmetro de Escala k (Produtiva):</strong>
+          <span id="param-k-display">${fmt(paramK, 0)} R$/ha</span>
+        </div>
+        <div class="param-input-wrap">
+          <input type="range" class="param-slider" id="param-k-slider" min="300" max="6000" step="100" value="${paramK}"/>
+          <input type="number" class="param-val-input" id="param-k-input" min="100" max="20000" step="50" value="${paramK}"/>
+        </div>
+      </div>
+      <table class="comp-table" style="margin-top: 6px;">
+        <tr><td>Função P(k)</td><td class="val">P = 50 × dm / (dm + k)</td></tr>
+        <tr><td>Ponto médio (P = 25,0)</td><td class="val">Quando dm = k (${fmt(paramK, 0)} R$/ha)</td></tr>
+        <tr><td>Função E</td><td class="val">E = 0.5 + clamp(nat/área, 0, 1)</td></tr>
+        <tr><td>Função S</td><td class="val">S = 25 × (assist/estab + coop/estab)</td></tr>
+      </table>
+      <div class="comp-note-box">
+        O parâmetro k define a taxa de saturação e é declarado na hipótese experimental. Mudar k permite avaliar a sensibilidade do município sem alterar seus dados observados.
+      </div>
+      <div class="comp-provenance-box">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Independência intermunicipal ativa · Metodologia METIS-DIR-MUN-001</span>
+      </div>
+    `;
 
+    // Vincular controles de slider e input
+    const slider = $('param-k-slider');
+    const input = $('param-k-input');
+    const display = $('param-k-display');
+
+    const onKChange = val => {
+      const num = Number(val);
+      if (num > 0 && Number.isFinite(num)) {
+        paramK = num;
+        if (slider) slider.value = String(num);
+        if (input) input.value = String(num);
+        if (display) display.textContent = `${fmt(num, 0)} R$/ha`;
+        updateComponentDetail(code);
+      }
+    };
+
+    if (slider) slider.addEventListener('input', ev => onKChange(ev.target.value));
+    if (input) input.addEventListener('change', ev => onKChange(ev.target.value));
+  }
+  // ÁREA C: HIPÓTESE RELACIONAL
+  else if (activeArea === 'C') {
     box.innerHTML = `
       <div class="comp-title-bar">
-        <strong>Síntese do Estado de Resiliência (R)</strong>
-        <span class="score-tag">${rVal != null ? fmt(rVal, 2) : 'Incompleto'}</span>
+        <strong>Área C · Hipótese Relacional</strong>
+        <span class="score-tag">Estrutura Teórica</span>
+      </div>
+      <div class="comp-formula-box" style="font-size: 0.82rem; padding: 10px;">
+        R_m = E_m × (P_m + S_m)
       </div>
       <table class="comp-table">
-        <tr><td>Base Produtiva + Social (P + S)</td><td class="val">${basePS != null ? fmt(basePS, 2) + ' / 100' : '—'}</td></tr>
-        <tr><td>Multiplicador Ecológico (E)</td><td class="val">${eVal != null ? fmt(eVal, 3) + '×' : '—'}</td></tr>
-        <tr><td>Estado de Resiliência Composto (R)</td><td class="val">${rVal != null ? fmt(rVal, 2) : '—'}</td></tr>
-        <tr><td>Status de integridade amostral</td><td class="val">${d?.status || 'desconhecido'}</td></tr>
+        <tr><td>Papel de E</td><td class="val">Multiplicador ecossistêmico (> 0; neutro em 1,0)</td></tr>
+        <tr><td>Papel de P</td><td class="val">Componente produtivo [0, 50]</td></tr>
+        <tr><td>Papel de S</td><td class="val">Componente social / associativo [0, 50]</td></tr>
+        <tr><td>Base socioeconômica</td><td class="val">(P + S) na escala [0, 100]</td></tr>
       </table>
-      <div class="comp-formula-box">
-        R = E × (P + S)
-      </div>
       <div class="comp-note-box">
-        O sistema opera em leitura relacional: a resiliência não decorre de variáveis isoladas, mas da capacidade de sustentação socioeconômica (P+S) atenuada ou amplificada pelas condições ecológicas (E).
+        A escolha de E como multiplicador é intencional e expressa a hipótese de que a integridade ecológica amplifica ou atenua a sustentabilidade da produção e coesão social ao longo do tempo.
       </div>
       <div class="comp-provenance-box">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>Manifesto: results/RS_497_RESULTADOS.manifest.json</span>
-      </div>
-    `;
-  } else if (activeCompTab === 'RAW') {
-    box.innerHTML = `
-      <div class="comp-title-bar">
-        <strong>Insumos Censitários Originais</strong>
-        <span class="score-tag">IBGE 2017</span>
-      </div>
-      <table class="comp-table">
-        <tr><td>Área dos estabelecimentos</td><td class="val">${raw?.area_estabelecimentos_ha ? raw.area_estabelecimentos_ha.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
-        <tr><td>Pastagens naturais</td><td class="val">${raw?.pastagem_natural_ha ? raw.pastagem_natural_ha.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
-        <tr><td>Matas & florestas naturais</td><td class="val">${raw?.mata_natural_ha ? raw.mata_natural_ha.toLocaleString('pt-BR') + ' ha' : '—'}</td></tr>
-        <tr><td>Valor total da produção</td><td class="val">${raw?.valor_producao_reais ? 'R$ ' + raw.valor_producao_reais.toLocaleString('pt-BR') : '—'}</td></tr>
-        <tr><td>Estabelecimentos agropecuários</td><td class="val">${raw?.estabelecimentos_total ? raw.estabelecimentos_total.toLocaleString('pt-BR') : '—'}</td></tr>
-        <tr><td>Com orientação técnica</td><td class="val">${raw?.estabelecimentos_orientacao_tecnica ? raw.estabelecimentos_orientacao_tecnica.toLocaleString('pt-BR') : '—'}</td></tr>
-        <tr><td>Associados a cooperativa</td><td class="val">${raw?.estabelecimentos_associados ? raw.estabelecimentos_associados.toLocaleString('pt-BR') : '—'}</td></tr>
-      </table>
-      <div class="comp-provenance-box">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>data/gerados/municipios_rs_2017_homologado.csv</span>
+        <span>Princípio SisTer/LABECO: Sem alteração de hipótese sem versionamento explícito.</span>
       </div>
     `;
   }
@@ -509,40 +497,13 @@ function choose(code, name) {
   if (statusAlert) {
     if (d && d.status === 'dados_incompletos') {
       statusAlert.style.display = 'block';
-      statusAlert.innerHTML = '⚠️ <strong>Dados Incompletos no Censo 2017:</strong> Variáveis essenciais não foram reportadas pelo IBGE para este município (por sigilo amostral ou omissão na fonte). Por rigor científico, o MÉTIS não realiza imputação fictícia e mantém o registro auditável.';
+      statusAlert.innerHTML = '⚠️ <strong>Dados Incompletos no Censo 2017:</strong> Variáveis essenciais não foram divulgadas pelo IBGE (por omissão amostral ou sigilo). Por rigor metodológico, o MÉTIS não realiza imputações fictícias.';
     } else {
       statusAlert.style.display = 'none';
     }
   }
 
-  if (d && d.status === 'experimental') {
-    const r = d.resiliencia ?? 0;
-    const e = d.ecologica_multiplicador ?? 1;
-    const p = d.produtiva ?? 0;
-    const s = d.social ?? 0;
-
-    if ($('detail-r')) $('detail-r').textContent = fmt(r);
-    if ($('detail-e')) $('detail-e').textContent = `${fmt(e, 3)}× (${e >= 1.0 ? 'Amplificador' : 'Atenuador'})`;
-    if ($('detail-p')) $('detail-p').textContent = `${fmt(p, 1)} / 50`;
-    if ($('detail-s')) $('detail-s').textContent = `${fmt(s, 1)} / 50`;
-
-    if ($('bar-r')) $('bar-r').style.width = Math.min(100, (r / 100) * 100) + '%';
-    if ($('bar-e')) $('bar-e').style.width = Math.min(100, Math.max(0, (e - 0.5) / 1.0 * 100)) + '%';
-    if ($('bar-p')) $('bar-p').style.width = Math.min(100, (p / 50) * 100) + '%';
-    if ($('bar-s')) $('bar-s').style.width = Math.min(100, (s / 50) * 100) + '%';
-  } else {
-    if ($('detail-r')) $('detail-r').textContent = 'Incompleto';
-    if ($('detail-e')) $('detail-e').textContent = 'Sem dado';
-    if ($('detail-p')) $('detail-p').textContent = 'Sem dado';
-    if ($('detail-s')) $('detail-s').textContent = 'Sem dado';
-
-    if ($('bar-r')) $('bar-r').style.width = '0%';
-    if ($('bar-e')) $('bar-e').style.width = '0%';
-    if ($('bar-p')) $('bar-p').style.width = '0%';
-    if ($('bar-s')) $('bar-s').style.width = '0%';
-  }
-
-  // Atualizar detalhamento analítico do componente ativo
+  // Atualizar detalhamento analítico na área ativa
   updateComponentDetail(code);
 
   // Atualizar classe ativa no mapa
@@ -566,7 +527,12 @@ async function autoLoadAll() {
     // Carregar manifesto oficial
     try {
       const rMan = await fetch('/results/RS_497_RESULTADOS.manifest.json');
-      if (rMan.ok) manifest = await rMan.json();
+      if (rMan.ok) {
+        manifest = await rMan.json();
+        if (manifest?.parametrizacao?.k_produtiva) {
+          paramK = Number(manifest.parametrizacao.k_produtiva);
+        }
+      }
     } catch (_) {}
 
     // Carregar CSV calculado
@@ -631,26 +597,16 @@ if (searchInput) {
   });
 }
 
-// Botões de camada
-document.querySelectorAll('[data-layer]').forEach(b => {
-  b.addEventListener('click', () => {
-    layer = b.dataset.layer;
-    document.querySelectorAll('[data-layer]').forEach(x => x.classList.toggle('selected', x === b));
-    renderMap();
-    choose(current, $('detail-name') ? $('detail-name').textContent : '');
-  });
-});
-
 // Botão de restaurar enquadramento do estado (reset zoom)
 const btnResetZoom = $('btn-reset-zoom');
 if (btnResetZoom) {
   btnResetZoom.addEventListener('click', () => resetZoom());
 }
 
-// Abas de exploração dos componentes (P, E, S, R, RAW)
+// Abas do ambiente analítico municipal (Áreas D, A, B, C)
 document.querySelectorAll('.comp-tab-btn').forEach(b => {
   b.addEventListener('click', () => {
-    activeCompTab = b.dataset.comp;
+    activeArea = b.dataset.area;
     document.querySelectorAll('.comp-tab-btn').forEach(x => x.classList.toggle('active', x === b));
     updateComponentDetail(current);
   });

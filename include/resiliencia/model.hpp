@@ -4,23 +4,35 @@
 #include <vector>
 
 namespace resiliencia {
-inline constexpr const char* MODEL_VERSION = "EPS-REF-001/0.1.0";
+// Versao segundo Diretriz Metodologica METIS-DIR-MUN-001:
+// O municipio e a unidade individual de analise; calculo 100% independente de outros municipios.
+inline constexpr const char* MODEL_VERSION = "EPS-DIR-MUN-001/0.2.0";
+
 struct RawMunicipio {
     std::string codigo, nome, referencia;
     std::optional<double> area_ha, pastagem_natural_ha, mata_natural_ha;
     std::optional<double> valor_producao_reais;
     std::optional<double> estabelecimentos, com_orientacao, associados;
 };
-struct Calibracao {
-    double log_valor_ha_q10 = 0, log_valor_ha_q90 = 0;
-    int observacoes = 0;
+
+struct ParametrosExperimento {
+    // Escala de saturacao da densidade monetaria dm = VP / A (R$/ha).
+    // Quando dm = k, P = 25.0 (exatamente a metade da escala [0, 50]).
+    double k_produtiva = 1500.0;
 };
+
 struct Nota {
     std::string codigo, nome, referencia, status;
-    std::optional<double> ecol_indice, ecologica, produtiva, social, resiliencia;
+    std::optional<double> densidade_monetaria_ha; // dm = VP / A (R$/ha)
+    std::optional<double> ecol_indice;            // e = (pastagem + mata) / A
+    std::optional<double> ecologica;              // E = 0.5 + clamp(e, 0, 1)
+    std::optional<double> produtiva;              // P = 50 * dm / (dm + k)
+    std::optional<double> social;                 // S = 25 * (orient + coop) / estab
+    std::optional<double> resiliencia;            // R = E * (P + S)
+    double k_utilizado = 0.0;
 };
-std::optional<double> valor_por_ha_log(const RawMunicipio& m);
-Calibracao calibrar(const std::vector<RawMunicipio>& municipios);
-Nota pontuar(const RawMunicipio& m, const Calibracao& cal);
+
+std::optional<double> densidade_monetaria(const RawMunicipio& m);
+Nota pontuar(const RawMunicipio& m, const ParametrosExperimento& params);
 double estado(double E, double P, double S);
 }

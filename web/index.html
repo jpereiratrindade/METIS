@@ -174,22 +174,22 @@
         </div>
       </section>
 
-      <!-- STAT CARDS -->
-      <section class="statgrid" aria-label="Indicadores gerais">
+      <!-- STAT CARDS (METIS-DIR-MUN-001) -->
+      <section class="statgrid" aria-label="Indicadores metodológicos gerais">
         <article class="stat-card">
-          <span class="stat-card-label">Municípios no Arquivo</span>
+          <span class="stat-card-label">Universo Territorial</span>
           <strong class="stat-card-value" id="metric-total">497</strong>
-          <span class="stat-card-meta">Meta oficial: 497 (IBGE UF 43)</span>
+          <span class="stat-card-meta">Municípios do RS (IBGE UF 43)</span>
         </article>
         <article class="stat-card">
-          <span class="stat-card-label">Média Estadual Calculada</span>
-          <strong class="stat-card-value" id="metric-mean">44,3</strong>
-          <span class="stat-card-meta">Somente valores calculáveis (n=492)</span>
+          <span class="stat-card-label">Unidade de Investigação</span>
+          <strong class="stat-card-value" id="metric-unit" style="color: var(--teal); font-size: 1.15rem;">Individual</strong>
+          <span class="stat-card-meta">Sem normalização intermunicipal</span>
         </article>
         <article class="stat-card">
-          <span class="stat-card-label">Municípios Válidos</span>
+          <span class="stat-card-label">Registros Homologados</span>
           <strong class="stat-card-value" id="metric-valid">492</strong>
-          <span class="stat-card-meta">5 com dados_incompletos (sem imputação)</span>
+          <span class="stat-card-meta">5 com dados_incompletos no Censo</span>
         </article>
         <article class="stat-card">
           <span class="stat-card-label">Referência Temporal</span>
@@ -202,14 +202,12 @@
       <section class="cartography-card" id="inicio">
         <div class="card-header-bar">
           <div class="card-header-titles">
-            <h2>Cartografia Agroterritorial Municipal</h2>
-            <p>Selecione um município no mapa ou use a busca para examinar os multiplicadores ecológicos, produtivos e sociais.</p>
+            <h2>Cartografia de Localização &amp; Contextualização Territorial</h2>
+            <p>Selecione um município no mapa ou use a busca para abrir seu ambiente analítico individual.</p>
           </div>
-          <div class="layer-buttons" role="group" aria-label="Dimensão exibida">
-            <button class="layer-btn selected" data-layer="resiliencia">Resiliência (R)</button>
-            <button class="layer-btn" data-layer="ecologica">Ecológica (E)</button>
-            <button class="layer-btn" data-layer="produtiva">Produtiva (P)</button>
-            <button class="layer-btn" data-layer="social">Social (S)</button>
+          <div class="directive-badge-top" title="Diretriz METIS-DIR-MUN-001: análise municipal autônoma sem ranking">
+            <span class="directive-dot"></span>
+            <span>Diretriz METIS-DIR-MUN-001 Ativa</span>
           </div>
         </div>
 
@@ -284,21 +282,20 @@
               </div>
             </div>
 
-            <!-- NAVEGADOR MODULAR DE COMPONENTES -->
+            <!-- AMBIENTE ANALÍTICO MUNICIPAL EM 4 ÁREAS (METIS-DIR-MUN-001) -->
             <div class="comp-section">
               <div class="comp-section-header">
-                <span class="comp-section-title">EXPLORAR COMPONENTES</span>
+                <span class="comp-section-title">AMBIENTE ANALÍTICO MUNICIPAL</span>
                 <div class="comp-tabs" id="comp-tabs">
-                  <button class="comp-tab-btn active" data-comp="P">P</button>
-                  <button class="comp-tab-btn" data-comp="E">E</button>
-                  <button class="comp-tab-btn" data-comp="S">S</button>
-                  <button class="comp-tab-btn" data-comp="R">R</button>
-                  <button class="comp-tab-btn" data-comp="RAW">Insumos</button>
+                  <button class="comp-tab-btn active" data-area="D" title="Área D: Resultados e Confronto">D · Resultados</button>
+                  <button class="comp-tab-btn" data-area="A" title="Área A: Observações do Município">A · Insumos</button>
+                  <button class="comp-tab-btn" data-area="B" title="Área B: Parametrização Experimental">B · Parâmetros</button>
+                  <button class="comp-tab-btn" data-area="C" title="Área C: Hipótese Relacional">C · Hipótese</button>
                 </div>
               </div>
 
               <div id="comp-detail-box" class="comp-detail-box">
-                <p class="comp-empty-hint">Selecione um município no mapa para inspecionar as equações e os dados censitários abertos.</p>
+                <p class="comp-empty-hint">Selecione um município no mapa para abrir sua investigação analítica individual (METIS-DIR-MUN-001).</p>
               </div>
             </div>
           </aside>

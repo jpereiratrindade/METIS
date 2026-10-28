@@ -1,14 +1,21 @@
 {
-  "model_id": "EPS-REF-001/0.1.0",
+  "model_id": "EPS-DIR-MUN-001/0.2.0",
   "status": "CALCULADO_PENDENTE_AUDITORIA_FONTE",
   "referencia": "2017",
   "universo": "estabelecimentos agropecuarios, nao todo o municipio",
+  "unidade_investigacao": "municipio individual (sem normalizacao intermunicipal)",
   "entrada": "data/gerados/municipios_rs_2017_homologado.csv",
   "municipios": 497,
   "validos": 492,
   "incompletos": 5,
   "inconsistentes": 0,
-  "calibracao": {"variavel": "log1p(valor_producao_reais / area_estabelecimentos_ha)", "q10": 7.27298934926942, "q90": 8.93207610159435, "n": 496},
+  "parametrizacao": {
+    "variavel_produtiva": "densidade_monetaria_ha = valor_producao_reais / area_estabelecimentos_ha (R$/ha)",
+    "funcao_p": "P = 50 * dm / (dm + k)",
+    "k_produtiva": 1500.00,
+    "funcao_e": "E = 0.5 + clamp((pastagem_natural + mata_natural) / area_total, 0, 1)",
+    "funcao_s": "S = 25 * (com_orientacao/estabelecimentos + associados/estabelecimentos)"
+  },
   "equacao": "R = E * (P + S)",
-  "aviso": "Sem vinculo automatico com IBGE. Conferir tabela, categorias e unidades no SIDRA; validar insumos antes do uso cientifico. Comparacoes temporais exigem calibracao fixa e compatibilidade."
+  "aviso": "Metodologia METIS-DIR-MUN-001: o municipio e analisado isoladamente a partir de parametros declarados, sem comparacao, ranking ou percentis estaduais. Resiliencia nao validada empiricamente."
 }

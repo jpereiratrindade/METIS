@@ -750,21 +750,50 @@ main#app {
   z-index: 2;
 }
 
+.directive-badge-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(8, 127, 140, 0.12);
+  border: 1px solid rgba(8, 127, 140, 0.35);
+  color: var(--teal);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+}
+.directive-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 6px var(--teal);
+}
+
 .map-municipality {
-  stroke: rgba(8, 25, 45, 0.8);
-  stroke-width: 0.45;
+  fill: #0c2844;
+  stroke: #163e66;
+  stroke-width: 0.55;
   cursor: pointer;
-  transition: stroke 0.12s, stroke-width 0.12s;
+  transition: fill 0.15s ease, stroke 0.15s ease, stroke-width 0.15s ease;
   vector-effect: non-scaling-stroke;
 }
 .map-municipality:hover {
-  stroke: #ffffff;
-  stroke-width: 2.2;
+  fill: #1d4ed8;
+  stroke: #7dd3fc;
+  stroke-width: 1.8;
 }
 .map-municipality.active {
-  stroke: #38bdf8;
+  fill: #087f8c !important;
+  stroke: #38bdf8 !important;
   stroke-width: 2.8;
-  filter: drop-shadow(0 0 6px #38bdf8);
+  filter: drop-shadow(0 0 8px #38bdf8);
+}
+.map-municipality.incomplete {
+  fill: #1e293b;
+  stroke: #334155;
+  stroke-width: 0.45;
 }
 
 .map-empty-state {
@@ -802,7 +831,7 @@ main#app {
   position: absolute;
   left: 20px;
   bottom: 16px;
-  background: rgba(7, 30, 56, 0.85);
+  background: rgba(7, 30, 56, 0.88);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: var(--radius-md);
@@ -811,17 +840,76 @@ main#app {
   color: #e2e8f0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   z-index: 10;
 }
-.swatch-group {
+.legend-item {
   display: flex;
-  gap: 2px;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
 }
-.swatch {
-  width: 18px;
-  height: 12px;
-  border-radius: 2px;
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.legend-dot.valid {
+  background: #0c2844;
+  border: 1px solid #38bdf8;
+}
+.legend-dot.active {
+  background: #087f8c;
+  border: 1px solid #7dd3fc;
+  box-shadow: 0 0 6px #38bdf8;
+}
+.legend-dot.incomplete {
+  background: #1e293b;
+  border: 1px solid #64748b;
+}
+
+/* CONTROLE DE PARÂMETRO EXPERIMENTAL (ÁREA B) */
+.param-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  margin-top: 6px;
+}
+.param-control-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.74rem;
+}
+.param-control-header strong {
+  color: var(--navy);
+}
+.param-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.param-slider {
+  flex: 1;
+  accent-color: var(--teal);
+  cursor: pointer;
+}
+.param-val-input {
+  width: 80px;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.76rem;
+  font-weight: 750;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy);
+  background: #f8fafc;
 }
 
 /* DETALHES LATERAIS DO MUNICÍPIO */

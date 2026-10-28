@@ -1,33 +1,42 @@
-# MÉTIS — Inteligência adaptativa (v0.1.0)
+# MÉTIS — Laboratório Computacional de Resiliência Agroterritorial (v0.2.0)
 
 > **"A inteligência que queremos investigar não é simplesmente a capacidade de produzir uma resposta correta, mas a capacidade de reconhecer, diante da realidade, quando suas próprias referências precisam ser reconsideradas."**
 
-**MÉTIS** integra o ecossistema científico do **LABECO** (SisTer, MORFO, SisTer-Git). Não é apenas um sistema que calcula índices municipais: é uma experiência científica e computacional orientada a investigar se um sistema computacional consegue reconhecer as limitações de suas próprias representações e, diante de evidências, sustentar uma **reconfiguração verificável**.
+**MÉTIS** integra o ecossistema científico do **LABECO** (SisTer, MORFO, SisTer-Git). Constitui um laboratório computacional para formular, parametrizar, experimentar, confrontar e revisar hipóteses sobre as relações entre condições ecológicas, produtivas e sociais e a resiliência de sistemas agroterritoriais.
+
+Conforme a diretriz **`METIS-DIR-MUN-001`**, o MÉTIS adota o **município como unidade individual e autônoma de investigação**, sem utilizar resultados de outros municípios para determinar suas pontuações nem estabelecer rankings ou classificações de desempenho.
 
 ---
 
-## 🧠 Origem Conceitual: Por que MÉTIS?
+## 🏛️ Princípio Fundamental de Invariância (METIS-DIR-MUN-001)
 
-Na tradição filosófica clássica, *Métis* designa a inteligência prática, relacional e adaptativa — a capacidade de apreender as condições do meio, lidar com a incerteza e reconfigurar a ação diante do inesperado.
+> **"A alteração dos dados de outro município não poderá modificar o resultado calculado para o município em análise, mantendo-se constantes seus próprios dados, a versão do modelo e seus parâmetros experimentais."**
 
-O MÉTIS opera como um laboratório de **descrição e investigação agroterritorial geral**, orientado universalmente aos 497 municípios do Rio Grande do Sul:
-1. **Organização e cálculo verificável**: computa o estado de referência ($R$) a partir do acoplamento relacional entre as dimensões Ecológica ($E$), Produtiva ($P$) e Social ($S$).
-2. **Transparência matemática**: explicita as fórmulas, variáveis brutas e parâmetros estatísticos (como percentis de corte $q_{10}$ e $q_{90}$), tornando visível o porquê de cada pontuação sem ocultar dados sob um índice escalar único.
-3. **Detecção de limites representacionais**: confronta os modelos matemáticos com a diversidade dos sistemas territoriais, permitindo ao pesquisador identificar onde métricas abstratas encontram seus limites e demandam evolução epistêmica.
+- **Sem normalização intermunicipal:** Eliminação de percentis estaduais ($q_{10}, q_{90}$), médias globais ou rankings competitivos.
+- **Observável produtivo:** $d_m = \frac{\text{VP}_m}{A_m}$ (R$/ha), identificado como **densidade monetária da produção**.
+- **Parametrização experimental explícita:**
+  $$P_m(k) = 50 \times \frac{d_m}{d_m + k}, \quad k > 0$$
+  onde $k$ possui unidade R$/ha$ e expressa uma hipótese de escala paramétrica declarada (valor padrão de referência: $1500{,}0\text{ R\$/ha}$), sem valores arbitrários ocultos.
+- **Hipótese relacional preservada:**
+  $$R_m = E_m \times (P_m + S_m)$$
+  onde $E_m$ atua como modulador ecológico multiplicativo.
 
----
-
-## 🏛️ Identidade Visual SisTer-Git & Painel Local
-
-A interface web em `web/` foi harmonizada com o design system do **SisTer-Git / MORFO**:
-- **Paleta profunda SisTer**: base marinho profunda (`#071e38`), acentos céu/teal (`#2ea8e8`, `#087f8c`) e superfícies contrastadas (`#ffffff`, `#edf2f8`).
-- **Ícone do Cérebro (Brain)**: símbolo vetorial da inteligência adaptativa e das sinapses relacionais.
-- **Cartografia SVG Pura**: mapa coroplético dos 497 municípios do Rio Grande do Sul sem dependências externas, bibliotecas remotas ou telemetria.
-- **Decomposição Analítica**: inspeção detalhada de cada município ($R, E, P, S$) e cruzamento com dados censitários brutos.
+> [!NOTE]
+> Os resultados calculados constituem indicadores exploratórios de hipóteses de trabalho e **não representam medidas empiricamente validadas de resiliência**.
 
 ---
 
-## ⚙️ Compilação e Testes (C++26)
+## 🔬 Ambiente Analítico Municipal (Quatro Áreas)
+
+A seleção territorial ativa uma bancada analítica decomposta em 4 áreas estruturadas:
+- **Área A — Observações do Município:** Dados brutos do Censo Agropecuário 2017 (IBGE/SIDRA), unidades de medida, ano e metadados de coleta.
+- **Área B — Parametrização Experimental:** Controle de sensibilidade interativo do parâmetro de escala $k$ (R$/ha$), equações e justificativas epistemológicas.
+- **Área C — Hipótese Relacional:** Equação $R = E(P+S)$ e rastreabilidade da hipótese multiplicadora ecológica.
+- **Área D — Resultados e Confronto:** Decomposição dos indicadores $R, E, P, S$, densidade monetária $d_m$, limitações e advertências metodológicas.
+
+---
+
+## ⚙️ Compilação e Testes Automatizados (C++26)
 
 Requer toolchain moderno com suporte a C++26 (`-std=c++2c` / `-std=c++26`), como GCC 14+ e CMake >= 3.30.
 
@@ -36,6 +45,8 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ctest --test-dir build --output-on-failure
 ```
+
+O conjunto de testes verifica automaticamente a **invariância municipal** (o cálculo de um município isolado produz resultado idêntico ao cálculo inserido em qualquer lote de municípios).
 
 ---
 
@@ -52,19 +63,24 @@ O script consulta as tabelas **6881**, **6898**, **6780** e **6773** do SIDRA e 
 
 ---
 
-## 🧮 Executar o Cálculo Oficial dos 497 Municípios
+## 🧮 Executar o Cálculo Municipal (CLI)
 
 ```bash
+# Execução com valor padrão de k (1500.0 R$/ha):
 ./build/resiliencia-rs compute data/gerados/municipios_rs_2017_homologado.csv results/RS_497_RESULTADOS.csv
+
+# Execução com parametrização experimental específica para k:
+./build/resiliencia-rs compute data/gerados/municipios_rs_2017_homologado.csv results/RS_497_RESULTADOS.csv --k 2000.0
 ```
 
 Saídas geradas:
-- `results/RS_497_RESULTADOS.csv`: resultados calculados para os 497 municípios.
-- `results/RS_497_RESULTADOS.manifest.json`: manifesto com parâmetros $q_{10}$, $q_{90}$, universo e integridade.
+- `results/RS_497_RESULTADOS.csv`: dados e pontuações calculadas de forma autônoma para os 497 municípios.
+- `results/RS_497_RESULTADOS.manifest.json`: manifesto com parâmetros experimentais declarados, versão do modelo (`EPS-DIR-MUN-001/0.2.0`) e integridade.
+- `results/historico/`: manifestos e resultados da formulação v0.1.0 histórica preservados para reprodutibilidade.
 
 ---
 
-## 🌐 Visualizador Web (Rede Local & Acesso Direto)
+## 🌐 Visualizador Territorial Web (Rede Local & Acesso Direto)
 
 Inicie o servidor HTTP com escuta na rede local (`0.0.0.0`):
 
@@ -83,17 +99,7 @@ Abra no navegador pelo IP da máquina ou localmente, **direto na raiz (sem `/web
 - `http://<IP_DA_REDE>:8080/` (ex: `http://10.163.80.176:8080/`)
 - `http://0.0.0.0:8080/`
 
-O painel carrega automaticamente os resultados oficiais dos 497 municípios e a malha cartográfica GeoJSON do IBGE, permitindo a seleção e inspeção de qualquer município em destaque interativo.
-
----
-
-## 🗺️ Roadmap v0.1.1 — Exploração e Descrição Agroterritorial Municipal
-
-O próximo incremento do MÉTIS aprofunda a transparência cognitiva e descritiva:
-- **Exploração em Dois Níveis:**
-  - **Zoom Territorial no SVG:** ao selecionar qualquer município, o enquadramento cartográfico aproxima suavemente seus limites através da manipulação do `viewBox`, com controle para restaurar a visão estadual completa a qualquer momento.
-  - **Detalhamento Analítico Modular ($E, P, S, R$):** inspeção aberta de cada dimensão, apresentando dados brutos censitários (IBGE/SIDRA), fórmulas aplicadas, parâmetros de calibração ($q_{10}, q_{90}$) e explicações conceituais de eventuais pontuações extremas ou dados incompletos.
-- **Auditoria Epistêmica:** antes de automatizar a auto-reconfiguração, o sistema capacita o pesquisador a avaliar as relações entre dados, representação matemática e o território real.
+O painel cartográfico opera como instrumento de **localização e contextualização territorial**, permitindo selecionar qualquer município individualmente, aproximar suavemente via zoom dinâmico SVG e experimentar diferentes parâmetros $k$ em tempo real.
 
 ---
 
