@@ -174,7 +174,64 @@
         </div>
       </section>
 
-      <!-- STAT CARDS (METIS-DIR-MUN-001) -->
+      <!-- BANCADA EPISTÊMICA TRIAXIAL (METIS-DIR-MULTI-002) -->
+      <section class="triaxial-bench-card" aria-label="Controles Epistêmicos do Laboratório">
+        <div class="triaxial-header">
+          <div class="triaxial-titles">
+            <span class="triaxial-kicker">LABORATÓRIO MULTIMODELO &amp; MULTITEMPORAL</span>
+            <h3>Bancada de Investigação Epistêmica</h3>
+          </div>
+          <div class="active-config-pill" id="active-config-badge">
+            <span class="pulse-green"></span>
+            <strong id="badge-config-summary">EPS-REF-001 · 2017 · Trajetória Experimental</strong>
+          </div>
+        </div>
+
+        <div class="triaxial-controls-grid">
+          <!-- EIXO 1: MODELO -->
+          <div class="triaxial-field">
+            <label for="select-model" class="triaxial-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              <span>Eixo 1 · Modelo Teórico</span>
+            </label>
+            <select id="select-model" class="triaxial-select">
+              <option value="EPS-REF-001" selected>EPS-REF-001 — Referência E-P-S (q10/q90)</option>
+              <option value="EPS-EXP-002">EPS-EXP-002 — Aditivo Ponderado Linear</option>
+              <option value="EPS-EXP-003">EPS-EXP-003 — Interativo (Acoplamento Não-Linear)</option>
+              <option value="EPS-EXP-004">EPS-EXP-004 — Autônomo Municipal (DIR-MUN-001)</option>
+            </select>
+            <span class="triaxial-hint" id="model-hypothesis-hint">Formulação original E–P–S preservada para reprodução e confronto.</span>
+          </div>
+
+          <!-- EIXO 2: ANO -->
+          <div class="triaxial-field">
+            <label for="select-year" class="triaxial-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>Eixo 2 · Ano de Referência</span>
+            </label>
+            <select id="select-year" class="triaxial-select">
+              <option value="2017" selected>2017 — Censo Agropecuário Oficial (IBGE)</option>
+              <option value="2006" disabled>2006 — Série Histórica (Em homologação)</option>
+            </select>
+            <span class="triaxial-hint">Base censitária oficial homologada (497 municípios).</span>
+          </div>
+
+          <!-- EIXO 3: TRAJETÓRIA -->
+          <div class="triaxial-field">
+            <label for="select-trajectory" class="triaxial-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <span>Eixo 3 · Tipo de Trajetória</span>
+            </label>
+            <select id="select-trajectory" class="triaxial-select">
+              <option value="experimental" selected>Experimental — Cenários, parâmetros e sensibilidade</option>
+              <option value="historica">Histórica — Leitura estrita de dados consolidados</option>
+            </select>
+            <span class="triaxial-hint" id="trajectory-hint">Permite alterar parâmetros k, pesos e sinergias em tempo real.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- STAT CARDS (METIS-DIR-MULTI-002) -->
       <section class="statgrid" aria-label="Indicadores metodológicos gerais">
         <article class="stat-card">
           <span class="stat-card-label">Universo Territorial</span>
@@ -182,9 +239,9 @@
           <span class="stat-card-meta">Municípios do RS (IBGE UF 43)</span>
         </article>
         <article class="stat-card">
-          <span class="stat-card-label">Unidade de Investigação</span>
-          <strong class="stat-card-value" id="metric-unit" style="color: var(--teal); font-size: 1.15rem;">Individual</strong>
-          <span class="stat-card-meta">Sem normalização intermunicipal</span>
+          <span class="stat-card-label">Modelo Ativo</span>
+          <strong class="stat-card-value" id="metric-unit" style="color: var(--teal); font-size: 1.15rem;">EPS-REF-001</strong>
+          <span class="stat-card-meta" id="metric-model-sub">Referência histórica E-P-S</span>
         </article>
         <article class="stat-card">
           <span class="stat-card-label">Registros Homologados</span>
@@ -289,7 +346,8 @@
               <div class="comp-section-header">
                 <span class="comp-section-title">AMBIENTE ANALÍTICO MUNICIPAL</span>
                 <div class="comp-tabs" id="comp-tabs">
-                  <button class="comp-tab-btn active" data-area="D" title="Área D: Resultados e Confronto">D · Resultados</button>
+                  <button class="comp-tab-btn active" data-area="D" title="Área D: Resultados e Decomposição">D · Resultados</button>
+                  <button class="comp-tab-btn" data-area="M" title="Confronto Direto de Modelos para o Município">M · Confronto</button>
                   <button class="comp-tab-btn" data-area="A" title="Área A: Observações do Município">A · Insumos</button>
                   <button class="comp-tab-btn" data-area="B" title="Área B: Parametrização Experimental">B · Parâmetros</button>
                   <button class="comp-tab-btn" data-area="C" title="Área C: Hipótese Relacional">C · Hipótese</button>

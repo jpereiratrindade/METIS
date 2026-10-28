@@ -89,12 +89,14 @@ std::vector<resiliencia::RawMunicipio> converter(const std::vector<std::vector<s
     if(out.empty()) throw std::runtime_error("Nenhum municipio fornecido");
     return out;
 }
-void executar(const std::string& entrada, const std::string& saida, double k_produtiva, bool prototipo) {
+void executar(const std::string& entrada, const std::string& saida, const std::string& modelo, double k_produtiva, bool prototipo) {
     auto dados = converter(ler_csv(entrada), prototipo);
-    resiliencia::ParametrosExperimento params{k_produtiva};
+    resiliencia::ParametrosExperimento params;
+    params.modelo = modelo;
+    params.k_produtiva = k_produtiva;
     std::ofstream out(saida);
     if (!out) throw std::runtime_error("Nao posso criar arquivo " + saida);
-    out << "codigo_ibge,municipio,ano_referencia,densidade_monetaria_ha,ecologica_indice,ecologica_multiplicador,produtiva,social,resiliencia,status\n";
+    out << "codigo_ibge,municipio,ano_referencia,modelo,densidade_monetaria_ha,ecologica_indice,ecologica_multiplicador,produtiva,social,resiliencia,status\n";
     int validos = 0, faltantes = 0, inconsistentes = 0;
     for (const auto& d : dados) {
         auto n = resiliencia::pontuar(d, params);
@@ -104,6 +106,7 @@ void executar(const std::string& entrada, const std::string& saida, double k_pro
         out << quote_csv(n.codigo) << ","
             << quote_csv(n.nome) << ","
             << n.referencia << ","
+            << quote_csv(n.modelo) << ","
             << number_csv(n.densidade_monetaria_ha) << ","
             << number_csv(n.ecol_indice) << ","
             << number_csv(n.ecologica) << ","
@@ -116,26 +119,22 @@ void executar(const std::string& entrada, const std::string& saida, double k_pro
     const auto meta = std::filesystem::path(saida).replace_extension(".manifest.json");
     std::ofstream j(meta);
     if (!j) throw std::runtime_error("Nao posso criar manifesto");
-    j << "{\n  \"model_id\": \"" << resiliencia::MODEL_VERSION << "\",\n"
+    j << "{\n  \"model_id\": \"" << modelo << "\",\n"
       << "  \"status\": \"" << (prototipo ? "PROTOTIPO_NAO_HOMOLOGADO" : "CALCULADO_PENDENTE_AUDITORIA_FONTE") << "\",\n"
       << "  \"referencia\": \"2017\",\n"
+      << "  \"trajetoria\": \"experimental\",\n"
       << "  \"universo\": \"estabelecimentos agropecuarios, nao todo o municipio\",\n"
-      << "  \"unidade_investigacao\": \"municipio individual (sem normalizacao intermunicipal)\",\n"
       << "  \"entrada\": \"" << escape_json(entrada) << "\",\n"
       << "  \"municipios\": " << dados.size() << ",\n"
       << "  \"validos\": " << validos << ",\n"
       << "  \"incompletos\": " << faltantes << ",\n"
       << "  \"inconsistentes\": " << inconsistentes << ",\n"
       << "  \"parametrizacao\": {\n"
-      << "    \"variavel_produtiva\": \"densidade_monetaria_ha = valor_producao_reais / area_estabelecimentos_ha (R$/ha)\",\n"
-      << "    \"funcao_p\": \"P = 50 * dm / (dm + k)\",\n"
-      << "    \"k_produtiva\": " << std::fixed << std::setprecision(2) << k_produtiva << ",\n"
-      << "    \"funcao_e\": \"E = 0.5 + clamp((pastagem_natural + mata_natural) / area_total, 0, 1)\",\n"
-      << "    \"funcao_s\": \"S = 25 * (com_orientacao/estabelecimentos + associados/estabelecimentos)\"\n"
+      << "    \"modelo\": \"" << modelo << "\",\n"
+      << "    \"k_produtiva\": " << std::fixed << std::setprecision(2) << k_produtiva << "\n"
       << "  },\n"
-      << "  \"equacao\": \"R = E * (P + S)\",\n"
-      << "  \"aviso\": \"Metodologia METIS-DIR-MUN-001: o municipio e analisado isoladamente a partir de parametros declarados, sem comparacao, ranking ou percentis estaduais. Resiliencia nao validada empiricamente.\"\n}\n";
-    std::cout << "Modelo " << resiliencia::MODEL_VERSION << " | " << dados.size() << " municipios | k=" << k_produtiva
+      << "  \"aviso\": \"Metodologia METIS-DIR-MULTI-002: laboratorio multimodelo. Resiliencia nao validada empiricamente.\"\n}\n";
+    std::cout << "Modelo " << modelo << " | " << dados.size() << " municipios | k=" << k_produtiva
               << " | validos=" << validos << " | faltantes=" << faltantes << " | inconsistentes=" << inconsistentes << "\n"
               << "Resultados: " << saida << "\nManifesto: " << meta.string() << "\n";
 }
@@ -143,7 +142,8 @@ void executar(const std::string& entrada, const std::string& saida, double k_pro
 int main(int argc, char** argv) {
     try {
         if (argc < 4) {
-            std::cerr << "Uso: resiliencia-rs compute <entrada.csv> <saida.csv> [--k <valor>] [--prototype]\n";
+            std::cerr << "Uso: resiliencia-rs compute <entrada.csv> <saida.csv> [--model <id>] [--k <valor>] [--prototype]\n"
+                      << "Modelos disponiveis: EPS-REF-001, EPS-EXP-002, EPS-EXP-003, EPS-EXP-004\n";
             return 2;
         }
         std::string op = argv[1];
@@ -153,6 +153,7 @@ int main(int argc, char** argv) {
         }
         std::string entrada = argv[2];
         std::string saida = argv[3];
+        std::string modelo = resiliencia::MODELO_REF_001;
         double k = 1500.0;
         bool proto = false;
 
@@ -160,13 +161,15 @@ int main(int argc, char** argv) {
             std::string arg = argv[i];
             if (arg == "--prototype") {
                 proto = true;
+            } else if (arg == "--model" && i + 1 < argc) {
+                modelo = argv[++i];
             } else if (arg == "--k" && i + 1 < argc) {
                 k = std::stod(argv[++i]);
             } else {
                 throw std::runtime_error("Argumento nao reconhecido: " + arg);
             }
         }
-        executar(entrada, saida, k, proto);
+        executar(entrada, saida, modelo, k, proto);
         return 0;
     } catch (const std::exception& e) {
         std::cerr << "ERRO: " << e.what() << "\n";

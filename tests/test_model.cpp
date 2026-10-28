@@ -23,7 +23,8 @@ int main() {
         check(failure, "E=0 invalido (E deve ser estritamente positivo)");
 
         // 2. Parametrização independente de P: P(k) = 50 * dm / (dm + k)
-        ParametrosExperimento params{1500.0};
+        ParametrosExperimento params{MODELO_EXP_004};
+        params.k_produtiva = 1500.0;
         
         // Quando dm = 0 => P = 0
         RawMunicipio m_zero{"TEST-ZERO", "ZeroProd", "2017", 1000, 300, 200, 0, 100, 40, 40};
@@ -68,7 +69,9 @@ int main() {
         // 4. Parâmetro inválido (k <= 0) deve ser rejeitado
         bool rejeitou_k_invalido = false;
         try {
-            pontuar(munA, ParametrosExperimento{0.0});
+            ParametrosExperimento p_inv{MODELO_EXP_004};
+            p_inv.k_produtiva = 0.0;
+            pontuar(munA, p_inv);
         } catch(const std::invalid_argument&) {
             rejeitou_k_invalido = true;
         }
@@ -86,7 +89,33 @@ int main() {
         check(!nota_inc.produtiva.has_value(), "Dado ausente nao vira zero em P");
         check(!nota_inc.resiliencia.has_value(), "Dado ausente nao vira zero em R");
 
-        std::cout << "✓ Todos os 10 testes de invariancia e modelagem municipal aprovados com sucesso.\n";
+        // 6. Testes do Catálogo Multimodelo (METIS-DIR-MULTI-002)
+        ParametrosExperimento p_ref{MODELO_REF_001};
+        auto n_ref = pontuar(munA, p_ref);
+        check(n_ref.modelo == MODELO_REF_001, "modelo REF-001 identificado");
+        check(n_ref.resiliencia.has_value() && *n_ref.resiliencia > 0, "R valido em REF-001");
+
+        ParametrosExperimento p_aditivo{MODELO_EXP_002};
+        p_aditivo.we = 0.33; p_aditivo.wp = 0.33; p_aditivo.ws = 0.34;
+        auto n_aditivo = pontuar(munA, p_aditivo);
+        check(n_aditivo.modelo == MODELO_EXP_002, "modelo EXP-002 identificado");
+        check(n_aditivo.resiliencia.has_value() && *n_aditivo.resiliencia > 0, "R valido em EXP-002");
+
+        ParametrosExperimento p_interativo{MODELO_EXP_003};
+        p_interativo.lambda_interativo = 0.5;
+        auto n_interativo = pontuar(munA, p_interativo);
+        check(n_interativo.modelo == MODELO_EXP_003, "modelo EXP-003 identificado");
+        check(*n_interativo.resiliencia > *notaA_isolado.resiliencia, "EXP-003 acopla sinergia positiva");
+
+        // Confronto multimodelo para o município
+        auto confronto = confrontar_modelos(munA, params);
+        check(confronto.size() == 4, "confronto retorna exatamente 4 modelos do catalogo");
+        check(confronto[0].modelo == MODELO_REF_001, "confronto[0] e REF-001");
+        check(confronto[1].modelo == MODELO_EXP_002, "confronto[1] e EXP-002");
+        check(confronto[2].modelo == MODELO_EXP_003, "confronto[2] e EXP-003");
+        check(confronto[3].modelo == MODELO_EXP_004, "confronto[3] e EXP-004");
+
+        std::cout << "✓ Todos os 15 testes de invariancia, modelagem municipal e catalogo multimodelo aprovados com sucesso.\n";
         return 0;
     } catch(const std::exception& e) {
         std::cerr << "ERRO: " << e.what() << "\n";

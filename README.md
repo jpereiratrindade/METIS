@@ -1,38 +1,55 @@
-# MÉTIS — Laboratório Computacional de Resiliência Agroterritorial (v0.2.0)
+# MÉTIS — Laboratório Multimodelo e Multitemporal de Resiliência Agroterritorial (v0.3.0)
 
 > **"A inteligência que queremos investigar não é simplesmente a capacidade de produzir uma resposta correta, mas a capacidade de reconhecer, diante da realidade, quando suas próprias referências precisam ser reconsideradas."**
 
 **MÉTIS** integra o ecossistema científico do **LABECO** (SisTer, MORFO, SisTer-Git). Constitui um laboratório computacional para formular, parametrizar, experimentar, confrontar e revisar hipóteses sobre as relações entre condições ecológicas, produtivas e sociais e a resiliência de sistemas agroterritoriais.
 
-Conforme a diretriz **`METIS-DIR-MUN-001`**, o MÉTIS adota o **município como unidade individual e autônoma de investigação**, sem utilizar resultados de outros municípios para determinar suas pontuações nem estabelecer rankings ou classificações de desempenho.
+Conforme a diretriz **`METIS-DIR-MULTI-002`**, o MÉTIS evolui de um calculador de índice estático para um **laboratório de múltiplos modelos experimentais**, permitindo ao pesquisador selecionar um município e investigar como diferentes formulações teóricas e parametrizações produzem interpretações distintas das condições territoriais.
 
 ---
 
-## 🏛️ Princípio Fundamental de Invariância (METIS-DIR-MUN-001)
+## 🏛️ Organização Conceitual Quádrupla
 
-> **"A alteração dos dados de outro município não poderá modificar o resultado calculado para o município em análise, mantendo-se constantes seus próprios dados, a versão do modelo e seus parâmetros experimentais."**
+Para assegurar rigor epistêmico, o sistema distingue quatro elementos fundamentais:
 
-- **Sem normalização intermunicipal:** Eliminação de percentis estaduais ($q_{10}, q_{90}$), médias globais ou rankings competitivos.
-- **Observável produtivo:** $d_m = \frac{\text{VP}_m}{A_m}$ (R$/ha), identificado como **densidade monetária da produção**.
-- **Parametrização experimental explícita:**
-  $$P_m(k) = 50 \times \frac{d_m}{d_m + k}, \quad k > 0$$
-  onde $k$ possui unidade R$/ha$ e expressa uma hipótese de escala paramétrica declarada (valor padrão de referência: $1500{,}0\text{ R\$/ha}$), sem valores arbitrários ocultos.
-- **Hipótese relacional preservada:**
-  $$R_m = E_m \times (P_m + S_m)$$
-  onde $E_m$ atua como modulador ecológico multiplicativo.
+| Elemento | Função no MÉTIS |
+| :--- | :--- |
+| **Variáveis** | Dados observados brutos censitários (IBGE / Censo Agropecuário 2017). |
+| **Indicadores** | Relações matemáticas construídas a partir das variáveis ($d_m = \text{VP}/A$, cobertura vegetal natural $e$, assistência técnica). |
+| **Modelos** | Formulações conceituais que organizam indicadores, componentes e suas interações. |
+| **Cenários** | Execuções de um modelo sob parâmetros, calibrações e condições experimentais declaradas. |
+
+---
+
+## 🔬 Três Eixos Independentes de Investigação
+
+1. **Eixo 1 — Modelo Teórico:**
+   - **`EPS-REF-001` (Referência):** Formulação original $R = E(P+S)$ com calibração empírica da produtividade por percentis estaduais ($q_{10}$ e $q_{90}$).
+   - **`EPS-EXP-002` (Aditivo Linear Ponderado):** Componentes independentes combinados por soma linear ponderada: $R = w_e E + w_p P + w_s S$.
+   - **`EPS-EXP-003` (Interativo com Acoplamento Não-Linear):** Interações sinérgicas explícitas entre coesão social e capacidade produtiva: $R = E(P+S) + \lambda \frac{P \cdot S}{50}$.
+   - **`EPS-EXP-004` (Autônomo DIR-MUN-001):** Análise municipal individual com escala $k$ explícita e estrita invariância intermunicipal ($P = 50 \frac{d_m}{d_m+k}$).
+2. **Eixo 2 — Ano de Referência:**
+   - **2017:** Censo Agropecuário oficial homologado (497 municípios do RS).
+   - Suporte arquitetural extensível para múltiplas séries históricas.
+3. **Eixo 3 — Tipo de Trajetória:**
+   - **Experimental:** Exploração interativa de cenários, sensibilidade a parâmetros e confrontos contrafactuais.
+   - **Histórica:** Leitura estrita de dados observados em períodos consolidados.
 
 > [!NOTE]
-> Os resultados calculados constituem indicadores exploratórios de hipóteses de trabalho e **não representam medidas empiricamente validadas de resiliência**.
+> Os resultados calculados constituem indicadores exploratórios de hipóteses concorrentes e **não representam medidas empiricamente validadas de resiliência**. As divergências entre modelos revelam os limites teóricos de cada formulação.
 
 ---
 
-## 🔬 Ambiente Analítico Municipal (Quatro Áreas)
+## 🗺️ Cartografia Reativa & Confronto Intramunicipal
 
-A seleção territorial ativa uma bancada analítica decomposta em 4 áreas estruturadas:
-- **Área A — Observações do Município:** Dados brutos do Censo Agropecuário 2017 (IBGE/SIDRA), unidades de medida, ano e metadados de coleta.
-- **Área B — Parametrização Experimental:** Controle de sensibilidade interativo do parâmetro de escala $k$ (R$/ha$), equações e justificativas epistemológicas.
-- **Área C — Hipótese Relacional:** Equação $R = E(P+S)$ e rastreabilidade da hipótese multiplicadora ecológica.
-- **Área D — Resultados e Confronto:** Decomposição dos indicadores $R, E, P, S$, densidade monetária $d_m$, limitações e advertências metodológicas.
+- **Tendência Territorial Estadual:** O mapa SVG é caracterizado por padrão por **$R$** (com alternância para $E$, $P$ e $S$) e recalcula sua coloração em tempo real ao alternar de modelo ou ajustar parâmetros.
+- **Confronto Exclusivamente Intramunicipal (Aba M · Confronto):** Ao selecionar um município, a interface apresenta uma matriz comparando lado a lado as pontuações e desvios ($\Delta R$ vs REF) de todos os 4 modelos para aquele município específico sob os mesmos dados empíricos observados.
+- **Ambiente Analítico Municipal em Quatro Áreas:**
+  - **Área D — Resultados:** Valores e diagnósticos do modelo ativo.
+  - **Área M — Confronto:** Tabela comparativa dos 4 modelos para o município.
+  - **Área A — Insumos:** Variáveis censitárias brutas do IBGE/SIDRA.
+  - **Área B — Parâmetros:** Controles de sensibilidade paramétrica do modelo ativo ($k$, pesos, $\lambda$).
+  - **Área C — Hipótese:** Equação e justificativa epistemológica da formulação selecionada.
 
 ---
 
@@ -46,31 +63,21 @@ cmake --build build -j
 ctest --test-dir build --output-on-failure
 ```
 
-O conjunto de testes verifica automaticamente a **invariância municipal** (o cálculo de um município isolado produz resultado idêntico ao cálculo inserido em qualquer lote de municípios).
+O conjunto de testes verifica automaticamente os 4 modelos do catálogo, a função de confronto intramunicipal e a invariância municipal.
 
 ---
 
-## 📡 Extração Oficial via API SIDRA (IBGE)
-
-Para obter e harmonizar os dados dos **497 municípios do RS** referentes ao Censo Agropecuário 2017 diretamente do IBGE:
+## 🧮 Executar o Cálculo Oficial via CLI
 
 ```bash
-python3 scripts/carregar_dados_ibge.py
-```
+# Execução com o modelo de referência histórica (padrão):
+./build/resiliencia-rs compute data/gerados/municipios_rs_2017_homologado.csv results/RS_497_RESULTADOS.csv --model EPS-REF-001
 
-O script consulta as tabelas **6881**, **6898**, **6780** e **6773** do SIDRA e gera:
-`data/gerados/municipios_rs_2017_homologado.csv`
+# Execução com modelo aditivo ponderado:
+./build/resiliencia-rs compute data/gerados/municipios_rs_2017_homologado.csv results/RS_497_RESULTADOS.csv --model EPS-EXP-002
 
----
-
-## 🧮 Executar o Cálculo Municipal (CLI)
-
-```bash
-# Execução com valor padrão de k (1500.0 R$/ha):
-./build/resiliencia-rs compute data/gerados/municipios_rs_2017_homologado.csv results/RS_497_RESULTADOS.csv
-
-# Execução com parametrização experimental específica para k:
-./build/resiliencia-rs compute data/gerados/municipios_rs_2017_homologado.csv results/RS_497_RESULTADOS.csv --k 2000.0
+# Execução com modelo autônomo municipal (k = 2000 R$/ha):
+./build/resiliencia-rs compute data/gerados/municipios_rs_2017_homologado.csv results/RS_497_RESULTADOS.csv --model EPS-EXP-004 --k 2000.0
 ```
 
 Saídas geradas:
