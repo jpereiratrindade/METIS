@@ -1,0 +1,14 @@
+{
+  "model_id": "EPS-REF-001/0.1.0",
+  "status": "PROTOTIPO_NAO_HOMOLOGADO",
+  "referencia": "2017",
+  "universo": "estabelecimentos agropecuarios, nao todo o municipio",
+  "entrada": "fixtures/SINTETICO_NAO_IBGE.csv",
+  "municipios": 3,
+  "validos": 3,
+  "incompletos": 0,
+  "inconsistentes": 0,
+  "calibracao": {"variavel": "log1p(valor_producao_reais / area_estabelecimentos_ha)", "q10": 7.78460050195077, "q90": 8.72724766644736, "n": 3},
+  "equacao": "R = E * (P + S)",
+  "aviso": "Sem vinculo automatico com IBGE. Conferir tabela, categorias e unidades no SIDRA; validar insumos antes do uso cientifico. Comparacoes temporais exigem calibracao fixa e compatibilidade."
+}

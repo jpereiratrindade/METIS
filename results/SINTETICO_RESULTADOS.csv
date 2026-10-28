@@ -1,0 +1,4 @@
+codigo_ibge,municipio,ano_referencia,ecologica_indice,ecologica_multiplicador,produtiva,social,resiliencia,status
+TEST-001,Exemplo sintético 1,2017,0.370000,0.870000,38.868874,17.500000,49.040920,experimental
+TEST-002,Exemplo sintético 2,2017,0.316667,0.816667,50.000000,27.500000,63.291667,experimental
+TEST-003,Exemplo sintético 3,2017,0.700000,1.200000,0.000000,11.250000,13.500000,experimental

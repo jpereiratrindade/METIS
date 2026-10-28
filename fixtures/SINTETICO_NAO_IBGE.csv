@@ -1,0 +1,4 @@
+codigo_ibge,municipio,ano_referencia,area_estabelecimentos_ha,pastagem_natural_ha,mata_natural_ha,valor_producao_reais,estabelecimentos_total,estabelecimentos_orientacao_tecnica,estabelecimentos_associados
+TEST-001,Exemplo sintético 1,2017,1000,250,120,5000000,100,40,30
+TEST-002,Exemplo sintético 2,2017,1200,200,180,7800000,120,60,72
+TEST-003,Exemplo sintético 3,2017,500,300,50,1000000,80,20,16
