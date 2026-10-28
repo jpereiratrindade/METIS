@@ -10,10 +10,10 @@
 
 Na tradição filosófica clássica, *Métis* designa a inteligência prática, relacional e adaptativa — a capacidade de apreender as condições do meio, lidar com a incerteza e reconfigurar a ação diante do inesperado.
 
-O cerne dessa investigação reside na detecção de limites representacionais:
-1. O sistema calcula o estado agroterritorial dos municípios a partir de suas funções de referência.
-2. Métricas estritamente financeiras de densidade monetária por hectare podem penalizar sistemas conservacionistas e de pastoreio nativo, contrastando com altos valores de multiplicadores ecológicos.
-3. O confronto entre o modelo e a realidade territorial evidencia um limite representacional: cabe ao sistema registrar a anomalia, acolher novas hipóteses de parametrização e sustentar a reconfiguração sem perder a memória e a rastreabilidade da configuração anterior.
+O MÉTIS opera como um laboratório de **descrição e investigação agroterritorial geral**, orientado universalmente aos 497 municípios do Rio Grande do Sul:
+1. **Organização e cálculo verificável**: computa o estado de referência ($R$) a partir do acoplamento relacional entre as dimensões Ecológica ($E$), Produtiva ($P$) e Social ($S$).
+2. **Transparência matemática**: explicita as fórmulas, variáveis brutas e parâmetros estatísticos (como percentis de corte $q_{10}$ e $q_{90}$), tornando visível o porquê de cada pontuação sem ocultar dados sob um índice escalar único.
+3. **Detecção de limites representacionais**: confronta os modelos matemáticos com a diversidade dos sistemas territoriais, permitindo ao pesquisador identificar onde métricas abstratas encontram seus limites e demandam evolução epistêmica.
 
 ---
 
@@ -84,6 +84,16 @@ Abra no navegador pelo IP da máquina ou localmente, **direto na raiz (sem `/web
 - `http://0.0.0.0:8080/`
 
 O painel carrega automaticamente os resultados oficiais dos 497 municípios e a malha cartográfica GeoJSON do IBGE, permitindo a seleção e inspeção de qualquer município em destaque interativo.
+
+---
+
+## 🗺️ Roadmap v0.1.1 — Exploração e Descrição Agroterritorial Municipal
+
+O próximo incremento do MÉTIS aprofunda a transparência cognitiva e descritiva:
+- **Exploração em Dois Níveis:**
+  - **Zoom Territorial no SVG:** ao selecionar qualquer município, o enquadramento cartográfico aproxima suavemente seus limites através da manipulação do `viewBox`, com controle para restaurar a visão estadual completa a qualquer momento.
+  - **Detalhamento Analítico Modular ($E, P, S, R$):** inspeção aberta de cada dimensão, apresentando dados brutos censitários (IBGE/SIDRA), fórmulas aplicadas, parâmetros de calibração ($q_{10}, q_{90}$) e explicações conceituais de eventuais pontuações extremas ou dados incompletos.
+- **Auditoria Epistêmica:** antes de automatizar a auto-reconfiguração, o sistema capacita o pesquisador a avaliar as relações entre dados, representação matemática e o território real.
 
 ---
 
