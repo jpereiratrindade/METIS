@@ -6,7 +6,7 @@ let scores = new Map();
 let rawData = new Map();
 let geometry = null;
 let layer = 'resiliencia';
-let current = '4301602'; // Iniciar com Bagé em destaque!
+let current = null; // Nenhum município selecionado inicialmente
 
 // Paleta de cores idêntica à escala Morfo/SisTer (marinho -> teal -> sky -> verde)
 const palette = ['#0c2844', '#087f8c', '#14805e', '#2ea8e8', '#7dd3fc'];
@@ -141,7 +141,12 @@ function renderMap() {
   const svg = $('map');
   if (!svg) return;
   svg.replaceChildren();
-  if ($('map-placeholder')) $('map-placeholder').hidden = !!geometry;
+  const placeholder = $('map-placeholder');
+  if (placeholder) {
+    placeholder.hidden = !!geometry;
+    placeholder.classList.toggle('is-hidden', !!geometry);
+    placeholder.style.display = geometry ? 'none' : 'flex';
+  }
 
   const legend = $('legend');
   if (legend) legend.replaceChildren();
@@ -209,6 +214,27 @@ function renderMap() {
 
 function choose(code, name) {
   current = code;
+  if (!code) {
+    if ($('detail-name')) $('detail-name').textContent = 'Selecione um município';
+    if ($('detail-code')) $('detail-code').textContent = 'Clique na malha territorial ou busque acima';
+    if ($('detail-r')) $('detail-r').textContent = '—';
+    if ($('detail-e')) $('detail-e').textContent = '—';
+    if ($('detail-p')) $('detail-p').textContent = '—';
+    if ($('detail-s')) $('detail-s').textContent = '—';
+    if ($('bar-r')) $('bar-r').style.width = '0%';
+    if ($('bar-e')) $('bar-e').style.width = '0%';
+    if ($('bar-p')) $('bar-p').style.width = '0%';
+    if ($('bar-s')) $('bar-s').style.width = '0%';
+    if ($('raw-area')) $('raw-area').textContent = '—';
+    if ($('raw-pastagem')) $('raw-pastagem').textContent = '—';
+    if ($('raw-mata')) $('raw-mata').textContent = '—';
+    if ($('raw-vp')) $('raw-vp').textContent = '—';
+    if ($('raw-estab')) $('raw-estab').textContent = '—';
+    if ($('raw-assist')) $('raw-assist').textContent = '—';
+    if ($('raw-assoc')) $('raw-assoc').textContent = '—';
+    document.querySelectorAll('.map-municipality').forEach(el => el.classList.remove('active'));
+    return;
+  }
   const d = scores.get(code);
   const raw = rawData.get(code);
 
@@ -294,9 +320,16 @@ async function autoLoadAll() {
       const o = await rGeo.json();
       if (o.type === 'FeatureCollection' && Array.isArray(o.features)) {
         geometry = o;
+        const placeholder = $('map-placeholder');
+        if (placeholder) {
+          placeholder.hidden = true;
+          placeholder.classList.add('is-hidden');
+          placeholder.style.display = 'none';
+        }
         refreshMetrics();
         renderMap();
-        choose(current, 'Bagé');
+        if (current) choose(current);
+        else choose(null);
       }
     }
 

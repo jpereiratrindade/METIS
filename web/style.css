@@ -778,6 +778,11 @@ main#app {
   text-align: center;
   padding: 24px;
 }
+.map-empty-state.is-hidden,
+.map-empty-state[hidden],
+[hidden] {
+  display: none !important;
+}
 .map-empty-state svg {
   width: 56px;
   height: 56px;

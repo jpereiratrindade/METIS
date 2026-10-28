@@ -10,9 +10,9 @@
 
 Na tradição filosófica clássica, *Métis* designa a inteligência prática, relacional e adaptativa — a capacidade de apreender as condições do meio, lidar com a incerteza e reconfigurar a ação diante do inesperado.
 
-O caso do primeiro teste em **Bagé** ilustra o cerne dessa investigação:
-1. O sistema calculou o estado agroterritorial de Bagé ($R = 21,15$) a partir de suas funções de referência.
-2. A métrica estritamente financeira de densidade monetária por hectare ($P = 0,0$) penalizou a pecuária conservacionista do Bioma Pampa, contrastando com o alto valor do multiplicador ecológico ($E = 1,09$, com quase 60% de vegetação nativa preservada).
+O cerne dessa investigação reside na detecção de limites representacionais:
+1. O sistema calcula o estado agroterritorial dos municípios a partir de suas funções de referência.
+2. Métricas estritamente financeiras de densidade monetária por hectare podem penalizar sistemas conservacionistas e de pastoreio nativo, contrastando com altos valores de multiplicadores ecológicos.
 3. O confronto entre o modelo e a realidade territorial evidencia um limite representacional: cabe ao sistema registrar a anomalia, acolher novas hipóteses de parametrização e sustentar a reconfiguração sem perder a memória e a rastreabilidade da configuração anterior.
 
 ---
@@ -64,18 +64,26 @@ Saídas geradas:
 
 ---
 
-## 🌐 Visualizador Web
+## 🌐 Visualizador Web (Rede Local & Acesso Direto)
 
-Inicie o servidor HTTP local na raiz:
+Inicie o servidor HTTP com escuta na rede local (`0.0.0.0`):
 
 ```bash
-python3 -m http.server 8080 --directory .
+./run.sh
 ```
 
-Abra no navegador:
-`http://localhost:8080/web/index.html`
+Ou diretamente via Python:
 
-O painel carrega automaticamente os resultados oficiais dos 497 municípios e a malha cartográfica GeoJSON do IBGE, exibindo Bagé e demais municípios em destaque interativo.
+```bash
+python3 -m http.server 8080 --bind 0.0.0.0 --directory .
+```
+
+Abra no navegador pelo IP da máquina ou localmente, **direto na raiz (sem `/web`)**:
+- `http://localhost:8080/`
+- `http://<IP_DA_REDE>:8080/` (ex: `http://10.163.80.176:8080/`)
+- `http://0.0.0.0:8080/`
+
+O painel carrega automaticamente os resultados oficiais dos 497 municípios e a malha cartográfica GeoJSON do IBGE, permitindo a seleção e inspeção de qualquer município em destaque interativo.
 
 ---
 
