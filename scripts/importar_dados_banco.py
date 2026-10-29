@@ -60,12 +60,14 @@ def checar_se_ja_populado(cur) -> bool:
     except Exception:
         return False
 
-def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
+def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False, schema: str = "public") -> int:
     print("=== MÉTIS: Iniciando Importação Científica Versionada (2017 e 2006) ===")
-    print(f"Destino: {db_url}")
+    print(f"Destino: {db_url} (Schema: {schema})")
 
     with psycopg.connect(db_url, autocommit=False) as conn:
         with conn.cursor() as cur:
+            if schema != "public":
+                cur.execute(f"SET search_path TO {schema}, public;")
             if not forcar and checar_se_ja_populado(cur):
                 print("[OK] Base de dados já populada e íntegra (497 municípios, séries 2017 e 2006).")
                 print("     Importação ignorada para agilidade. Use '--force' para reprocessar.\n")
@@ -100,6 +102,8 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
 
     with psycopg.connect(db_url, autocommit=False) as conn:
         with conn.cursor() as cur:
+            if schema != "public":
+                cur.execute(f"SET search_path TO {schema}, public;")
             # -------------------------------------------------------------
             # 1. Registrar Fontes de Dados
             # -------------------------------------------------------------
@@ -200,11 +204,17 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                         past_nat = float_ou_none(row["pastagem_natural_ha"])
                         mata_nat = float_ou_none(row["mata_natural_ha"])
                         val_prod = float_ou_none(row["valor_producao_reais"])
-                        est_tot = int_ou_none(row["estabelecimentos_total"]) or 0
-                        est_ori = int_ou_none(row["estabelecimentos_orientacao_tecnica"]) or 0
-                        est_ass = int_ou_none(row["estabelecimentos_associados"]) or 0
+                        est_tot = int_ou_none(row["estabelecimentos_total"])
+                        est_ori = int_ou_none(row["estabelecimentos_orientacao_tecnica"])
+                        est_ass = int_ou_none(row["estabelecimentos_associados"])
 
-                        incompleto = (area_est is None or past_nat is None or mata_nat is None or val_prod is None)
+                        incompleto = (
+                            area_est is None 
+                            or past_nat is None 
+                            or mata_nat is None 
+                            or val_prod is None
+                            or est_tot is None
+                        )
                         status_obs = "dados_incompletos" if incompleto else "valido"
                         if incompleto:
                             obs_incompletas += 1
@@ -327,14 +337,10 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                 INSERT INTO execucoes_experimentais (
                     id, modelo_id, modelo_versao, fonte_id, ano_referencia,
                     trajetoria, status_execucao, parametros, metadados,
-                    arquivo_saida, sha256_saida, arquivo_manifesto, sha256_manifesto
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (id) DO UPDATE SET
-                    status_execucao = EXCLUDED.status_execucao,
-                    parametros = EXCLUDED.parametros,
-                    metadados = EXCLUDED.metadados,
-                    sha256_saida = EXCLUDED.sha256_saida,
-                    sha256_manifesto = EXCLUDED.sha256_manifesto;
+                    arquivo_saida, sha256_saida, arquivo_manifesto, sha256_manifesto,
+                    imutavel, homologado_em
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE, CURRENT_TIMESTAMP)
+                ON CONFLICT (id) DO NOTHING;
             """, (
                 exec_id_v010,
                 "EPS-REF-001",
@@ -368,13 +374,7 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                             execucao_id, codigo_ibge, densidade_monetaria_ha,
                             ecologica_indice, ecologica_multiplicador, produtiva, social, resiliencia, status
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (execucao_id, codigo_ibge) DO UPDATE SET
-                            ecologica_indice = EXCLUDED.ecologica_indice,
-                            ecologica_multiplicador = EXCLUDED.ecologica_multiplicador,
-                            produtiva = EXCLUDED.produtiva,
-                            social = EXCLUDED.social,
-                            resiliencia = EXCLUDED.resiliencia,
-                            status = EXCLUDED.status;
+                        ON CONFLICT (execucao_id, codigo_ibge) DO NOTHING;
                     """, (
                         exec_id_v010, ibge, None,
                         eco_ind, eco_mul, prod, soc, res, status
@@ -397,14 +397,10 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                 INSERT INTO execucoes_experimentais (
                     id, modelo_id, modelo_versao, fonte_id, ano_referencia,
                     trajetoria, status_execucao, parametros, metadados,
-                    arquivo_saida, sha256_saida, arquivo_manifesto, sha256_manifesto
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (id) DO UPDATE SET
-                    status_execucao = EXCLUDED.status_execucao,
-                    parametros = EXCLUDED.parametros,
-                    metadados = EXCLUDED.metadados,
-                    sha256_saida = EXCLUDED.sha256_saida,
-                    sha256_manifesto = EXCLUDED.sha256_manifesto;
+                    arquivo_saida, sha256_saida, arquivo_manifesto, sha256_manifesto,
+                    imutavel, homologado_em
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE, CURRENT_TIMESTAMP)
+                ON CONFLICT (id) DO NOTHING;
             """, (
                 exec_id_v020,
                 "EPS-REF-001",
@@ -439,14 +435,7 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                             execucao_id, codigo_ibge, densidade_monetaria_ha,
                             ecologica_indice, ecologica_multiplicador, produtiva, social, resiliencia, status
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (execucao_id, codigo_ibge) DO UPDATE SET
-                            densidade_monetaria_ha = EXCLUDED.densidade_monetaria_ha,
-                            ecologica_indice = EXCLUDED.ecologica_indice,
-                            ecologica_multiplicador = EXCLUDED.ecologica_multiplicador,
-                            produtiva = EXCLUDED.produtiva,
-                            social = EXCLUDED.social,
-                            resiliencia = EXCLUDED.resiliencia,
-                            status = EXCLUDED.status;
+                        ON CONFLICT (execucao_id, codigo_ibge) DO NOTHING;
                     """, (
                         exec_id_v020, ibge, dens,
                         eco_ind, eco_mul, prod, soc, res, status
@@ -469,14 +458,10 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                 INSERT INTO execucoes_experimentais (
                     id, modelo_id, modelo_versao, fonte_id, ano_referencia,
                     trajetoria, status_execucao, parametros, metadados,
-                    arquivo_saida, sha256_saida, arquivo_manifesto, sha256_manifesto
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (id) DO UPDATE SET
-                    status_execucao = EXCLUDED.status_execucao,
-                    parametros = EXCLUDED.parametros,
-                    metadados = EXCLUDED.metadados,
-                    sha256_saida = EXCLUDED.sha256_saida,
-                    sha256_manifesto = EXCLUDED.sha256_manifesto;
+                    arquivo_saida, sha256_saida, arquivo_manifesto, sha256_manifesto,
+                    imutavel, homologado_em
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, TRUE, CURRENT_TIMESTAMP)
+                ON CONFLICT (id) DO NOTHING;
             """, (
                 exec_id_2006,
                 "EPS-REF-001",
@@ -511,14 +496,7 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                             execucao_id, codigo_ibge, densidade_monetaria_ha,
                             ecologica_indice, ecologica_multiplicador, produtiva, social, resiliencia, status
                         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (execucao_id, codigo_ibge) DO UPDATE SET
-                            densidade_monetaria_ha = EXCLUDED.densidade_monetaria_ha,
-                            ecologica_indice = EXCLUDED.ecologica_indice,
-                            ecologica_multiplicador = EXCLUDED.ecologica_multiplicador,
-                            produtiva = EXCLUDED.produtiva,
-                            social = EXCLUDED.social,
-                            resiliencia = EXCLUDED.resiliencia,
-                            status = EXCLUDED.status;
+                        ON CONFLICT (execucao_id, codigo_ibge) DO NOTHING;
                     """, (
                         exec_id_2006, ibge, dens,
                         eco_ind, eco_mul, prod, soc, res, status

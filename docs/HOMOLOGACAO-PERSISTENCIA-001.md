@@ -1,24 +1,26 @@
 # MÉTIS — Relatório de Homologação da Persistência Científica Versionada
 **Documento:** METIS-REL-PERSIST-001  
-**Versão:** 1.0.0  
+**Versão:** 1.1.0  
 **Data:** 29/10/2026  
-**Natureza:** Relatório formal de homologação técnica e científica da Prioridade Técnica 001  
-**Status:** HOMOLOGADO E APROVADO  
+**Natureza:** Relatório formal de homologação técnica e científica da Prioridade Técnica 001 (revisão independente incorporada)  
+**Status:** HOMOLOGADO E BLINDADO  
 
 ---
 
 ## 1. Sumário Executivo
 
-Este documento homologa a implantação da **primeira camada de persistência científica do MÉTIS**, estruturada sobre **PostgreSQL 17 com extensão geoespacial PostGIS 3.5**.
-
-A entrega atende integralmente a todos os critérios de aceite estabelecidos, sem qualquer modificação nas formulações científicas de referência (`EPS-REF-001`), preservando os arquivos CSV e JSON originais como evidências auditáveis imutáveis e mantendo intacta a interface web existente.
+Este documento homologa a implantação da **primeira camada de persistência científica do MÉTIS**, estruturada sobre **PostgreSQL 17 com extensão geoespacial PostGIS 3.5**, contemplando integralmente as correções apontadas na revisão independente de código e metodologia:
+1. **Isolamento de Segurança:** O servidor web expõe estritamente o diretório `web/` com bind padrão em `127.0.0.1`, isolando a raiz do repositório, `.env`, `.git/` e códigos de infraestrutura.
+2. **Imutabilidade Científica:** O banco bloqueia ativamente, via triggers PL/pgSQL nativos, qualquer alteração (`UPDATE`) ou exclusão (`DELETE`) em execuções e resultados homologados.
+3. **Rigor Censitário:** Diferenciação estrita entre ausência de observação (`NULL`) e zero observado (`0`), com colunas anuláveis em `observacoes_censitarias`.
+4. **Reprodutibilidade Ponta a Ponta:** Suíte de 11 testes automatizados sob modo estrito (`METIS_STRICT_TESTS=1`), incluindo a reconstrução e importação integral em schema limpo isolado.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        ARQUITETURA DE PERSISTÊNCIA                     │
 │                                                                        │
-│   [Fontes Censitárias IBGE 2017]         [Malha GeoJSON IBGE 2022]     │
-│   (Tabelas 6881, 6898, 6780, 6773)       (497 Polígonos Municipais)    │
+│   [Fontes Censitárias IBGE 2017/2006]    [Malha GeoJSON IBGE 2022]     │
+│   (Tabelas SIDRA 6881, 6898, 1011, etc.) (497 Polígonos Municipais)    │
 │                  │                                    │                │
 │                  ▼                                    ▼                │
 │        [fontes_dados]                           [municipios]           │
@@ -26,18 +28,18 @@ A entrega atende integralmente a todos os critérios de aceite estabelecidos, se
 │                  │                                    │                │
 │                  ▼                                    ▼                │
 │     [observacoes_censitarias] ◄───────────────────────┤                │
-│     (492 válidas, 5 incompletas)                      │                │
+│     (NULL estrito para incompletos, sem zero forçado) │                │
 │                                                       │                │
 │     [modelos] (Catálogo Formal)                       │                │
 │     (EPS-REF-001/0.1.0, 0.2.0, etc.)                  │                │
 │                  │                                    │                │
 │                  ▼                                    ▼                │
 │     [execucoes_experimentais] ◄───────────────────────┤                │
-│     (Parâmetros JSONB, Manifestos, Hashes)            │                │
+│     (Trigger PL/pgSQL: imutavel = TRUE)               │                │
 │                  │                                    │                │
 │                  ▼                                    │                │
 │     [resultados_experimentais] ───────────────────────┘                │
-│     (R, E, P, S, dm - 100% idêntico aos CSVs)                          │
+│     (Trigger PL/pgSQL: bloqueio de UPDATE/DELETE)                      │
 │                  │                                                     │
 │                  ▼                                                     │
 │        [vw_resultados_completos] ──► Pronta para React / REST / MCP    │
@@ -51,12 +53,14 @@ A entrega atende integralmente a todos os critérios de aceite estabelecidos, se
 | # | Critério de Aceite | Resultado | Evidência Técnica |
 | :---: | :--- | :---: | :--- |
 | **CA-01** | **497 municípios sem duplicações** | **APROVADO** | Exatamente 497 registros na tabela `municipios`. Todos com código IBGE de 7 dígitos iniciando por `43`, pertencentes à UF `RS`, com geometrias `MultiPolygon` válidas no PostGIS (`ST_IsValid` = true). |
-| **CA-02** | **Identidade estrita de dados de entrada** | **APROVADO** | As 497 observações em `observacoes_censitarias` coincidem valor por valor com `data/gerados/municipios_rs_2017_homologado.csv`. As 5 ocorrências de dados incompletos (Cachoeirinha, Doutor Ricardo, Esteio, Muçum e Vespasiano Corrêa) preservam `NULL` estrito sem inserção de zeros arbitrários. |
-| **CA-03** | **Identidade estrita de resultados experimentais** | **APROVADO** | Os 497 resultados de `EPS-REF-001/0.1.0` no banco coincidem rigorosamente com `results/historico/RS_497_RESULTADOS_v0.1.0_percentil.csv` em todas as dimensões ($R, E, P, S$) e status. Os resultados da execução multimodelo vigente também conferem integralmente com `results/RS_497_RESULTADOS.csv`. |
+| **CA-02** | **Identidade estrita de dados de entrada** | **APROVADO** | As observações em `observacoes_censitarias` coincidem valor por valor com os CSVs homologados de 2017 e 2006. Ocorrências incompletas (ex: Cachoeirinha em 2017 e Pinto Bandeira em 2006) preservam `NULL` estrito, sem conversão indevida para zero. |
+| **CA-03** | **Identidade estrita de resultados experimentais** | **APROVADO** | Os 497 resultados de `EPS-REF-001/0.1.0` no banco coincidem rigorosamente com `results/historico/RS_497_RESULTADOS_v0.1.0_percentil.csv` em todas as dimensões ($R, E, P, S$) e status. Os resultados vigentes de 2017 e 2006 conferem 100% com seus respectivos arquivos CSV. |
 | **CA-04** | **Rastreabilidade epistêmica e proveniência** | **APROVADO** | Cada registro em `resultados_experimentais` está estritamente vinculado à sua execução (`execucoes_experimentais`), ao modelo formal e versão (`modelos`), aos parâmetros declarados e à fonte censitária (`fontes_dados`). |
 | **CA-05** | **Integridade criptográfica auditável** | **APROVADO** | Todos os hashes SHA-256 gravados nas tabelas conferem com os hashes dos arquivos físicos em disco. |
-| **CA-06** | **Reprodutibilidade em instalação limpa** | **APROVADO** | Procedimento automatizado testado em schema isolado (`metis_teste_limpo`), recriando toda a estrutura DDL e índices espaciais sem intervenção manual. |
+| **CA-06** | **Reprodutibilidade em instalação limpa** | **APROVADO** | Procedimento automatizado testado em schema isolado (`metis_teste_limpo`), aplicando todas as migrações e executando a rotina real de importação completa sem intervenção manual. |
 | **CA-07** | **Extensão multitemporal (Censo 2006)** | **APROVADO** | Ingestão e cálculo oficial para o Censo Agropecuário 2006 (497 municípios, 493 válidos e 4 incompletos / territoriais), associados com integridade numérica estrita e rastreabilidade temporal. |
+| **CA-08** | **Imutabilidade científica ativa no PostgreSQL** | **APROVADO** | Migração `002_scientific_immutability.sql` implanta triggers PL/pgSQL que interceptam e abortam com exceção qualquer tentativa de `UPDATE` ou `DELETE` em execuções e resultados homologados. |
+| **CA-09** | **Isolamento de segurança do servidor web** | **APROVADO** | Orquestrador `./run.sh` serve exclusivamente `--directory web` com bind padrão `127.0.0.1`. Raiz do projeto (`.git`, `.env`, códigos internos) inacessível externamente. |
 
 ---
 

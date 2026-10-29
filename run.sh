@@ -37,7 +37,7 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-HOST="${METIS_HOST:-${HOST:-0.0.0.0}}"
+HOST="${METIS_HOST:-${HOST:-127.0.0.1}}"
 PORT="${METIS_PORT:-${PORT:-8080}}"
 DB_CONTAINER="${METIS_DB_CONTAINER:-metis-db}"
 DB_PORT="${METIS_DB_PORT:-5432}"
@@ -82,16 +82,12 @@ iniciar_banco() {
 }
 
 preparar_links_web() {
-  echo -e "${CYAN}==> [3/4] Sincronizando roteamento direto da interface web...${NC}"
-  ln -sf web/index.html index.html
-  ln -sf web/style.css style.css
-  ln -sf web/app.js app.js
-  ln -sf web/modelos.html modelos.html
-  ln -sf web/mapa.html mapa.html
-  ln -sf web/dashboard.html dashboard.html
-  ln -sf web/dashboard.js dashboard.js
-  ln -sfn web/api api
-  echo -e "    ${GREEN}✓ Rotas raiz sincronizadas (index.html, mapa.html, dashboard.html, modelos.html).${NC}"
+  echo -e "${CYAN}==> [3/4] Sincronizando roteamento seguro da interface web...${NC}"
+  # Garantir isolamento rigoroso: o servidor web expõe unicamente o diretório web/
+  # Arquivos internos (.env, .git, db/, src/, scripts/) permanecem inacessíveis via HTTP.
+  ln -sfn ../results web/results
+  ln -sfn ../data web/data
+  echo -e "    ${GREEN}✓ Sandbox web configurada: apenas 'web/' é servido.${NC}"
 }
 
 executar_testes() {
@@ -100,7 +96,7 @@ executar_testes() {
   ctest --test-dir build --output-on-failure
 
   echo -e "\n${BOLD}${BLUE}=== Executando Testes de Persistência PostGIS ===${NC}"
-  ./scripts/test_persistencia.sh
+  METIS_STRICT_TESTS=1 ./scripts/test_persistencia.sh
 }
 
 executar_checagem() {
@@ -113,7 +109,7 @@ executar_checagem() {
 }
 
 iniciar_servidor_web() {
-  echo -e "${CYAN}==> [4/4] Inicializando servidor web do laboratório...${NC}"
+  echo -e "${CYAN}==> [4/4] Inicializando servidor web seguro do laboratório...${NC}"
   
   local lan_ips
   lan_ips=$(hostname -I 2>/dev/null || echo "127.0.0.1")
@@ -125,19 +121,20 @@ iniciar_servidor_web() {
   echo -e " Ecossistema SisTer · Núcleo C++26 Nativo · PostgreSQL/PostGIS"
   echo -e "${BOLD}============================================================${NC}"
   echo -e " ${BOLD}Ambientes disponíveis diretamente (porta ${PORT}):${NC}"
-  echo -e "  • ${CYAN}Apresentação & Notícias:${NC}  http://localhost:${PORT}/"
-  echo -e "  • ${CYAN}Visão Territorial (RS):${NC}   http://localhost:${PORT}/mapa.html"
-  echo -e "  • ${CYAN}Dashboard Analítico:${NC}      http://localhost:${PORT}/dashboard.html"
-  echo -e "  • ${CYAN}Modelos & Algoritmos:${NC}     http://localhost:${PORT}/modelos.html"
-  echo -e "  • ${CYAN}API Pública Estática:${NC}     http://localhost:${PORT}/api/public/achados.json"
-  if [[ -n "$primary_ip" && "$primary_ip" != "127.0.0.1" ]]; then
+  echo -e "  • ${CYAN}Apresentação & Notícias:${NC}  http://${HOST}:${PORT}/"
+  echo -e "  • ${CYAN}Visão Territorial (RS):${NC}   http://${HOST}:${PORT}/mapa.html"
+  echo -e "  • ${CYAN}Dashboard Analítico:${NC}      http://${HOST}:${PORT}/dashboard.html"
+  echo -e "  • ${CYAN}Modelos & Algoritmos:${NC}     http://${HOST}:${PORT}/modelos.html"
+  echo -e "  • ${CYAN}API Pública Estática:${NC}     http://${HOST}:${PORT}/api/public/achados.json"
+  if [[ "$HOST" == "0.0.0.0" && -n "$primary_ip" && "$primary_ip" != "127.0.0.1" ]]; then
     echo -e "  • ${GREEN}Acesso Rede Local (IP):${NC}   http://${primary_ip}:${PORT}/"
   fi
   echo -e "${BOLD}============================================================${NC}"
+  echo -e " ${GREEN}Segurança:${NC} Servindo exclusivamente diretório 'web/' (raiz do repo protegida)."
   echo -e " Pressione ${RED}Ctrl+C${NC} para encerrar o servidor web."
   echo
 
-  exec python3 -m http.server "$PORT" --bind "$HOST" --directory .
+  exec python3 -m http.server "$PORT" --bind "$HOST" --directory web
 }
 
 # ------------------------------------------------------------------------------

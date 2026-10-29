@@ -20,7 +20,15 @@ import math
 import unittest
 import psycopg
 
+# Garantir raiz do repositório no sys.path
+REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if REPO_ROOT not in sys.path:
+    sys.path.insert(0, REPO_ROOT)
+
+from scripts.importar_dados_banco import importar_todos
+
 DB_URL = os.environ.get("DATABASE_URL", "postgresql://metis:metis@127.0.0.1:5432/metis")
+STRICT_MODE = os.environ.get("METIS_STRICT_TESTS") == "1"
 
 def checar_conexao_db(url: str) -> bool:
     try:
@@ -42,6 +50,11 @@ class TestPersistenciaMetis(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         if not DB_DISPONIVEL:
+            if STRICT_MODE:
+                raise AssertionError(
+                    f"FALHA CRÍTICA DE HOMOLOGAÇÃO: Banco PostgreSQL/PostGIS inacessível em {DB_URL}. "
+                    "Sob modo estrito (METIS_STRICT_TESTS=1), a indisponibilidade do banco impede a homologação."
+                )
             raise unittest.SkipTest(
                 f"Banco PostgreSQL/PostGIS inacessível em {DB_URL}. "
                 "Inicie o serviço executando './scripts/db_up.sh' antes de rodar os testes de persistência."
@@ -310,26 +323,28 @@ class TestPersistenciaMetis(unittest.TestCase):
         self.cur.execute(f"CREATE SCHEMA {schema_teste};")
         self.cur.execute(f"SET search_path TO {schema_teste}, public;")
 
-        # Executar migração 001 no schema de teste
-        with open("db/migrations/001_initial_schema.sql", "r", encoding="utf-8") as f:
-            sql_migracao = f.read()
-        self.cur.execute(sql_migracao)
+        # Executar migrações 001 e 002 no schema de teste
+        for mig in ["001_initial_schema.sql", "002_scientific_immutability.sql"]:
+            with open(f"db/migrations/{mig}", "r", encoding="utf-8") as f:
+                sql_migracao = f.read()
+            self.cur.execute(sql_migracao)
 
-        # Verificar se as tabelas foram criadas no schema
-        self.cur.execute("""
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = %s
-            ORDER BY table_name;
-        """, (schema_teste,))
-        tabelas = [r[0] for r in self.cur.fetchall()]
-        tabelas_esperadas = [
-            "execucoes_experimentais", "fontes_dados", "modelos",
-            "municipios", "observacoes_censitarias", "registro_migracoes",
-            "resultados_experimentais"
-        ]
-        for t in tabelas_esperadas:
-            self.assertIn(t, tabelas, f"Tabela {t} esperada no schema limpo")
+        # Executar rotina completa de importação dos dados no schema limpo
+        codigo_retorno = importar_todos(DB_URL, forcar=True, schema=schema_teste)
+        self.assertEqual(codigo_retorno, 0, "A importação completa no schema limpo deve retornar 0")
+
+        # Verificar se as tabelas foram criadas e populadas no schema limpo
+        self.cur.execute(f"SELECT COUNT(*) FROM {schema_teste}.municipios;")
+        self.assertEqual(self.cur.fetchone()[0], 497, "Schema limpo deve conter 497 municípios")
+
+        self.cur.execute(f"SELECT COUNT(*) FROM {schema_teste}.observacoes_censitarias;")
+        self.assertEqual(self.cur.fetchone()[0], 994, "Schema limpo deve conter 994 observações (497 de 2017 e 497 de 2006)")
+
+        self.cur.execute(f"SELECT COUNT(*) FROM {schema_teste}.execucoes_experimentais;")
+        self.assertEqual(self.cur.fetchone()[0], 3, "Schema limpo deve conter 3 execuções registradas")
+
+        self.cur.execute(f"SELECT COUNT(*) FROM {schema_teste}.resultados_experimentais;")
+        self.assertEqual(self.cur.fetchone()[0], 1491, "Schema limpo deve conter 1491 resultados experimentais")
 
         # Restaurar search_path e remover schema de teste
         self.cur.execute("SET search_path TO public;")
@@ -355,6 +370,12 @@ class TestPersistenciaMetis(unittest.TestCase):
         db_rows = {r[0]: r for r in self.cur.fetchall()}
         self.assertEqual(len(db_rows), 497, "Deve haver 497 observações para o Censo 2006 no banco")
 
+        # Verificação metodológica crucial: Pinto Bandeira (4314548) não existia em 2006
+        # Os campos censitários devem ser estritamente NULL, e NÃO convertidos para zero!
+        self.assertIsNone(db_rows["4314548"][6], "Pinto Bandeira em 2006 deve ter estabelecimentos_total como NULL")
+        self.assertIsNone(db_rows["4314548"][7], "Pinto Bandeira em 2006 deve ter orientacao_tecnica como NULL")
+        self.assertIsNone(db_rows["4314548"][8], "Pinto Bandeira em 2006 deve ter associados como NULL")
+
         def _parse_int(val):
             v = val.strip()
             return int(v) if v else None
@@ -364,12 +385,12 @@ class TestPersistenciaMetis(unittest.TestCase):
             db_r = db_rows.get(ibge)
             self.assertIsNotNone(db_r, f"Município {ibge} não encontrado no banco para 2006")
 
-            est_tot_csv = _parse_int(csv_r["estabelecimentos_total"]) or 0
-            est_ori_csv = _parse_int(csv_r["estabelecimentos_orientacao_tecnica"]) or 0
-            est_ass_csv = _parse_int(csv_r["estabelecimentos_associados"]) or 0
+            est_tot_csv = _parse_int(csv_r["estabelecimentos_total"])
+            est_ori_csv = _parse_int(csv_r["estabelecimentos_orientacao_tecnica"])
+            est_ass_csv = _parse_int(csv_r["estabelecimentos_associados"])
 
             if db_r[6] != est_tot_csv or db_r[7] != est_ori_csv or db_r[8] != est_ass_csv:
-                divergencias.append(f"{ibge}: contagem de estabelecimentos 2006 diverge")
+                divergencias.append(f"{ibge}: contagem de estabelecimentos 2006 diverge (DB={db_r[6]} != CSV={est_tot_csv})")
 
             for idx, col_name in [(2, "area_estabelecimentos_ha"), (3, "pastagem_natural_ha"),
                                   (4, "mata_natural_ha"), (5, "valor_producao_reais")]:
@@ -434,6 +455,34 @@ class TestPersistenciaMetis(unittest.TestCase):
                             divergencias.append(f"{ibge} {col_name}: CSV={csv_f:.4f} != DB={db_f:.4f}")
 
         self.assertEqual(len(divergencias), 0, f"Divergências na execução 2006: {divergencias[:5]}")
+
+    def test_11_imutabilidade_cientifica_bloqueio_de_mutacao(self):
+        """Critério 3: O PostgreSQL deve barrar ativamente UPDATE ou DELETE em execuções e resultados homologados."""
+        exec_id = "EXEC-HISTORICA-EPS-REF-001-v0.1.0-2017"
+
+        # 1. Tentar UPDATE em execução homologada imutável
+        with self.assertRaises(psycopg.Error) as ctx_exec:
+            self.cur.execute(
+                "UPDATE execucoes_experimentais SET parametros = '{\"hack\": true}'::jsonb WHERE id = %s;",
+                (exec_id,)
+            )
+        self.assertIn("VIOLAÇÃO DE IMUTABILIDADE CIENTÍFICA", str(ctx_exec.exception))
+
+        # 2. Tentar UPDATE em resultado de execução imutável
+        with self.assertRaises(psycopg.Error) as ctx_res_up:
+            self.cur.execute(
+                "UPDATE resultados_experimentais SET resiliencia = 99.99 WHERE execucao_id = %s AND codigo_ibge = '4300034';",
+                (exec_id,)
+            )
+        self.assertIn("VIOLAÇÃO DE IMUTABILIDADE CIENTÍFICA", str(ctx_res_up.exception))
+
+        # 3. Tentar DELETE em resultado de execução imutável
+        with self.assertRaises(psycopg.Error) as ctx_res_del:
+            self.cur.execute(
+                "DELETE FROM resultados_experimentais WHERE execucao_id = %s AND codigo_ibge = '4300034';",
+                (exec_id,)
+            )
+        self.assertIn("VIOLAÇÃO DE IMUTABILIDADE CIENTÍFICA", str(ctx_res_del.exception))
 
 if __name__ == "__main__":
     unittest.main()
