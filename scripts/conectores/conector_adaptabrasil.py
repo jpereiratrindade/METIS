@@ -68,6 +68,53 @@ INDICADORES_CONFIG = [
 def calcular_sha256_bytes(dados: bytes) -> str:
     return hashlib.sha256(dados).hexdigest()
 
+def coletar_catalogo_adaptabrasil(db_url: str = DEFAULT_DB_URL, headers: dict = None, ctx = None):
+    print("-> Sincronizando Catálogo Metodológico Oficial (/api/hierarquia/adaptabrasil)...")
+    url = "https://sistema.adaptabrasil.mcti.gov.br/api/hierarquia/adaptabrasil"
+    try:
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=12, context=ctx) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        with psycopg.connect(db_url) as conn:
+            with conn.cursor() as cur:
+                count = 0
+                for item in data:
+                    ind_id = item.get("id")
+                    if ind_id is None:
+                        continue
+                    cur.execute("""
+                        INSERT INTO catalogo_indicadores_adaptabrasil (
+                            indicador_id, nome, titulo, descricao_simples, anos_disponiveis,
+                            cenarios_json, legenda_json, direcao_interpretacao, atualizado_em
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+                        ON CONFLICT (indicador_id) DO UPDATE SET
+                            nome = EXCLUDED.nome,
+                            titulo = EXCLUDED.titulo,
+                            descricao_simples = EXCLUDED.descricao_simples,
+                            anos_disponiveis = EXCLUDED.anos_disponiveis,
+                            cenarios_json = EXCLUDED.cenarios_json,
+                            legenda_json = EXCLUDED.legenda_json,
+                            direcao_interpretacao = EXCLUDED.direcao_interpretacao,
+                            atualizado_em = CURRENT_TIMESTAMP;
+                    """, (
+                        ind_id,
+                        item.get("name") or f"Indicador {ind_id}",
+                        item.get("title"),
+                        item.get("simple_description"),
+                        item.get("years") or [],
+                        json.dumps(item.get("scenarios") or []),
+                        json.dumps(item.get("legend") or {}),
+                        "pessimista" if item.get("pessimist") == 1 else "otimista"
+                    ))
+                    count += 1
+                conn.commit()
+        print(f"   ✓ Catálogo atualizado com sucesso: {count} indicadores oficiais registrados.")
+        return count
+    except Exception as e:
+        print(f"   ✗ Falha ao obter catálogo metodológico: {e}", file=sys.stderr)
+        return 0
+
 def coletar_indicadores_adaptabrasil(db_url: str = DEFAULT_DB_URL, salvar_banco: bool = True):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     ctx = ssl.create_default_context()
@@ -79,11 +126,13 @@ def coletar_indicadores_adaptabrasil(db_url: str = DEFAULT_DB_URL, salvar_banco:
         "Referer": "https://adaptabrasil.mcti.gov.br/"
     }
 
+    print("=== Conector AdaptaBrasil MCTI: Iniciando Coleta ===")
+    coletar_catalogo_adaptabrasil(db_url, headers=headers, ctx=ctx)
+
     dados_consolidados_rs = {} # geocod_ibge -> list of indicators
     total_registros_inseridos = 0
     arquivos_gerados = []
-
-    print("=== Conector AdaptaBrasil MCTI: Iniciando Coleta ===")
+    status_msg = "Operacional"
 
     for cfg in INDICADORES_CONFIG:
         ind_id = cfg["id"]
@@ -165,6 +214,28 @@ def coletar_indicadores_adaptabrasil(db_url: str = DEFAULT_DB_URL, salvar_banco:
             print(f"   ✗ Erro na coleta do indicador {ind_id}: {e}", file=sys.stderr)
 
     print(f"=== AdaptaBrasil: Coleta finalizada! Inserções no banco: {total_registros_inseridos} ===")
+
+    # Registrar status na tabela de auditoria de conectores
+    if salvar_banco:
+        try:
+            with psycopg.connect(db_url) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO status_conectores (
+                            fonte, ultima_tentativa, ultima_coleta_sucesso, status,
+                            registros_processados, mensagem
+                        ) VALUES (%s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s, %s, %s)
+                        ON CONFLICT (fonte) DO UPDATE SET
+                            ultima_tentativa = CURRENT_TIMESTAMP,
+                            ultima_coleta_sucesso = CURRENT_TIMESTAMP,
+                            status = EXCLUDED.status,
+                            registros_processados = EXCLUDED.registros_processados,
+                            mensagem = EXCLUDED.mensagem;
+                    """, ("adaptabrasil", "operacional", total_registros_inseridos, "Coleta e catálogo sincronizados com sucesso"))
+                    conn.commit()
+        except Exception as e_aud:
+            print(f"   [AVISO] Falha ao registrar status_conectores: {e_aud}", file=sys.stderr)
+
     return {
         "municipios": dados_consolidados_rs,
         "arquivos": arquivos_gerados,

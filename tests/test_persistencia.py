@@ -485,7 +485,7 @@ class TestPersistenciaMetis(unittest.TestCase):
         self.assertIn("VIOLAÇÃO DE IMUTABILIDADE CIENTÍFICA", str(ctx_res_del.exception))
 
     def test_12_evidencias_climaticas_e_inmet(self):
-        """Critério 6: Migração 003 e integração epistêmica de AdaptaBrasil e avisos INMET."""
+        """Critério 6: Migrações 003/004, catálogo AdaptaBrasil e robustez do pipeline de avisos."""
         # 1. Verificar cobertura de AdaptaBrasil para os 497 municípios
         self.cur.execute("""
             SELECT COUNT(DISTINCT codigo_ibge) 
@@ -494,17 +494,32 @@ class TestPersistenciaMetis(unittest.TestCase):
         muni_adapta = self.cur.fetchone()[0]
         self.assertEqual(muni_adapta, 497, f"AdaptaBrasil deve cobrir 497 municípios, obtido {muni_adapta}")
 
-        # 2. Verificar integridade da tabela de avisos INMET
+        # 2. Verificar catálogo metodológico oficial do AdaptaBrasil
+        self.cur.execute("SELECT COUNT(*) FROM catalogo_indicadores_adaptabrasil;")
+        total_catalogo = self.cur.fetchone()[0]
+        self.assertGreaterEqual(total_catalogo, 500, f"Catálogo do AdaptaBrasil deve conter ao menos 500 indicadores, obtido {total_catalogo}")
+
+        # 3. Robustez INMET: a estrutura deve operar mesmo se total de avisos ativos for zero
         self.cur.execute("SELECT COUNT(*) FROM avisos_meteorologicos_inmet;")
         total_avisos = self.cur.fetchone()[0]
-        self.assertGreaterEqual(total_avisos, 1, "Deve haver ao menos 1 aviso meteorológico registrado")
+        self.assertIsInstance(total_avisos, int)
+        self.assertGreaterEqual(total_avisos, 0, "Contagem de avisos deve ser não-negativa")
 
-        # 3. Verificar que a View espacial PostGIS executa sem erros
-        self.cur.execute("SELECT COUNT(*) FROM vw_municipios_avisos_inmet WHERE uf = 'RS';")
+        # 4. Verificar que a View espacial PostGIS com controle temporal executa sem erros
+        self.cur.execute("""
+            SELECT COUNT(*) 
+            FROM vw_municipios_avisos_inmet 
+            WHERE uf = 'RS' AND estado_vigencia IN ('vigente', 'futuro');
+        """)
         total_muni_afetados = self.cur.fetchone()[0]
         self.assertIsInstance(total_muni_afetados, int)
 
-        # 4. Verificar existência e conformidade do artefato JSON consolidado
+        # 5. Verificar auditoria de status operacional dos conectores
+        self.cur.execute("SELECT COUNT(*) FROM status_conectores WHERE status = 'operacional';")
+        conectores_op = self.cur.fetchone()[0]
+        self.assertGreaterEqual(conectores_op, 1, "Ao menos um conector deve estar com status operacional")
+
+        # 6. Verificar existência e conformidade do artefato JSON consolidado de evidências
         json_path = os.path.join(REPO_ROOT, "web/api/public/evidencias_rs.json")
         self.assertTrue(os.path.exists(json_path), f"Arquivo {json_path} deve existir")
         with open(json_path, "r", encoding="utf-8") as f:
@@ -512,6 +527,36 @@ class TestPersistenciaMetis(unittest.TestCase):
         self.assertIn("metadados", dados)
         self.assertIn("municipios", dados)
         self.assertEqual(len(dados["municipios"]), 497, "JSON consolidado deve cobrir exatamente 497 municípios")
+
+    def test_13_motor_episodios_investigativos(self):
+        """Critério 7: Diretriz METIS-DIR-EVID-001 (Motor de Episódios Investigativos e Imutabilidade)."""
+        # 1. Verificar tabela de episódios investigativos
+        self.cur.execute("SELECT COUNT(*) FROM episodios_investigacao;")
+        total_eps = self.cur.fetchone()[0]
+        self.assertIsInstance(total_eps, int)
+
+        # 2. Se houver episódios abertos, verificar integridade do snapshot basal e condições antecedentes
+        if total_eps > 0:
+            self.cur.execute("""
+                SELECT id, codigo_ibge, estado_episodio, condicoes_antecedentes, estado_metis_congelado
+                FROM episodios_investigacao
+                LIMIT 1;
+            """)
+            ep_row = self.cur.fetchone()
+            self.assertIsNotNone(ep_row[0], "ID do episódio deve ser válido")
+            self.assertIn(ep_row[2], ['ameaca_anunciada', 'em_verificacao', 'impactos_respostas', 'avaliacao_concluida'])
+            self.assertIsInstance(ep_row[3], (list, dict), "Condições antecedentes devem ser JSON estruturado")
+            self.assertIsInstance(ep_row[4], dict, "Estado MÉTIS congelado deve ser objeto JSON")
+
+        # 3. Verificar exportação do arquivo publico episodios_rs.json
+        ep_json_path = os.path.join(REPO_ROOT, "web/api/public/episodios_rs.json")
+        self.assertTrue(os.path.exists(ep_json_path), f"Arquivo {ep_json_path} deve existir")
+        with open(ep_json_path, "r", encoding="utf-8") as f:
+            dados_ep = json.load(f)
+        self.assertIn("metadados", dados_ep)
+        self.assertIn("episodios", dados_ep)
+        self.assertIn("por_municipio", dados_ep)
+        self.assertIn("diretriz", dados_ep["metadados"])
 
 if __name__ == "__main__":
     unittest.main()

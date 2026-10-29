@@ -16,6 +16,10 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 OUTPUT_JSON = os.path.join(REPO_ROOT, "web/api/public/evidencias_rs.json")
 DEFAULT_DB_URL = os.environ.get("DATABASE_URL", "postgresql://metis:metis@127.0.0.1:5432/metis")
 
+# Garantir importações locais
+sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.join(REPO_ROOT, "scripts"))
+
 # Importar conectores
 from conector_adaptabrasil import coletar_indicadores_adaptabrasil
 from conector_inmet import coletar_avisos_inmet
@@ -70,14 +74,14 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
                 })
                 total_ind_linhas += 1
 
-            # 2. Carregar avisos ativos e vinculados a municípios do RS
+            # 2. Carregar avisos estritamente vigentes ou futuros (não encerrados e dentro da janela)
             cur.execute("""
                 SELECT 
                     codigo_ibge, aviso_codigo, descricao, severidade, aviso_cor,
-                    inicio, fim, riscos, instrucoes,
+                    inicio, fim, estado_vigencia, riscos, instrucoes,
                     afetado_por_geocodigo, afetado_por_intersecao_espacial
                 FROM vw_municipios_avisos_inmet
-                WHERE uf = 'RS' AND encerrado = FALSE
+                WHERE uf = 'RS' AND encerrado = FALSE AND estado_vigencia IN ('vigente', 'futuro')
                 ORDER BY inicio DESC;
             """)
             dados_inmet_por_muni = {}
@@ -95,10 +99,11 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
                     "cor": r[4],
                     "inicio": str(r[5]),
                     "fim": str(r[6]),
-                    "riscos": r[7] or [],
-                    "instrucoes": r[8] or [],
-                    "via_geocodigo": r[9],
-                    "via_espacial": r[10]
+                    "estado_vigencia": r[7],
+                    "riscos": r[8] or [],
+                    "instrucoes": r[9] or [],
+                    "via_geocodigo": r[10],
+                    "via_espacial": r[11]
                 }
                 dados_inmet_por_muni[ibge].append(aviso_item)
 
@@ -110,6 +115,7 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
                         "cor": r[4],
                         "inicio": str(r[5]),
                         "fim": str(r[6]),
+                        "estado_vigencia": r[7],
                         "municipios_afetados": []
                     }
                 avisos_unicos_rs[cod_aviso]["municipios_afetados"].append(ibge)
@@ -117,6 +123,15 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
             # 3. Metadados e montagem do pacote consolidado
             cur.execute("SELECT COUNT(*) FROM municipios WHERE uf = 'RS';")
             total_muni_rs = cur.fetchone()[0]
+
+            cur.execute("SELECT COUNT(DISTINCT (indicador_id, cenario)) FROM evidencias_adaptabrasil;")
+            total_ind_config = cur.fetchone()[0]
+
+            cur.execute("SELECT COUNT(*) FROM catalogo_indicadores_adaptabrasil;")
+            total_catalogo = cur.fetchone()[0]
+
+            cur.execute("SELECT fonte, status, ultima_coleta_sucesso, mensagem FROM status_conectores;")
+            status_con = {row[0]: {"status": row[1], "ultima_coleta": row[2].isoformat() if row[2] else None, "mensagem": row[3]} for row in cur.fetchall()}
 
     municipios_export = {}
     for ibge in dados_adapta.keys():
@@ -129,17 +144,21 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
         "metadados": {
             "gerado_em": datetime.now(timezone.utc).isoformat(),
             "universo_territorial": "RS (497 municípios)",
-            "finalidade": "Camada de Validação Epistêmica e Perturbações Agroterritoriais",
+            "diretriz": "METIS-DIR-EVID-001 (Monitoramento de Perturbações e Investigação da Resiliência)",
             "fontes": {
                 "adaptabrasil": {
                     "instituicao": "MCTI / AdaptaBrasil",
-                    "indicadores_cadastrados": len(dados_adapta),
-                    "total_observacoes": total_ind_linhas
+                    "catalogo_oficial_total": total_catalogo,
+                    "indicadores_selecionados": total_ind_config,
+                    "municipios_cobertos": len(dados_adapta),
+                    "total_observacoes": total_ind_linhas,
+                    "status_conector": status_con.get("adaptabrasil", {})
                 },
                 "inmet": {
                     "instituicao": "INMET / CPTEC / MAPA",
                     "avisos_ativos_rs": len(avisos_unicos_rs),
-                    "municipios_sob_alerta": len(dados_inmet_por_muni)
+                    "municipios_sob_alerta": len(dados_inmet_por_muni),
+                    "status_conector": status_con.get("inmet_avisos", {})
                 }
             }
         },
@@ -152,10 +171,17 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
 
     tam_kb = os.path.getsize(OUTPUT_JSON) / 1024
     print(f"\n✓ Arquivo de evidências exportado: {OUTPUT_JSON} ({tam_kb:.1f} KB)")
-    print(f"  • Municípios com AdaptaBrasil: {len(dados_adapta)}/{total_muni_rs}")
+    print(f"  • Municípios com AdaptaBrasil: {len(dados_adapta)}/{total_muni_rs} (Catálogo oficial: {total_catalogo})")
     print(f"  • Avisos ativos INMET no RS:   {len(avisos_unicos_rs)}")
     print(f"  • Municípios sob alerta agora: {len(dados_inmet_por_muni)}")
     print("============================================================\n")
+
+    # 4. Executar motor de episódios investigativos
+    try:
+        from motor_episodios import processar_episodios_investigacao
+        processar_episodios_investigacao(db_url)
+    except Exception as e_ep:
+        print(f"[AVISO] Falha ao processar motor de episódios: {e_ep}", file=sys.stderr)
 
 if __name__ == "__main__":
     exec_coleta = "--export-only" not in sys.argv

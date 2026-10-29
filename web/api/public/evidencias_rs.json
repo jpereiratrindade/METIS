@@ -1,18 +1,30 @@
 {
   "metadados": {
-    "gerado_em": "2026-10-29T15:51:13.414724+00:00",
+    "gerado_em": "2026-10-29T16:27:04.775681+00:00",
     "universo_territorial": "RS (497 municípios)",
-    "finalidade": "Camada de Validação Epistêmica e Perturbações Agroterritoriais",
+    "diretriz": "METIS-DIR-EVID-001 (Monitoramento de Perturbações e Investigação da Resiliência)",
     "fontes": {
       "adaptabrasil": {
         "instituicao": "MCTI / AdaptaBrasil",
-        "indicadores_cadastrados": 497,
-        "total_observacoes": 2982
+        "catalogo_oficial_total": 558,
+        "indicadores_selecionados": 6,
+        "municipios_cobertos": 497,
+        "total_observacoes": 2982,
+        "status_conector": {
+          "status": "operacional",
+          "ultima_coleta": "2026-10-29T16:27:03.902122+00:00",
+          "mensagem": "Coleta e catálogo sincronizados com sucesso"
+        }
       },
       "inmet": {
         "instituicao": "INMET / CPTEC / MAPA",
         "avisos_ativos_rs": 2,
-        "municipios_sob_alerta": 84
+        "municipios_sob_alerta": 84,
+        "status_conector": {
+          "status": "operacional",
+          "ultima_coleta": "2026-10-29T16:27:04.526158+00:00",
+          "mensagem": "Feed ativo sincronizado (2 avisos no RS)"
+        }
       }
     }
   },
@@ -24,6 +36,7 @@
       "cor": "#FFFE00",
       "inicio": "2026-10-30 00:00:00+00:00",
       "fim": "2026-10-30 23:59:00+00:00",
+      "estado_vigencia": "futuro",
       "municipios_afetados": [
         "4300505",
         "4302303",
@@ -48,21 +61,8 @@
       "cor": "#FFFE00",
       "inicio": "2026-10-29 09:00:00+00:00",
       "fim": "2026-10-29 23:59:00+00:00",
+      "estado_vigencia": "vigente",
       "municipios_afetados": [
-        "4300505",
-        "4300646",
-        "4321857",
-        "4301552",
-        "4301800",
-        "4302303",
-        "4301701",
-        "4301925",
-        "4302055",
-        "4321956",
-        "4322186",
-        "4303202",
-        "4303400",
-        "4303806",
         "4304853",
         "4306957",
         "4306973",
@@ -110,7 +110,7 @@
         "4320206",
         "4314787",
         "4315313",
-        "4316105",
+        "4300505",
         "4321402",
         "4317954",
         "4321634",
@@ -132,7 +132,21 @@
         "4321501",
         "4321329",
         "4323101",
-        "4323705"
+        "4323705",
+        "4316105",
+        "4300646",
+        "4321857",
+        "4301552",
+        "4301800",
+        "4302303",
+        "4301701",
+        "4301925",
+        "4302055",
+        "4321956",
+        "4322186",
+        "4303202",
+        "4303400",
+        "4303806"
       ]
     }
   ],
@@ -674,6 +688,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -692,6 +707,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -1006,6 +1022,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -1379,6 +1396,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -1397,6 +1415,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -1947,6 +1966,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -2202,6 +2222,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -2339,6 +2360,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -2594,6 +2616,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -2612,6 +2635,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -2808,6 +2832,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -3240,6 +3265,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -3258,6 +3284,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -4103,6 +4130,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -4240,6 +4268,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -4436,6 +4465,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -4632,6 +4662,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -5300,6 +5331,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -5909,6 +5941,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -6223,6 +6256,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -6419,6 +6453,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -7264,6 +7299,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -7873,6 +7909,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -8010,6 +8047,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -9091,6 +9129,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -9228,6 +9267,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -9306,6 +9346,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -9384,6 +9425,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -9580,6 +9622,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -9598,6 +9641,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -9676,6 +9720,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -9754,6 +9799,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -10481,6 +10527,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -10736,6 +10783,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -11050,6 +11098,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -11246,6 +11295,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -11442,6 +11492,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -11697,6 +11748,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -13250,6 +13302,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -13623,6 +13676,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -13641,6 +13695,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -13837,6 +13892,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -13974,6 +14030,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -14170,6 +14227,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -14602,6 +14660,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -14857,6 +14916,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -15053,6 +15113,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -15071,6 +15132,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -15208,6 +15270,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -15522,6 +15585,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -15540,6 +15604,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -15677,6 +15742,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -15695,6 +15761,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -16068,6 +16135,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -16205,6 +16273,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -16342,6 +16411,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -16597,6 +16667,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -16911,6 +16982,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -17166,6 +17238,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -17184,6 +17257,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -18324,6 +18398,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -18579,6 +18654,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -18775,6 +18851,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -19384,6 +19461,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -19816,6 +19894,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -19894,6 +19973,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -20031,6 +20111,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -20345,6 +20426,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -20541,6 +20623,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -21327,6 +21410,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -21523,6 +21607,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -21719,6 +21804,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -21737,6 +21823,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -22051,6 +22138,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -22247,6 +22335,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -22797,6 +22886,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -24055,6 +24145,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -24487,6 +24578,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -24978,6 +25070,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -25115,6 +25208,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -25133,6 +25227,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -26096,6 +26191,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -26587,6 +26683,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -27255,6 +27352,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -27273,6 +27371,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -27941,6 +28040,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -28078,6 +28178,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -28451,6 +28552,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -28647,6 +28749,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -28961,6 +29064,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -29098,6 +29202,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -29353,6 +29458,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -29903,6 +30009,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -30453,6 +30560,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -30590,6 +30698,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-30 00:00:00+00:00",
           "fim": "2026-10-30 23:59:00+00:00",
+          "estado_vigencia": "futuro",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -30608,6 +30717,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -30981,6 +31091,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],
@@ -31118,6 +31229,7 @@
           "cor": "#FFFE00",
           "inicio": "2026-10-29 09:00:00+00:00",
           "fim": "2026-10-29 23:59:00+00:00",
+          "estado_vigencia": "vigente",
           "riscos": [
             "Chuva entre 20 e 30 mm/h ou até 50 mm/dia, ventos intensos (40-60 km/h). Baixo risco de corte de energia elétrica, queda de galhos de árvores, alagamentos e de descargas elétricas."
           ],

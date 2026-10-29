@@ -9,7 +9,18 @@ let scores2006 = new Map();
 let rawData2017 = new Map();
 let rawData2006 = new Map();
 let evidenciasData = null;
+let episodiosData = null;
 let manifest = null;
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 let geometry = null;
 let current = null; // Nenhum município selecionado inicialmente
 let activeArea = 'D'; // Área D (Resultados) padrão, ou 'T', 'M', 'A', 'B', 'C'
@@ -765,13 +776,55 @@ function updateComponentDetail(code) {
       </div>
     `;
   }
-  // ÁREA E: EVIDÊNCIAS EPISTÊMICAS (AdaptaBrasil MCTI + INMET)
+  // ÁREA E: EVIDÊNCIAS EPISTÊMICAS (AdaptaBrasil MCTI + INMET + METIS-DIR-EVID-001)
   else if (activeArea === 'E') {
     const muniEvid = evidenciasData?.municipios?.[code];
     const avisos = muniEvid?.avisos_inmet || [];
     const adapta = muniEvid?.adaptabrasil || [];
+    const eps = episodiosData?.por_municipio?.[code] || [];
 
-    // 1. Avisos INMET
+    // 0. Episódios Investigativos Ativos (METIS-DIR-EVID-001)
+    let epsHtml = '';
+    if (eps.length > 0) {
+      epsHtml = eps.map(ep => {
+        const estadoLabels = {
+          'ameaca_anunciada': 'Ameaça Anunciada',
+          'em_verificacao': 'Em Verificação Operacional',
+          'impactos_respostas': 'Impactos & Respostas Documentadas',
+          'avaliacao_concluida': 'Avaliação Concluída'
+        };
+        const estadoBadge = estadoLabels[ep.estado_episodio] || ep.estado_episodio;
+        const rBasal = ep.estado_metis_congelado?.resiliencia;
+        const rBasalStr = rBasal != null ? fmt(rBasal, 2) : '—';
+
+        return `
+          <div class="episode-card">
+            <div class="episode-header-row">
+              <span class="episode-state-badge">🔬 ${escapeHtml(estadoBadge)}</span>
+              <span style="font-size:0.66rem; color:#64748b; font-family:monospace;">${escapeHtml(ep.id)}</span>
+            </div>
+            <strong style="color:var(--navy); font-size:0.75rem;">Ameaça: ${escapeHtml(ep.tipo_ameaca)} (${escapeHtml(ep.severidade)})</strong>
+            <div style="font-size:0.68rem; color:#64748b; margin:2px 0 4px;">
+              Janela: ${ep.janela_inicio ? ep.janela_inicio.substring(0, 16).replace('T', ' ') : '—'} até ${ep.janela_fim ? ep.janela_fim.substring(0, 16).replace('T', ' ') : '—'}
+            </div>
+            <div class="episode-hypothesis-box">
+              <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                <span>Estado Basal MÉTIS (t₀ congelado):</span>
+                <strong>R = ${rBasalStr}</strong>
+              </div>
+              <div style="font-size:0.67rem; color:#64748b;">
+                Hipótese sob estresse: O município sustentará suas funções ecológicas, produtivas e sociais diante desta perturbação?
+              </div>
+              <div style="margin-top:4px; font-weight:700; color:#4338ca;">
+                Status Epistêmico: ${escapeHtml(ep.desfecho_cientifico === 'em_aberto' ? 'Confrontação em aberto (aguardando dados pós-evento)' : ep.desfecho_cientifico)}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 1. Avisos INMET Operacionais
     let inmetHtml = '';
     if (avisos.length > 0) {
       inmetHtml = avisos.map(a => {
@@ -780,29 +833,32 @@ function updateComponentDetail(code) {
         else if (a.severidade === 'Perigo') cardCls = 'warning-moderate';
         else cardCls = 'warning-potential';
 
-        const riscosList = (a.riscos || []).map(r => `<li>${r}</li>`).join('');
-        const instrucoesList = (a.instrucoes || []).map(i => `<li>${i}</li>`).join('');
+        const riscosList = (a.riscos || []).map(r => `<li>${escapeHtml(r)}</li>`).join('');
+        const instrucoesList = (a.instrucoes || []).map(i => `<li>${escapeHtml(i)}</li>`).join('');
 
         return `
           <div class="inmet-alert-card ${cardCls}">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
-              <span class="inmet-badge" style="background:${a.cor || '#eab308'};">⚠️ ${a.severidade}</span>
-              <span style="font-size:0.67rem; color:#64748b; font-weight:600;">INMET Operacional</span>
+              <span class="inmet-badge" style="background:${a.cor || '#eab308'};">⚠️ ${escapeHtml(a.severidade)}</span>
+              <span style="font-size:0.67rem; color:#64748b; font-weight:600;">INMET Operacional (${escapeHtml(a.estado_vigencia || 'vigente')})</span>
             </div>
-            <strong style="color:#0f172a; font-size:0.75rem;">${a.descricao}</strong>
+            <strong style="color:#0f172a; font-size:0.75rem;">${escapeHtml(a.descricao)}</strong>
             <div style="font-size:0.68rem; color:#64748b; margin:2px 0 6px;">
-              <span>Vigência: ${a.inicio.replace('T', ' ').substring(0, 16)} até ${a.fim.replace('T', ' ').substring(0, 16)}</span>
+              <span>Vigência: ${escapeHtml(a.inicio.replace('T', ' ').substring(0, 16))} até ${escapeHtml(a.fim.replace('T', ' ').substring(0, 16))}</span>
             </div>
-            ${riscosList ? `<div style="font-size:0.68rem; margin-bottom:4px;"><strong>Riscos:</strong> <ul style="margin:2px 0 0 14px; padding:0;">${riscosList}</ul></div>` : ''}
-            ${instrucoesList ? `<div style="font-size:0.68rem; color:#0369a1;"><strong>Instruções:</strong> <ul style="margin:2px 0 0 14px; padding:0;">${instrucoesList}</ul></div>` : ''}
+            ${riscosList ? `<div style="font-size:0.68rem; margin-bottom:4px;"><strong>Riscos declarados:</strong> <ul style="margin:2px 0 0 14px; padding:0;">${riscosList}</ul></div>` : ''}
+            ${instrucoesList ? `<div style="font-size:0.68rem; color:#0369a1;"><strong>Instruções de Defesa Civil:</strong> <ul style="margin:2px 0 0 14px; padding:0;">${instrucoesList}</ul></div>` : ''}
           </div>
         `;
       }).join('');
     } else {
       inmetHtml = `
         <div class="inmet-calm-box">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          <span>Nenhuma perturbação meteorológica severa ativa no momento para este município (INMET).</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <div>
+            <strong>Sem avisos meteorológicos vigentes emitidos pelo INMET</strong>
+            <p style="margin:2px 0 0; font-size:0.67rem; opacity:0.85; color:#166534;">A ausência de alerta meteorológico oficial não comprova ausência de perturbação no território nem garante resiliência.</p>
+          </div>
         </div>
       `;
     }
@@ -818,8 +874,8 @@ function updateComponentDetail(code) {
         return `
           <div class="climate-meter-row">
             <div class="climate-meter-label">
-              <span>${ind.nome} (${ind.ano})</span>
-              <strong style="color:${ind.cor || 'var(--navy)'}">${fmt(ind.valor, 2)} · ${ind.classe}</strong>
+              <span>${escapeHtml(ind.nome)} (${ind.ano})</span>
+              <strong style="color:${ind.cor || 'var(--navy)'}">${fmt(ind.valor, 2)} · ${escapeHtml(ind.classe)}</strong>
             </div>
             <div class="climate-bar-bg">
               <div class="climate-bar-fill" style="width:${valPct}%; background:${ind.cor || '#10b981'};"></div>
@@ -832,10 +888,10 @@ function updateComponentDetail(code) {
       if (projecoes.length > 0) {
         const projRows = projecoes.map(p => `
           <tr>
-            <td>${p.nome}</td>
+            <td>${escapeHtml(p.nome)}</td>
             <td style="text-align:center;"><strong>${p.ano}</strong></td>
             <td style="text-align:right;">${fmt(p.valor, 2)}</td>
-            <td style="text-align:right;"><span style="color:${p.cor || 'var(--navy)'}; font-weight:700;">${p.classe}</span></td>
+            <td style="text-align:right;"><span style="color:${p.cor || 'var(--navy)'}; font-weight:700;">${escapeHtml(p.classe)}</span></td>
           </tr>
         `).join('');
 
@@ -870,11 +926,24 @@ function updateComponentDetail(code) {
     box.innerHTML = `
       <div class="comp-title-bar">
         <strong>Área E · Evidências Epistêmicas &amp; Perturbações</strong>
-        <span class="score-tag">${avisos.length > 0 ? '⚠️ Alerta Ativo' : '✓ Normalidade'}</span>
+        <span class="score-tag">${avisos.length > 0 ? '⚠️ Alerta Ativo' : '✓ Sem Avisos'}</span>
       </div>
       <p style="font-size: 0.72rem; color: #475569; margin: 4px 0 10px;">
         Confronto empírico do território sob estresse meteorológico e riscos climáticos auditados:
       </p>
+
+      ${epsHtml ? `
+        <div class="evidence-section-block">
+          <div class="evidence-block-header">
+            <span class="evidence-block-title" style="color:#4338ca;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              Episódios Investigativos (METIS-DIR-EVID-001)
+            </span>
+            <span style="font-size:0.67rem; color:#6366f1; font-weight:700;">${eps.length} episódio(s)</span>
+          </div>
+          ${epsHtml}
+        </div>
+      ` : ''}
 
       <div class="evidence-section-block">
         <div class="evidence-block-header">
@@ -882,7 +951,7 @@ function updateComponentDetail(code) {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
             INMET · Avisos Meteorológicos Operacionais
           </span>
-          <span style="font-size:0.67rem; color:#64748b;">${avisos.length} aviso(s) ativo(s)</span>
+          <span style="font-size:0.67rem; color:#64748b;">${avisos.length} aviso(s) vigente(s)</span>
         </div>
         ${inmetHtml}
       </div>
@@ -1307,19 +1376,24 @@ async function autoLoadAll() {
 
     // 3. Carregar repositório de evidências epistêmicas (AdaptaBrasil + INMET)
     try {
-      const rEvid = await fetch('/api/public/evidencias_rs.json');
+      const [rEvid, rEps] = await Promise.all([
+        fetch('/api/public/evidencias_rs.json'),
+        fetch('/api/public/episodios_rs.json')
+      ]);
       if (rEvid.ok) {
         evidenciasData = await rEvid.json();
-        // Se a camada ativa for inmet ou adaptabrasil, re-renderizar mapa
-        if (layer === 'inmet' || layer === 'adaptabrasil') {
-          renderMap();
-        }
-        if (current && activeArea === 'E') {
-          updateComponentDetail(current);
-        }
+      }
+      if (rEps.ok) {
+        episodiosData = await rEps.json();
+      }
+      if (layer === 'inmet' || layer === 'adaptabrasil') {
+        renderMap();
+      }
+      if (current && activeArea === 'E') {
+        updateComponentDetail(current);
       }
     } catch (eEvid) {
-      console.warn('Evidências climáticas offline ou pendentes:', eEvid);
+      console.warn('Evidências climáticas ou episódios offline:', eEvid);
     }
   } catch (err) {
     console.warn('Carregamento automático de dados offline ou em rede restrita:', err);

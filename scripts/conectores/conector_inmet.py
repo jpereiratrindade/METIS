@@ -115,16 +115,26 @@ def coletar_avisos_inmet(db_url: str = DEFAULT_DB_URL, salvar_banco: bool = True
                         ))
                         avisos_inseridos += 1
 
-                    # Identificar cruzamento com municípios do RS
+                    # Encerrar avisos prévios que não constam mais no feed ativo
+                    codigos_ativos = [av.get("codigo") for av in todos_avisos if av.get("codigo")]
+                    if codigos_ativos:
+                        cur.execute("""
+                            UPDATE avisos_meteorologicos_inmet
+                            SET encerrado = TRUE, consultado_em = CURRENT_TIMESTAMP
+                            WHERE encerrado = FALSE AND NOT (codigo = ANY(%s));
+                        """, (codigos_ativos,))
+
+                    # Identificar cruzamento com municípios do RS (apenas vigentes ou futuros)
                     cur.execute("""
                         SELECT 
                             aviso_codigo, descricao, severidade, aviso_cor,
-                            inicio, fim, COUNT(DISTINCT codigo_ibge) AS total_municipios_rs,
+                            inicio, fim, estado_vigencia,
+                            COUNT(DISTINCT codigo_ibge) AS total_municipios_rs,
                             array_agg(DISTINCT codigo_ibge) AS lista_ibge,
                             riscos, instrucoes
                         FROM vw_municipios_avisos_inmet
-                        WHERE uf = 'RS'
-                        GROUP BY aviso_codigo, descricao, severidade, aviso_cor, inicio, fim, riscos, instrucoes
+                        WHERE uf = 'RS' AND estado_vigencia IN ('vigente', 'futuro')
+                        GROUP BY aviso_codigo, descricao, severidade, aviso_cor, inicio, fim, estado_vigencia, riscos, instrucoes
                         ORDER BY inicio DESC;
                     """)
                     for row in cur.fetchall():
@@ -135,17 +145,32 @@ def coletar_avisos_inmet(db_url: str = DEFAULT_DB_URL, salvar_banco: bool = True
                             "cor": row[3],
                             "inicio": str(row[4]),
                             "fim": str(row[5]),
-                            "total_municipios_rs": row[6],
-                            "municipios_rs": row[7],
-                            "riscos": row[8],
-                            "instrucoes": row[9]
+                            "estado_vigencia": row[6],
+                            "total_municipios_rs": row[7],
+                            "municipios_rs": row[8],
+                            "riscos": row[9],
+                            "instrucoes": row[10]
                         })
+
+                    # Registrar auditoria de status operacional do conector
+                    cur.execute("""
+                        INSERT INTO status_conectores (
+                            fonte, ultima_tentativa, ultima_coleta_sucesso, status,
+                            registros_processados, mensagem
+                        ) VALUES (%s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s, %s, %s)
+                        ON CONFLICT (fonte) DO UPDATE SET
+                            ultima_tentativa = CURRENT_TIMESTAMP,
+                            ultima_coleta_sucesso = CURRENT_TIMESTAMP,
+                            status = EXCLUDED.status,
+                            registros_processados = EXCLUDED.registros_processados,
+                            mensagem = EXCLUDED.mensagem;
+                    """, ("inmet_avisos", "operacional", len(todos_avisos), f"Feed ativo sincronizado ({len(avisos_rs)} avisos no RS)"))
 
                     conn.commit()
 
         print(f"=== INMET: Coleta finalizada! Avisos no banco: {avisos_inseridos} | Afetam RS: {len(avisos_rs)} ===")
         for a in avisos_rs:
-            print(f"   -> [{a['severidade']}] {a['descricao']} ({a['inicio']} a {a['fim']}): {a['total_municipios_rs']} municípios do RS afetados")
+            print(f"   -> [{a['severidade']}] {a['descricao']} ({a['inicio']} a {a['fim']}) [{a['estado_vigencia']}]: {a['total_municipios_rs']} municípios do RS afetados")
 
         return {
             "avisos_total": len(todos_avisos),
@@ -156,6 +181,21 @@ def coletar_avisos_inmet(db_url: str = DEFAULT_DB_URL, salvar_banco: bool = True
 
     except Exception as e:
         print(f"   ✗ Erro na coleta de avisos INMET: {e}", file=sys.stderr)
+        try:
+            with psycopg.connect(db_url) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        INSERT INTO status_conectores (
+                            fonte, ultima_tentativa, status, mensagem
+                        ) VALUES (%s, CURRENT_TIMESTAMP, %s, %s)
+                        ON CONFLICT (fonte) DO UPDATE SET
+                            ultima_tentativa = CURRENT_TIMESTAMP,
+                            status = EXCLUDED.status,
+                            mensagem = EXCLUDED.mensagem;
+                    """, ("inmet_avisos", "falha_rede", str(e)))
+                    conn.commit()
+        except Exception:
+            pass
         return {"avisos_total": 0, "avisos_rs": [], "erro": str(e)}
 
 if __name__ == "__main__":
