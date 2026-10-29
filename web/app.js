@@ -1453,10 +1453,7 @@ async function autoLoadAll() {
         refreshMetrics();
         renderMap();
         if (current) choose(current);
-        else {
-          choose('4302105', 'Bento Gonçalves');
-          resetZoom();
-        }
+        else choose(null);
       }
     }
 
@@ -1508,7 +1505,7 @@ if (searchInput) {
 // Botão de restaurar enquadramento do estado (reset zoom)
 const btnResetZoom = $('btn-reset-zoom');
 if (btnResetZoom) {
-  btnResetZoom.addEventListener('click', () => resetZoom());
+  btnResetZoom.addEventListener('click', () => choose(null));
 }
 
 // Alternância de camadas de tendência territorial (R por padrão, ou Evolução, E, P, S)
