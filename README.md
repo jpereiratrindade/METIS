@@ -107,26 +107,118 @@ Saídas geradas:
 
 ---
 
-## 🌐 Visualizador Territorial Web (Rede Local & Acesso Direto)
+## 🚀 Execução Unificada com Único Script (`./run.sh`)
 
-Inicie o servidor HTTP com escuta na rede local (`0.0.0.0`):
+O MÉTIS é 100% padronizado para operar através de um único orquestrador unificado ([`run.sh`](run.sh)):
 
 ```bash
+# Iniciar o ambiente completo (C++26 + PostgreSQL/PostGIS + Migrações + Importação + Servidor Web):
 ./run.sh
+
+# Executar todos os testes automatizados (CTest C++26 e PostGIS):
+./run.sh test
+
+# Verificar integridade completa de compilação, banco de dados e testes:
+./run.sh check
+
+# Comandos específicos para controle do banco de dados:
+./run.sh db status       # Inspeciona estado do contêiner
+./run.sh db down         # Para o serviço de banco
+./run.sh db up           # Sobe o banco e aplica migrações
+./run.sh db import       # Força reimportação dos dados censitários
 ```
 
-Ou diretamente via Python:
+Ao executar `./run.sh` sem parâmetros, o orquestrador realiza automaticamente em cascata:
+1. Carrega ou cria o arquivo `.env` a partir de `.env.example`.
+2. Verifica e compila o núcleo C++26 nativo via CMake (se necessário).
+3. Inicia o contêiner PostgreSQL 17 + PostGIS 3.5 (`metis-db`).
+4. Executa migrações SQL versionadas pendentes.
+5. Importa as observações e geometrias censitárias se o banco for novo.
+6. Cria os atalhos de roteamento direto para a web.
+7. Abre o servidor web na porta `8080` (configurável via `METIS_PORT`).
+
+Acesse no navegador:
+- **Apresentação & Notícias:** `http://localhost:8080/`
+- **Visão Territorial (RS 497):** `http://localhost:8080/mapa.html`
+- **Dashboard Analítico:** `http://localhost:8080/dashboard.html`
+- **Modelos & Algoritmos:** `http://localhost:8080/modelos.html`
+- **Rede Local (IP):** `http://<IP_DA_REDE>:8080/` (ex: `http://10.163.80.176:8080/`)
+
+---
+
+## ⚖️ Conformidade Legal Brasileira (LGPD, LAI e Dados Abertos)
+
+O MÉTIS foi concebido em estrita consonância com o ordenamento jurídico brasileiro e as diretrizes de transparência pública:
+
+1. **LGPD (Lei Geral de Proteção de Dados - Lei nº 13.709/2018):**
+   - **Bases Estatísticas Agregadas (Art. 12):** O sistema opera unicamente sobre dados agregados censitários em escala municipal oficial. Não há tratamento de dados pessoais, nem identificação direta ou indireta de pessoas físicas, agricultores familiares ou propriedades privadas.
+   - **Privacidade por Padrão (*Privacy by Default*):** O acesso público é universal e não exige cadastro, senha, login ou fornecimento de e-mail. Não são empregados cookies analíticos de terceiros nem técnicas de rastreamento individual.
+2. **Lei de Acesso à Informação (LAI - Lei nº 12.527/2011) e Governo Digital (Lei nº 14.129/2021):**
+   - Transparência pública ativa (Art. 8º): fórmulas, dados brutos, parâmetros e resultados são plenamente auditáveis e exportáveis.
+   - Padrões de dados abertos (Decreto nº 8.777/2016): dados servidos em formatos não-proprietários e estruturados (`.csv`, `.json`).
+3. **Citação e Atribuição de Fontes Oficiais (IBGE):**
+   - Dados provenientes do Instituto Brasileiro de Geografia e Estatística (Censo Agropecuário 2017 / SIDRA, tabelas 6881, 6898, 6780 e 6773).
+4. **Isenção de Responsabilidade (Scientific Disclaimer):**
+   - Os resultados calculados destinam-se exclusivamente à pesquisa acadêmica, exploração de hipóteses e apoio ao debate público. **Não constituem decisão automatizada vinculante (Art. 20 da LGPD), nem base isolada para sanções fiscais/ambientais ou pontuação de crédito rural.**
+
+Consulte o documento completo: [METIS-DIR-LEG-001 — Marco Legal, Governança de Dados e Responsabilidade Científica](docs/GOVERNANCA-DADOS-E-MARCO-LEGAL.md).
+
+---
+
+## ♿ Usabilidade, Acessibilidade e Engenharia Centrada no Usuário
+
+A concepção das interfaces e do pipeline computacional segue os modelos consagrados de usabilidade e acessibilidade:
+
+- **10 Heurísticas de Jakob Nielsen:** Feedback imediato de status, consistência de navegação entre páginas, prevenção contra inserção de zeros artificiais em dados censitários omissos e explicabilidade contínua de equações.
+- **Mantra de Shneiderman:** *"Overview first, zoom and filter, then details-on-demand"* na cartografia SVG e no dashboard analítico.
+- **Acessibilidade Web (e-MAG / WCAG 2.1 AA):** Semântica HTML5, contraste cromático em conformidade, navegação integral por teclado e rótulos ARIA para leitores de tela.
+- **Diretriz Ética Anti-Ranqueamento:** Proibição de ranqueamento competitivo entre municípios, substituído pelo confronto intramunicipal entre modelos.
+
+Consulte o guia completo: [METIS-DIR-USA-001 — Diretrizes de Usabilidade, Acessibilidade e Boas Práticas](docs/USABILIDADE-ACESSIBILIDADE-E-BOAS-PRATICAS.md).
+
+---
+
+## 📚 Mapa da Documentação Técnica e Epistêmica
+
+O acervo documental completo está reunido no diretório [`docs/`](docs/README.md):
+
+| Documento | Identificador | Tema Central |
+| :--- | :--- | :--- |
+| [HOMOLOGACAO-PERSISTENCIA-001.md](docs/HOMOLOGACAO-PERSISTENCIA-001.md) | `METIS-REL-PERSIST-001` | Homologação da Persistência PostgreSQL/PostGIS (Prioridade 001) |
+| [GOVERNANCA-DADOS-E-MARCO-LEGAL.md](docs/GOVERNANCA-DADOS-E-MARCO-LEGAL.md) | `METIS-DIR-LEG-001` | LGPD, LAI, Dados Abertos, Citação IBGE e Disclaimer Científico |
+| [USABILIDADE-ACESSIBILIDADE-E-BOAS-PRATICAS.md](docs/USABILIDADE-ACESSIBILIDADE-E-BOAS-PRATICAS.md) | `METIS-DIR-USA-001` | Nielsen, Shneiderman, WCAG 2.1, e-MAG e Transparência Algorítmica |
+| [METIS-OPEN-001_v0.1.0.md](docs/METIS-OPEN-001_v0.1.0.md) | `METIS-OPEN-001` | Laboratório aberto, acesso sem login, dashboard analítico e API |
+| [METIS-DIR-MULTI-002.md](docs/METIS-DIR-MULTI-002.md) | `METIS-DIR-MULTI-002` | Bancada triaxial e catálogo dos 4 modelos concorrentes |
+| [METIS-DIR-MUN-001.md](docs/METIS-DIR-MUN-001.md) | `METIS-DIR-MUN-001` | Reorientação municipal autônoma e invariância intermunicipal |
+| [EXPLORACAO-TERRITORIAL_v0.1.1.md](docs/EXPLORACAO-TERRITORIAL_v0.1.1.md) | `METIS-SPEC-EXP-002` | Especificação técnica de interface cartográfica em 2 níveis |
+| [RESILIENCIA-SISTEMA-EXP-001_v0.1.0.md](docs/RESILIENCIA-SISTEMA-EXP-001_v0.1.0.md) | `RESILIENCIA-EXP-001` | Formulação experimental de referência histórica (v0.1.0) |
+
+---
+
+## 🗄️ Persistência Científica Versionada (PostgreSQL 17 + PostGIS 3.5)
+
+Conforme a **Prioridade Técnica 001**, o MÉTIS conta com uma camada de persistência científica com rastreabilidade integral:
+
+- **PostGIS 3.5 com SRID 4326:** Malha municipal vetorial completa dos 497 municípios gaúchos.
+- **Rastreabilidade e Proveniência:** Registro das fontes do Censo Agropecuário 2017 com somas de verificação SHA-256 auditáveis.
+- **Execuções Experimentais & Manifestos:** Registro das execuções e resultados de `EPS-REF-001/0.1.0` e vigentes com parâmetros em `JSONB`.
+- **Base para Futuras Entregas:** Visão analítica `vw_resultados_completos` preparada para as próximas interfaces React, APIs REST e servidores MCP.
 
 ```bash
-python3 -m http.server 8080 --bind 0.0.0.0 --directory .
+# Iniciar o banco (via Podman/Docker) e aplicar migrações:
+./scripts/db_up.sh
+
+# Importar dados censitários, geometrias e resultados de referência:
+python3 scripts/importar_dados_banco.py
+
+# Executar a suíte formal de testes de persistência:
+./scripts/test_persistencia.sh
+
+# Parar o contêiner:
+./scripts/db_down.sh
 ```
 
-Abra no navegador pelo IP da máquina ou localmente, **direto na raiz (sem `/web`)**:
-- `http://localhost:8080/`
-- `http://<IP_DA_REDE>:8080/` (ex: `http://10.163.80.176:8080/`)
-- `http://0.0.0.0:8080/`
-
-O painel cartográfico opera como instrumento de **localização e contextualização territorial**, permitindo selecionar qualquer município individualmente, aproximar suavemente via zoom dinâmico SVG e experimentar diferentes parâmetros $k$ em tempo real.
+Consulte o relatório formal: [METIS-REL-PERSIST-001 — Homologação da Persistência Científica](docs/HOMOLOGACAO-PERSISTENCIA-001.md).
 
 ---
 

@@ -14,7 +14,7 @@ O MÉTIS constitui um laboratório computacional para formular, parametrizar, ex
 Adota o **município como unidade individual e autônoma de investigação**, eliminando rankings, médias estaduais e normalizações intermunicipais (como percentis $q_{10}$ e $q_{90}$):
 1. **Invariância intermunicipal:** O resultado calculado para o município $A$ é estritamente invariante à inclusão, exclusão ou alteração de dados dos municípios $B, C, \dots$.
 2. **Separação epistemológica:** Distinção explícita entre **observações censitárias brutas**, **parametrizações experimentais**, **hipótese relacional** e **resultados/confrontos**.
-3. **Cartografia como localizador territorial:** O mapa SVG atua exclusivamente como seletor espacial e contextualizador geográfico, sem classificação de cores por desempenho ou ranking.
+3. **Cartografia como localizador territorial e exploração temático-espacial:** O mapa SVG atua primordialmente como seletor espacial e contextualizador geográfico. Conforme ampliado pela diretriz `METIS-DIR-MULTI-002`, oferece visualização reativa de camadas temáticas ($R, E, P, S$), mantendo estrita proibição de ranqueamento competitivo, índices univariados de punição ou estigmatização de municípios.
 
 ---
 
@@ -22,7 +22,7 @@ Adota o **município como unidade individual e autônoma de investigação**, el
 
 ### 2.1. Nível 1: Visão Cartográfica Estadual & Zoom Municipal Dinâmico
 - **Preservação do SVG Puro:** Renderização vetorial nativa (`<svg id="map">`), sem dependências remotas ou bibliotecas externas.
-- **Cartografia Neutra e Contextual:** Preenchimento neutro uniforme para municípios válidos e distinção para incompletos na fonte censitária. Nenhuma coroplética classificatória de resiliência.
+- **Cartografia Temática Reativa e Contextual:** Preenchimento temático suave calibrado pelo indicador ativo ($R, E, P$ ou $S$) ou neutro uniforme, com distinção clara para municípios com dados censitários incompletos (`dados_incompletos`). Nenhuma coloração deve ser interpretada como classificação de virtude, prêmio ou demérito.
 - **Enquadramento Dinâmico via `viewBox`:**
   - Visão geral estadual: `viewBox="0 0 740 590"`.
   - Ao selecionar um município (clique ou busca): cálculo da *bounding box* $[x_{\min}, y_{\min}, x_{\max}, y_{\max}]$ com margem de contexto (25%) e transição animada.

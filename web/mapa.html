@@ -12,7 +12,7 @@
 <div class="shell">
   <!-- SIDEBAR IDENTIDADE MORFO / SISTER-GIT -->
   <aside class="sidebar">
-    <a class="brand" href="#/" aria-label="MÉTIS Início">
+    <a class="brand" href="index.html" aria-label="MÉTIS Início">
       <div class="brand-logo-wrap">
         <!-- ÍCONE CÉREBRO (BRAIN) -->
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -131,7 +131,7 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
         </span>
-        <input type="text" id="search-input" placeholder="Buscar município (ex: Bento Gonçalves, Alegrete, Santa Maria)..." autocomplete="off"/>
+        <input type="text" id="search-input" placeholder="Buscar município (ex: Bento Gonçalves, Alegrete, Santa Maria)..." aria-label="Buscar município por nome ou código IBGE" autocomplete="off"/>
       </div>
 
       <div class="topbar-right">
@@ -469,8 +469,11 @@
     <footer class="app-footer">
       <div>
         <strong>MÉTIS</strong> — <em>Inteligência adaptativa &amp; Laboratório de estados de referência</em>
+        <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">
+          Fontes Censitárias: IBGE · Conformidade com LGPD (Lei 13.709/18) e LAI (Lei 12.527/11) · Modelo exploratório sem efeito sancionatório ou creditício.
+        </div>
       </div>
-      <div>
+      <div style="text-align: right;">
         Código sob licença <strong>GNU GPL v3.0</strong> · Ecossistema <em>SisTer</em>
       </div>
     </footer>
