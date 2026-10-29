@@ -1264,6 +1264,7 @@ function choose(code, name) {
   if (!code) {
     if ($('detail-name')) $('detail-name').textContent = 'Selecione um município';
     if ($('detail-code')) $('detail-code').textContent = 'Clique na malha territorial ou busque acima';
+    if ($('climate-quick-badge')) $('climate-quick-badge').style.display = 'none';
     if ($('status-alert')) $('status-alert').style.display = 'none';
     if ($('detail-r')) $('detail-r').textContent = '—';
     if ($('detail-e')) $('detail-e').textContent = '—';
@@ -1285,6 +1286,47 @@ function choose(code, name) {
   const munName = name || d?.municipio || raw?.municipio || 'Município';
   if ($('detail-name')) $('detail-name').textContent = munName;
   if ($('detail-code')) $('detail-code').textContent = `Código IBGE: ${code} ${d ? '· ' + d.status : ''}`;
+
+  const climateBadge = $('climate-quick-badge');
+  if (climateBadge) {
+    const muniEvid = evidenciasData?.municipios?.[code];
+    const ind5001 = muniEvid?.adaptabrasil?.find(x => x.indicador_id === 5001 && x.ano === 2017);
+    const avisos = muniEvid?.avisos_inmet || [];
+
+    if (ind5001) {
+      climateBadge.style.display = 'flex';
+      climateBadge.style.alignItems = 'center';
+      climateBadge.style.justifyContent = 'space-between';
+      climateBadge.style.gap = '8px';
+
+      const alertStr = avisos.length > 0 
+        ? `⚠️ <span style="color:#b45309; font-weight:700;">${avisos.length} Alerta INMET</span>` 
+        : `✓ <span style="color:#15803d;">Sem alertas INMET</span>`;
+
+      climateBadge.innerHTML = `
+        <div style="line-height:1.35;">
+          <div>🌱 <strong>AdaptaBrasil:</strong> Risco <span style="color:${ind5001.cor || 'var(--teal)'}; font-weight:750;">${fmt(ind5001.valor, 2)} (${escapeHtml(ind5001.classe)})</span></div>
+          <div style="font-size:0.67rem; color:#64748b; margin-top:1px;">${alertStr}</div>
+        </div>
+        <button id="btn-goto-evid" type="button" style="background:#e0e7ff; color:#4338ca; border:1px solid #c7d2fe; padding:3px 7px; border-radius:4px; font-size:0.67rem; font-weight:700; cursor:pointer; white-space:nowrap;">
+          Ver Evidências →
+        </button>
+      `;
+
+      const btnGo = $('btn-goto-evid');
+      if (btnGo) {
+        btnGo.onclick = () => {
+          activeArea = 'E';
+          document.querySelectorAll('.comp-tab-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.area === 'E');
+          });
+          updateComponentDetail(code);
+        };
+      }
+    } else {
+      climateBadge.style.display = 'none';
+    }
+  }
 
   const statusAlert = $('status-alert');
   if (statusAlert) {
