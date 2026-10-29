@@ -1,0 +1,25 @@
+# MÉTIS — Configuração de Serviços de Persistência (PostgreSQL 17 + PostGIS 3.5)
+# Prioridade Técnica 001: Persistência Científica Versionada
+
+services:
+  metis-db:
+    image: docker.io/postgis/postgis:17-3.5
+    container_name: metis-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${METIS_DB_NAME:-metis}
+      POSTGRES_USER: ${METIS_DB_USER:-metis}
+      POSTGRES_PASSWORD: ${METIS_DB_PASSWORD:-metis}
+    ports:
+      - "${METIS_DB_HOST:-127.0.0.1}:${METIS_DB_PORT:-5432}:5432"
+    volumes:
+      - metis-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${METIS_DB_USER:-metis} -d ${METIS_DB_NAME:-metis}"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  metis-pgdata:
+    driver: local

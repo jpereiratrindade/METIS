@@ -79,7 +79,8 @@ std::vector<resiliencia::RawMunicipio> converter(const std::vector<std::vector<s
             throw std::runtime_error("Codigo IBGE invalido na linha "+std::to_string(i+1));
         if (id.empty()||!ids.insert(id).second) throw std::runtime_error("ID vazio/duplicado: "+id);
         auto ano=get("ano_referencia");
-        if(ano!="2017") throw std::runtime_error("Este modelo requer referencia 2017; linha "+std::to_string(i+1));
+        if(ano.size()!=4 || !std::all_of(ano.begin(),ano.end(),[](unsigned char c){return c>='0'&&c<='9';}))
+            throw std::runtime_error("Ano de referencia invalido (esperado 4 digitos) na linha "+std::to_string(i+1));
         out.push_back({id,get("municipio"),ano,
             number(get("area_estabelecimentos_ha")),number(get("pastagem_natural_ha")),number(get("mata_natural_ha")),
             number(get("valor_producao_reais")),number(get("estabelecimentos_total")),
@@ -89,44 +90,90 @@ std::vector<resiliencia::RawMunicipio> converter(const std::vector<std::vector<s
     if(out.empty()) throw std::runtime_error("Nenhum municipio fornecido");
     return out;
 }
-void executar(const std::string& entrada,const std::string& saida, bool prototipo) {
-    auto dados=converter(ler_csv(entrada),prototipo);
-    auto cal=resiliencia::calibrar(dados);
+void executar(const std::string& entrada, const std::string& saida, const std::string& modelo, double k_produtiva, bool prototipo) {
+    auto dados = converter(ler_csv(entrada), prototipo);
+    resiliencia::ParametrosExperimento params;
+    params.modelo = modelo;
+    params.k_produtiva = k_produtiva;
     std::ofstream out(saida);
-    if(!out) throw std::runtime_error("Nao posso criar arquivo "+saida);
-    out<<"codigo_ibge,municipio,ano_referencia,ecologica_indice,ecologica_multiplicador,produtiva,social,resiliencia,status\n";
-    int validos=0, faltantes=0, inconsistentes=0;
-    for(const auto& d:dados) {
-        auto n=resiliencia::pontuar(d,cal);
-        if(n.status=="experimental") ++validos; else if(n.status=="inconsistencia") ++inconsistentes; else ++faltantes;
-        out<<quote_csv(n.codigo)<<","<<quote_csv(n.nome)<<","<<n.referencia<<","<<number_csv(n.ecol_indice)<<","<<number_csv(n.ecologica)<<","<<number_csv(n.produtiva)<<","<<number_csv(n.social)<<","<<number_csv(n.resiliencia)<<","<<n.status<<"\n";
+    if (!out) throw std::runtime_error("Nao posso criar arquivo " + saida);
+    out << "codigo_ibge,municipio,ano_referencia,modelo,densidade_monetaria_ha,ecologica_indice,ecologica_multiplicador,produtiva,social,resiliencia,status\n";
+    int validos = 0, faltantes = 0, inconsistentes = 0;
+    for (const auto& d : dados) {
+        auto n = resiliencia::pontuar(d, params);
+        if (n.status == "experimental") ++validos;
+        else if (n.status == "inconsistencia") ++inconsistentes;
+        else ++faltantes;
+        out << quote_csv(n.codigo) << ","
+            << quote_csv(n.nome) << ","
+            << n.referencia << ","
+            << quote_csv(n.modelo) << ","
+            << number_csv(n.densidade_monetaria_ha) << ","
+            << number_csv(n.ecol_indice) << ","
+            << number_csv(n.ecologica) << ","
+            << number_csv(n.produtiva) << ","
+            << number_csv(n.social) << ","
+            << number_csv(n.resiliencia) << ","
+            << n.status << "\n";
     }
-    if(!out) throw std::runtime_error("Falha ao escrever CSV");
-    const auto meta=std::filesystem::path(saida).replace_extension(".manifest.json");
+    if (!out) throw std::runtime_error("Falha ao escrever CSV");
+    const auto meta = std::filesystem::path(saida).replace_extension(".manifest.json");
     std::ofstream j(meta);
-    if(!j) throw std::runtime_error("Nao posso criar manifesto");
-    j<<"{\n  \"model_id\": \""<<resiliencia::MODEL_VERSION<<"\",\n"
-     <<"  \"status\": \""<<(prototipo?"PROTOTIPO_NAO_HOMOLOGADO":"CALCULADO_PENDENTE_AUDITORIA_FONTE")<<"\",\n"
-     <<"  \"referencia\": \"2017\",\n  \"universo\": \"estabelecimentos agropecuarios, nao todo o municipio\",\n"
-     <<"  \"entrada\": \""<<escape_json(entrada)<<"\",\n"
-     <<"  \"municipios\": "<<dados.size()<<",\n  \"validos\": "<<validos<<",\n  \"incompletos\": "<<faltantes<<",\n  \"inconsistentes\": "<<inconsistentes<<",\n"
-     <<"  \"calibracao\": {\"variavel\": \"log1p(valor_producao_reais / area_estabelecimentos_ha)\", \"q10\": "<<std::setprecision(15)<<cal.log_valor_ha_q10<<", \"q90\": "<<cal.log_valor_ha_q90<<", \"n\": "<<cal.observacoes<<"},\n"
-     <<"  \"equacao\": \"R = E * (P + S)\",\n"
-     <<"  \"aviso\": \"Sem vinculo automatico com IBGE. Conferir tabela, categorias e unidades no SIDRA; validar insumos antes do uso cientifico. Comparacoes temporais exigem calibracao fixa e compatibilidade.\"\n}\n";
-    std::cout<<"Modelo "<<resiliencia::MODEL_VERSION<<" | "<<dados.size()<<" municipios | validos="<<validos<<" | faltantes="<<faltantes<<" | inconsistentes="<<inconsistentes<<"\n"
-             <<"Resultados: "<<saida<<"\nManifesto: "<<meta.string()<<"\n";
+    if (!j) throw std::runtime_error("Nao posso criar manifesto");
+    j << "{\n  \"model_id\": \"" << modelo << "\",\n"
+      << "  \"status\": \"" << (prototipo ? "PROTOTIPO_NAO_HOMOLOGADO" : "CALCULADO_PENDENTE_AUDITORIA_FONTE") << "\",\n"
+      << "  \"referencia\": \"" << (dados.empty() ? "2017" : dados.front().referencia) << "\",\n"
+      << "  \"trajetoria\": \"experimental\",\n"
+      << "  \"universo\": \"estabelecimentos agropecuarios, nao todo o municipio\",\n"
+      << "  \"entrada\": \"" << escape_json(entrada) << "\",\n"
+      << "  \"municipios\": " << dados.size() << ",\n"
+      << "  \"validos\": " << validos << ",\n"
+      << "  \"incompletos\": " << faltantes << ",\n"
+      << "  \"inconsistentes\": " << inconsistentes << ",\n"
+      << "  \"parametrizacao\": {\n"
+      << "    \"modelo\": \"" << modelo << "\",\n"
+      << "    \"k_produtiva\": " << std::fixed << std::setprecision(2) << k_produtiva << "\n"
+      << "  },\n"
+      << "  \"aviso\": \"Metodologia METIS-DIR-MULTI-002: laboratorio multimodelo. Resiliencia nao validada empiricamente.\"\n}\n";
+    std::cout << "Modelo " << modelo << " | " << dados.size() << " municipios | k=" << k_produtiva
+              << " | validos=" << validos << " | faltantes=" << faltantes << " | inconsistentes=" << inconsistentes << "\n"
+              << "Resultados: " << saida << "\nManifesto: " << meta.string() << "\n";
 }
 }
 int main(int argc, char** argv) {
     try {
-        if(argc<2) {std::cerr<<"Uso: resiliencia-rs compute <entrada.csv> <saida.csv> [--prototype]\n";return 2;}
-        std::string op=argv[1];
-        if(op=="compute" && (argc==4 || argc==5)) {
-            bool proto=(argc==5 && std::string(argv[4])=="--prototype");
-            if (argc==5 && !proto) throw std::runtime_error("Argumento nao reconhecido");
-            executar(argv[2],argv[3],proto); return 0;
+        if (argc < 4) {
+            std::cerr << "Uso: resiliencia-rs compute <entrada.csv> <saida.csv> [--model <id>] [--k <valor>] [--prototype]\n"
+                      << "Modelos disponiveis: EPS-REF-001, EPS-EXP-002, EPS-EXP-003, EPS-EXP-004\n";
+            return 2;
         }
-        std::cerr<<"Comando invalido. Uso: resiliencia-rs compute <entrada.csv> <saida.csv> [--prototype]\n";
-        return 2;
-    } catch(const std::exception& e) {std::cerr<<"ERRO: "<<e.what()<<"\n"; return 1;}
+        std::string op = argv[1];
+        if (op != "compute") {
+            std::cerr << "Comando desconhecido: " << op << "\n";
+            return 2;
+        }
+        std::string entrada = argv[2];
+        std::string saida = argv[3];
+        std::string modelo = resiliencia::MODELO_REF_001;
+        double k = 1500.0;
+        bool proto = false;
+
+        for (int i = 4; i < argc; ++i) {
+            std::string arg = argv[i];
+            if (arg == "--prototype") {
+                proto = true;
+            } else if (arg == "--model" && i + 1 < argc) {
+                modelo = argv[++i];
+            } else if (arg == "--k" && i + 1 < argc) {
+                k = std::stod(argv[++i]);
+            } else {
+                throw std::runtime_error("Argumento nao reconhecido: " + arg);
+            }
+        }
+        executar(entrada, saida, modelo, k, proto);
+        return 0;
+    } catch (const std::exception& e) {
+        std::cerr << "ERRO: " << e.what() << "\n";
+        return 1;
+    }
 }

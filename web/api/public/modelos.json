@@ -1,0 +1,57 @@
+{
+  "versao_api": "0.1.0",
+  "data_atualizacao": "2026-10-29T07:30:00-03:00",
+  "ecossistema": "SisTer",
+  "total_modelos": 4,
+  "modelos": [
+    {
+      "codigo": "EPS-REF-001",
+      "nome": "Referência Histórica E-P-S",
+      "tipo": "referencia_imutavel",
+      "formula": "R = E * (P + S)",
+      "descricao": "Formulação clássica preservada para reproducibilidade histórica e linha de base comparativa.",
+      "parametros_padrao": {
+        "q10": 7.273,
+        "q90": 8.932
+      },
+      "invariancia_intermunicipal": false
+    },
+    {
+      "codigo": "EPS-EXP-002",
+      "nome": "Aditivo Linear Ponderado",
+      "tipo": "experimental",
+      "formula": "R = w_e * E + w_p * P + w_s * S",
+      "descricao": "Trata os três pilares com pesos customizáveis somando 1,0, permitindo isolar a sensibilidade linear de cada dimensão.",
+      "parametros_padrao": {
+        "w_e": 0.33,
+        "w_p": 0.33,
+        "w_s": 0.34,
+        "k_produtiva": 1500.0
+      },
+      "invariancia_intermunicipal": true
+    },
+    {
+      "codigo": "EPS-EXP-003",
+      "nome": "Acoplamento Interativo Não-Linear",
+      "tipo": "experimental",
+      "formula": "R = E * (P + S) + lambda * (P * S / 50)",
+      "descricao": "Termo aditivo de sinergia entre densidade produtiva e coesão social/orientação técnica.",
+      "parametros_padrao": {
+        "lambda_sinergia": 0.5,
+        "k_produtiva": 1500.0
+      },
+      "invariancia_intermunicipal": true
+    },
+    {
+      "codigo": "EPS-EXP-004",
+      "nome": "Autônomo Municipal (METIS-DIR-MUN-001)",
+      "tipo": "experimental_autonomo",
+      "formula": "P = 50 * d_m / (d_m + k); R = E * (P + S)",
+      "descricao": "Unidade municipal estritamente independente de quantis externos, com saturação Hill física.",
+      "parametros_padrao": {
+        "k_produtiva": 1500.0
+      },
+      "invariancia_intermunicipal": true
+    }
+  ]
+}

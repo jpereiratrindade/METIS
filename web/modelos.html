@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#071e38"/>
+  <meta name="description" content="MÉTIS — Transparência algorítmica, formulações matemáticas e catálogo de modelos do laboratório agroterritorial"/>
+  <title>MÉTIS · Modelos Teóricos &amp; Algoritmos</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* COMPONENTES DOCUMENTAIS INTEGRADOS AO WORKSPACE */
+    .doc-nav-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .doc-header-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--teal);
+      padding: 7px 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .doc-header-back:hover {
+      background: #f1f5f9;
+      color: var(--navy);
+      text-decoration: none;
+      transform: translateX(-2px);
+    }
+    .doc-section-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+    .doc-section-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.02em;
+    }
+    .doc-section-subtitle {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0 0 20px;
+      line-height: 1.5;
+    }
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .pipeline-step {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: var(--radius-md);
+      padding: 18px 16px;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+    .pipeline-step:hover {
+      background: #ffffff;
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--navy);
+      color: #fff;
+      font-size: 0.74rem;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .step-title {
+      font-size: 0.88rem;
+      font-weight: 750;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .step-desc {
+      font-size: 0.78rem;
+      color: #475569;
+      line-height: 1.45;
+      margin: 0;
+    }
+    .model-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 22px;
+      margin-top: 20px;
+    }
+    .model-box {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: #ffffff;
+      padding: 22px 26px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .model-box:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+      border-color: rgba(46, 168, 232, 0.4);
+    }
+    .model-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .model-box-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0;
+    }
+    .model-badge {
+      font-size: 0.70rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .model-badge.ref {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .model-badge.exp {
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .model-formula-callout {
+      background: #071e38;
+      color: #e2e8f0;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin: 12px 0 16px;
+      border-left: 4px solid var(--sky);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .model-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin-top: 10px;
+    }
+    .model-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: top;
+    }
+    .model-table td:first-child {
+      font-weight: 750;
+      color: var(--navy);
+      width: 180px;
+      background: #f8fafc;
+      border-right: 1px solid #f1f5f9;
+    }
+    .model-table td:last-child {
+      color: #334155;
+      line-height: 1.5;
+    }
+    .disclaimer-box {
+      background: #fffbeb;
+      border: 1px solid #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px 20px;
+      border-radius: var(--radius-md);
+      margin-top: 24px;
+      color: #92400e;
+      font-size: 0.84rem;
+      line-height: 1.55;
+    }
+    .disclaimer-box strong {
+      color: #78350f;
+    }
+    @media (max-width: 900px) {
+      .pipeline-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    @media (max-width: 600px) {
+      .pipeline-grid {
+        grid-template-columns: 1fr;
+      }
+      .doc-section-card {
+        padding: 20px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR IDENTIDADE MORFO / SISTER-GIT -->
+  <aside class="sidebar">
+    <a class="brand" href="index.html" aria-label="MÉTIS Início">
+      <div class="brand-logo-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/>
+          <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/>
+          <circle cx="9" cy="8" r="0.75" fill="currentColor"/>
+          <circle cx="15" cy="8" r="0.75" fill="currentColor"/>
+          <circle cx="8" cy="14" r="0.75" fill="currentColor"/>
+          <circle cx="16" cy="14" r="0.75" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="brand-words">
+        <span>Ecossistema SisTer</span>
+        <strong>MÉTIS</strong>
+      </div>
+    </a>
+    <p class="sidebar-subtitle">Inteligência Adaptativa &amp; Epistêmica</p>
+
+    <div class="navlabel">ESPAÇOS DE TRABALHO</div>
+    <nav id="sidebarNav" aria-label="Navegação">
+      <a class="nav-item" href="index.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </span>
+        <span class="navtxt">Apresentação &amp; Notícias</span>
+        <span class="navtag">Hub</span>
+      </a>
+      <a class="nav-item" href="mapa.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+            <line x1="8" y1="2" x2="8" y2="18"/>
+            <line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
+        </span>
+        <span class="navtxt">Visão Territorial</span>
+        <span class="navtag">RS 497</span>
+      </a>
+      <a class="nav-item" href="dashboard.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+        </span>
+        <span class="navtxt">Dashboard Analítico</span>
+        <span class="navtag">Sem Mapa</span>
+      </a>
+      <a class="nav-item active" href="modelos.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </span>
+        <span class="navtxt">Modelos &amp; Algoritmos</span>
+        <span class="navtag">Catálogo</span>
+      </a>
+    </nav>
+
+    <div class="navlabel">ÍNDICE DO CATÁLOGO</div>
+    <div class="sidebar-model-nav">
+      <a class="sidebar-doc-link" href="#organizacao">
+        <span>🏛️ 1. Organização Conceitual</span>
+      </a>
+      <a class="sidebar-doc-link" href="#algoritmo">
+        <span>⚙️ 2. Algoritmo de Cálculo</span>
+      </a>
+      <a class="sidebar-doc-link" href="#catalogo">
+        <span>📚 3. Catálogo de Modelos</span>
+      </a>
+      <a class="sidebar-doc-link sub" href="#mod-eps-001">
+        <span>• EPS-REF-001 (Referência)</span>
+      </a>
+      <a class="sidebar-doc-link sub" href="#mod-eps-002">
+        <span>• EPS-EXP-002 (Aditivo)</span>
+      </a>
+      <a class="sidebar-doc-link sub" href="#mod-eps-003">
+        <span>• EPS-EXP-003 (Interativo)</span>
+      </a>
+      <a class="sidebar-doc-link sub" href="#mod-eps-004">
+        <span>• EPS-EXP-004 (Autônomo)</span>
+      </a>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="side-note">
+        <small>PRINCÍPIO DE DESENVOLVIMENTO</small>
+        <strong>Sempre pronto.<br>Sempre incompleto.</strong>
+        <p>Identidade e evolução documental sob proveniência Git do ecossistema SisTer.</p>
+      </div>
+
+      <div class="sidebar-auth">
+        <div class="auth-badge-status">
+          <span class="dot-auth" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+          <span>Acesso Aberto Público</span>
+        </div>
+        <span class="btn-auth-action">GPL v3.0</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- WORKSPACE PRINCIPAL -->
+  <div class="workspace">
+    <!-- TOPBAR ESTILO SISTER-GIT -->
+    <header class="topbar">
+      <div class="crumb">
+        <a href="index.html" class="crumb-root">MÉTIS</a>
+        <span class="crumb-slash">/</span>
+        <span>Experiência Territorial 001</span>
+        <span class="crumb-slash">/</span>
+        <strong>Modelos &amp; Algoritmos</strong>
+      </div>
+
+      <div class="topbar-search">
+        <span class="search-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </span>
+        <input type="text" id="search-doc" placeholder="Buscar no catálogo (ex: Hill, saturação, pesos, k)..." aria-label="Buscar no catálogo matemático" autocomplete="off"/>
+      </div>
+
+      <div class="topbar-right">
+        <div class="top-status">
+          <span class="status-pulse"></span>
+          <span>Acesso Público Aberto • C++26 Nativo</span>
+        </div>
+
+        <div class="user-badge-top" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3);">
+          <span class="user-avatar-tiny" style="background: #10b981;">OPEN</span>
+          <span class="topbar-user-name">Visitante Científico</span>
+          <span class="user-role-pill" style="background: #10b981;">PÚBLICO</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL (DENTRO DE MAIN #APP) -->
+    <main id="app">
+      <!-- BOTÃO DE NAVEGAÇÃO RÁPIDA -->
+      <div class="doc-nav-bar">
+        <a href="index.html" class="doc-header-back">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+          <span>Retornar à Cartografia Territorial</span>
+        </a>
+      </div>
+
+      <!-- HERO EDITORIAL SISTER-GIT -->
+      <section class="hero-editorial">
+        <div class="hero-left">
+          <div class="hero-kicker-bar">
+            <span class="hero-kicker">ECOSSISTEMA SISTER</span>
+            <span class="hero-tag">• Catálogo Formal C++26</span>
+          </div>
+          <h1 class="hero-title">Modelos &amp; Algoritmos do MÉTIS</h1>
+          <div class="hero-subtitle">Transparência Metodológica, Formulações Matemáticas e Dinâmica Territorial</div>
+          <p class="hero-desc">
+            O MÉTIS é um laboratório computacional para parametrizar, experimentar e confrontar hipóteses sobre a resiliência agroterritorial. Esta documentação apresenta a formulação matemática, as variáveis observadas e a dinâmica analítica de cada modelo do catálogo.
+          </p>
+          <div class="hero-pills">
+            <span class="hero-pill accent">4 Modelos Ativos</span>
+            <span class="hero-pill">Invariância Intermunicipal</span>
+            <span class="hero-pill">Auditabilidade C++26</span>
+            <span class="hero-pill">Licença GPL v3.0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SEÇÃO 1: DISTINÇÃO CONCEITUAL -->
+      <section class="doc-section-card" id="organizacao">
+        <h2 class="doc-section-title">
+          <span>🏛️</span>
+          <span>1. Organização Conceitual Quádrupla</span>
+        </h2>
+        <p class="doc-section-subtitle">
+          O MÉTIS distingue rigorosamente quatro instâncias de formulação científica:
+        </p>
+
+        <table class="comp-table" style="width: 100%; font-size: 0.86rem; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden;">
+          <thead style="background: #f1f5f9;">
+            <tr>
+              <th style="padding: 10px 14px; text-align: left; width: 140px; color: var(--navy); font-weight: 800;">Elemento</th>
+              <th style="padding: 10px 14px; text-align: left; color: var(--navy); font-weight: 800;">Função Epistêmica</th>
+              <th style="padding: 10px 14px; text-align: left; width: 300px; color: var(--navy); font-weight: 800;">Aplicação no MÉTIS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;"><strong>Variáveis</strong></td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569;">Observações empíricas brutas coletadas de fontes oficiais consolidadas.</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569;">Área total, valor da produção (VP), pastagens naturais, assistência técnica e cooperativismo (Censo 2017).</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;"><strong>Indicadores</strong></td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569;">Transformações matemáticas que expressam intensidades por unidade de referência.</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569;">Densidade monetária (<code>d_m = VP / A</code> em R$/ha$), proporção de vegetação natural (<code>e</code>).</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9;"><strong>Modelos</strong></td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569;">Formulações teóricas que articulam indicadores, definem componentes e testam hipóteses relacionais.</td>
+              <td style="padding: 10px 14px; border-bottom: 1px solid #f1f5f9; color: #475569;"><code>EPS-REF-001</code>, <code>EPS-EXP-002</code>, <code>EPS-EXP-003</code>, <code>EPS-EXP-004</code>.</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 14px;"><strong>Cenários</strong></td>
+              <td style="padding: 10px 14px; color: #475569;">Execuções de um modelo específico sob calibrações de escala e parâmetros declarados.</td>
+              <td style="padding: 10px 14px; color: #475569;">Escala produtiva <code>k = 1500 R$/ha</code>, pesos aditivos <code>(0,33; 0,33; 0,34)</code>, sinergia <code>λ = 0,5</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- SEÇÃO 2: PIPELINE ALGORÍTMICO -->
+      <section class="doc-section-card" id="algoritmo">
+        <h2 class="doc-section-title">
+          <span>⚙️</span>
+          <span>2. O Algoritmo de Cálculo (Passo a Passo)</span>
+        </h2>
+        <p class="doc-section-subtitle">
+          O processamento computacional em C++26 segue quatro etapas transparentes e reprodutíveis:
+        </p>
+
+        <div class="pipeline-grid">
+          <div class="pipeline-step">
+            <span class="step-number">1</span>
+            <div class="step-title">Ingestão Censitária</div>
+            <p class="step-desc">
+              Leitura dos 497 municípios gaúchos a partir do Censo Agropecuário 2017 (tabelas SIDRA 6881, 6898, 6780 e 6773). Detecção formal de dados incompletos sem substituição arbitrária por zero.
+            </p>
+          </div>
+
+          <div class="pipeline-step">
+            <span class="step-number">2</span>
+            <div class="step-title">Extração dos Indicadores</div>
+            <p class="step-desc">
+              Cálculo da densidade monetária <code>d_m = VP / A</code>, da proporção vegetal <code>e = (pastagem + mata) / A</code> e da razão associativa e de assistência técnica sobre o total de estabelecimentos.
+            </p>
+          </div>
+
+          <div class="pipeline-step">
+            <span class="step-number">3</span>
+            <div class="step-title">Aplicação do Modelo</div>
+            <p class="step-desc">
+              Execução da formulação teórica selecionada na Bancada Epistêmica Triaxial (Referência, Aditivo, Interativo ou Autônomo Municipal), aplicando suas equações e parâmetros.
+            </p>
+          </div>
+
+          <div class="pipeline-step">
+            <span class="step-number">4</span>
+            <div class="step-title">Confronto &amp; Proveniência</div>
+            <p class="step-desc">
+              Renderização cartográfica reativa do território, emissão de manifesto JSON de integridade e comparação intramunicipal entre os modelos concorrentes.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SEÇÃO 3: CATÁLOGO DETALHADO DE MODELOS -->
+      <section class="doc-section-card" id="catalogo">
+        <h2 class="doc-section-title">
+          <span>📚</span>
+          <span>3. Catálogo Experimental de Modelos</span>
+        </h2>
+        <p class="doc-section-subtitle">
+          Cada modelo expressa uma hipótese científica singular sobre como condições ecológicas, produtivas e sociais se articulam:
+        </p>
+
+        <div class="model-detail-grid">
+          <!-- MODELO 1: EPS-REF-001 -->
+          <article class="model-box" id="mod-eps-001">
+            <div class="model-box-header">
+              <h3 class="model-box-title">EPS-REF-001 — Modelo de Referência Histórica</h3>
+              <span class="model-badge ref">Referência Imutável</span>
+            </div>
+            <div class="model-formula-callout">
+              <span>R = E × (P + S)</span>
+              <span style="font-size: 0.76rem; opacity: 0.7;">P normalizado por quantis estaduais (q10 e q90)</span>
+            </div>
+            <table class="model-table">
+              <tr>
+                <td>Hipótese Científica</td>
+                <td>A integridade ecológica atua como multiplicador sistêmico (<code>E</code>), modulando a soma das capacidades produtivas (<code>P</code>) e sociais (<code>S</code>). A escala produtiva é balizada pela distribuição empírica dos municípios gaúchos.</td>
+              </tr>
+              <tr>
+                <td>Equações</td>
+                <td>
+                  • <code>E = 0,5 + clamp(e, 0, 1)</code> &nbsp; (faixa [0,5; 1,5])<br/>
+                  • <code>P = 50 · clamp((ln(1+d_m) - q10) / (q90 - q10), 0, 1)</code> com q10 = 7,273 e q90 = 8,932<br/>
+                  • <code>S = 25 · (N_assist / N_estab + N_coop / N_estab)</code> &nbsp; (faixa [0, 50])<br/>
+                  • <code>R = E · (P + S)</code> &nbsp; (faixa típica [0, 150])
+                </td>
+              </tr>
+              <tr>
+                <td>Propriedade Operacional</td>
+                <td>Por utilizar os percentis estaduais q10 e q90, o valor de P reflete a posição relativa do município no estado. Modelo preservado para reprodutibilidade histórica.</td>
+              </tr>
+            </table>
+          </article>
+
+          <!-- MODELO 2: EPS-EXP-002 -->
+          <article class="model-box" id="mod-eps-002">
+            <div class="model-box-header">
+              <h3 class="model-box-title">EPS-EXP-002 — Modelo Aditivo Linear Ponderado</h3>
+              <span class="model-badge exp">Experimental Candidato</span>
+            </div>
+            <div class="model-formula-callout">
+              <span>R = w_e · E_norm + w_p · P_100 + w_s · S_100</span>
+              <span style="font-size: 0.76rem; opacity: 0.7;">Pesos parametrizáveis: w_e + w_p + w_s = 1,0</span>
+            </div>
+            <table class="model-table">
+              <tr>
+                <td>Hipótese Científica</td>
+                <td>As dimensões ecológica, produtiva e social operam como esferas autônomas de capacidade. A resiliência resulta do somatório ponderado de cada dimensão, permitindo isolar a sensibilidade linear de cada componente.</td>
+              </tr>
+              <tr>
+                <td>Equações</td>
+                <td>
+                  • <code>E_norm = 100 · e ∈ [0, 100]</code><br/>
+                  • <code>P_100 = 100 · (d_m / (d_m + k)) ∈ [0, 100]</code><br/>
+                  • <code>S_100 = 50 · (N_assist / N_estab + N_coop / N_estab) ∈ [0, 100]</code><br/>
+                  • <code>R = w_e · E_norm + w_p · P_100 + w_s · S_100</code> com pesos padrão (0,33; 0,33; 0,34)
+                </td>
+              </tr>
+              <tr>
+                <td>Aplicação Analítica</td>
+                <td>Permite confrontar hipóteses em que a substitutibilidade parcial entre componentes é investigada pelo pesquisador.</td>
+              </tr>
+            </table>
+          </article>
+
+          <!-- MODELO 3: EPS-EXP-003 -->
+          <article class="model-box" id="mod-eps-003">
+            <div class="model-box-header">
+              <h3 class="model-box-title">EPS-EXP-003 — Modelo Interativo com Acoplamento Não-Linear</h3>
+              <span class="model-badge exp">Experimental Candidato</span>
+            </div>
+            <div class="model-formula-callout">
+              <span>R = E × (P + S) + λ · (P · S / 50)</span>
+              <span style="font-size: 0.76rem; opacity: 0.7;">λ ∈ [0, 1] intensidade sinérgica</span>
+            </div>
+            <table class="model-table">
+              <tr>
+                <td>Hipótese Científica</td>
+                <td>Existe um efeito de sinergia cruzada entre coesão associativa/assistência técnica e intensidade econômica. Municípios com alta densidade produtiva e alto associativismo alcançam uma amplificação na capacidade de adaptação.</td>
+              </tr>
+              <tr>
+                <td>Equações</td>
+                <td>
+                  • <code>E = 0,5 + e</code><br/>
+                  • <code>P = 50 · (d_m / (d_m + k))</code> &nbsp; (com escala física k declarada)<br/>
+                  • <code>S = 25 · (N_assist / N_estab + N_coop / N_estab)</code><br/>
+                  • Termo de Acoplamento: <code>Sinergia = λ · (P · S / 50)</code><br/>
+                  • <code>R = E · (P + S) + Sinergia</code>
+                </td>
+              </tr>
+              <tr>
+                <td>Aplicação Analítica</td>
+                <td>Investiga hipóteses em que o capital social amplifica a eficiência produtiva diante de perturbações tecnológicas ou climáticas.</td>
+              </tr>
+            </table>
+          </article>
+
+          <!-- MODELO 4: EPS-EXP-004 -->
+          <article class="model-box" id="mod-eps-004">
+            <div class="model-box-header">
+              <h3 class="model-box-title">EPS-EXP-004 — Modelo Autônomo Municipal (METIS-DIR-MUN-001)</h3>
+              <span class="model-badge exp">Invariância Estrita</span>
+            </div>
+            <div class="model-formula-callout">
+              <span>P = 50 · d_m / (d_m + k) &nbsp;·&nbsp; R = E × (P + S)</span>
+              <span style="font-size: 0.76rem; opacity: 0.7;">k > 0 (parâmetro intrínseco em R$/ha)</span>
+            </div>
+            <table class="model-table">
+              <tr>
+                <td>Hipótese Científica</td>
+                <td>O município é a unidade individual e autônoma de investigação. A escala de produtividade é determinada por um parâmetro físico-econômico explícito <code>k</code> (em R$/ha$) onde <code>d_m = k ⟹ P = 25,0</code>, garantindo total independência em relação a dados de outros municípios.</td>
+              </tr>
+              <tr>
+                <td>Equações</td>
+                <td>
+                  • <code>d_m = VP / A</code> (densidade monetária da produção em R$/ha$)<br/>
+                  • <code>P_m(k) = 50 · (d_m / (d_m + k))</code><br/>
+                  • <code>E = 0,5 + e</code><br/>
+                  • <code>S = 25 · (N_assist / N_estab + N_coop / N_estab)</code><br/>
+                  • <code>R_m = E_m · (P_m + S_m)</code>
+                </td>
+              </tr>
+              <tr>
+                <td>Propriedade Fundamental</td>
+                <td><strong>Invariância intermunicipal estrita:</strong> alterar, incluir ou remover dados de outros municípios produz exatamente zero impacto no cálculo de qualquer município em análise.</td>
+              </tr>
+            </table>
+          </article>
+        </div>
+
+        <!-- NOTA EPISTÊMICA -->
+        <div class="disclaimer-box">
+          <strong>Princípio Epistêmico do Ecossistema SisTer:</strong><br/>
+          Os modelos do MÉTIS representam deduções formais fundamentadas em hipóteses científicas de trabalho. O laboratório capacita o pesquisador a examinar parâmetros, confrontar formulações concorrentes e documentar de modo verificável a dinâmica de cada representação territorial.
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER SISTER-GIT -->
+    <footer class="app-footer">
+      <div>
+        <strong>MÉTIS</strong> — <em>Inteligência adaptativa &amp; Laboratório de estados de referência</em>
+        <div style="font-size: 0.78rem; color: #64748b; margin-top: 4px;">
+          Fontes Censitárias: IBGE · Conformidade com LGPD (Lei 13.709/18) e LAI (Lei 12.527/11) · Modelo exploratório sem efeito sancionatório ou creditício.
+        </div>
+      </div>
+      <div style="text-align: right;">
+        Código sob licença <strong>GNU GPL v3.0</strong> · Ecossistema <em>SisTer</em>
+      </div>
+    </footer>
+  </div>
+</div>
+
+</body>
+</html>
