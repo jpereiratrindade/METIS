@@ -274,6 +274,44 @@ a:hover {
   margin-top: 4px;
 }
 
+.sidebar-model-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 6px 0 16px;
+}
+
+.sidebar-doc-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: #cbd5e1;
+  text-decoration: none;
+  font-size: 0.76rem;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.sidebar-doc-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  text-decoration: none;
+  transform: translateX(2px);
+}
+
+.sidebar-doc-link.sub {
+  padding-left: 20px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-family: var(--font-mono);
+}
+
+.sidebar-doc-link.sub:hover {
+  color: var(--sky);
+}
+
 .sidebar-bottom {
   margin-top: auto;
   padding-top: 18px;
