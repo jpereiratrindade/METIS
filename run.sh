@@ -37,7 +37,7 @@ if [[ -f .env ]]; then
   set +a
 fi
 
-HOST="${METIS_HOST:-${HOST:-127.0.0.1}}"
+HOST="${METIS_HOST:-${HOST:-0.0.0.0}}"
 PORT="${METIS_PORT:-${PORT:-8080}}"
 DB_CONTAINER="${METIS_DB_CONTAINER:-metis-db}"
 DB_PORT="${METIS_DB_PORT:-5432}"
@@ -116,17 +116,22 @@ iniciar_servidor_web() {
   local primary_ip
   primary_ip=$(echo "$lan_ips" | awk '{print $1}')
 
+  local display_host="localhost"
+  if [[ "$HOST" != "0.0.0.0" && -n "$HOST" ]]; then
+    display_host="$HOST"
+  fi
+
   echo -e "\n${BOLD}============================================================${NC}"
   echo -e " ${BOLD}MÉTIS${NC} — Laboratório Científico Aberto de Resiliência Agroterritorial"
   echo -e " Ecossistema SisTer · Núcleo C++26 Nativo · PostgreSQL/PostGIS"
   echo -e "${BOLD}============================================================${NC}"
   echo -e " ${BOLD}Ambientes disponíveis diretamente (porta ${PORT}):${NC}"
-  echo -e "  • ${CYAN}Apresentação & Notícias:${NC}  http://${HOST}:${PORT}/"
-  echo -e "  • ${CYAN}Visão Territorial (RS):${NC}   http://${HOST}:${PORT}/mapa.html"
-  echo -e "  • ${CYAN}Dashboard Analítico:${NC}      http://${HOST}:${PORT}/dashboard.html"
-  echo -e "  • ${CYAN}Modelos & Algoritmos:${NC}     http://${HOST}:${PORT}/modelos.html"
-  echo -e "  • ${CYAN}API Pública Estática:${NC}     http://${HOST}:${PORT}/api/public/achados.json"
-  if [[ "$HOST" == "0.0.0.0" && -n "$primary_ip" && "$primary_ip" != "127.0.0.1" ]]; then
+  echo -e "  • ${CYAN}Apresentação & Notícias:${NC}  http://${display_host}:${PORT}/"
+  echo -e "  • ${CYAN}Visão Territorial (RS):${NC}   http://${display_host}:${PORT}/mapa.html"
+  echo -e "  • ${CYAN}Dashboard Analítico:${NC}      http://${display_host}:${PORT}/dashboard.html"
+  echo -e "  • ${CYAN}Modelos & Algoritmos:${NC}     http://${display_host}:${PORT}/modelos.html"
+  echo -e "  • ${CYAN}API Pública Estática:${NC}     http://${display_host}:${PORT}/api/public/achados.json"
+  if [[ -n "$primary_ip" && "$primary_ip" != "127.0.0.1" ]]; then
     echo -e "  • ${GREEN}Acesso Rede Local (IP):${NC}   http://${primary_ip}:${PORT}/"
   fi
   echo -e "${BOLD}============================================================${NC}"
