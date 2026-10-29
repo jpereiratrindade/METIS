@@ -77,21 +77,14 @@
       </a>
     </nav>
 
-    <div class="navlabel">DADOS DE ENTRADA</div>
+    <div class="navlabel">CUSTÓDIA DOS DADOS</div>
     <div class="sidebar-data-actions">
-      <button id="btn-quick-load" class="btn-sidebar-quick" type="button">
-        ⚡ Carregar dados oficiais (RS 497)
-      </button>
-      <label class="file-upload-btn" for="file-scores">
-        ① Carregar resultados CSV
-        <input id="file-scores" type="file" accept=".csv,text/csv"/>
-      </label>
-      <label class="file-upload-btn" for="file-geo">
-        ② Carregar malha GeoJSON
-        <input id="file-geo" type="file" accept=".geojson,.json,application/json"/>
-      </label>
-      <div class="source-status-box" id="source-state">
-        Aguardando carregamento de dados...
+      <div class="source-status-box" id="source-state" style="background:#0b1d33; border:1px solid #1e3a5f; padding:12px; border-radius:6px; color:#94a3b8; font-size:0.75rem; line-height:1.4;">
+        <div style="display:flex; align-items:center; gap:6px; color:#10b981; font-weight:700; margin-bottom:6px;">
+          <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981; box-shadow:0 0 6px #10b981;"></span>
+          Base Homologada &amp; Imutável
+        </div>
+        Séries censitárias oficiais (IBGE 2006 e 2017) e malha vetorial com validação criptográfica SHA-256 no PostgreSQL/PostGIS. Acesso estritamente somente-leitura.
       </div>
     </div>
 
@@ -282,6 +275,7 @@
           </div>
           <div class="layer-buttons" role="group" aria-label="Camada territorial de tendência">
             <button class="layer-btn selected" data-layer="resiliencia" title="Estado de Resiliência Experimental R = E(P+S)">Resiliência (R)</button>
+            <button class="layer-btn" data-layer="evolucao" title="Evolução Temporal da Resiliência entre os Censos 2006 e 2017 (Δ R)">Evolução (Δ 06-17)</button>
             <button class="layer-btn" data-layer="ecologica" title="Multiplicador Ecológico E">Ecológica (E)</button>
             <button class="layer-btn" data-layer="produtiva" title="Densidade Produtiva P(k)">Produtiva (P)</button>
             <button class="layer-btn" data-layer="social" title="Dimensão Social S">Social (S)</button>
@@ -365,6 +359,7 @@
                 <span class="comp-section-title">AMBIENTE ANALÍTICO MUNICIPAL</span>
                 <div class="comp-tabs" id="comp-tabs">
                   <button class="comp-tab-btn active" data-area="D" title="Área D: Resultados e Decomposição">D · Resultados</button>
+                  <button class="comp-tab-btn" data-area="T" title="Trajetória Decenal (2006 ➔ 2017): Evolução e Confronto Censitário">T · Trajetória</button>
                   <button class="comp-tab-btn" data-area="M" title="Confronto Direto de Modelos para o Município">M · Confronto</button>
                   <button class="comp-tab-btn" data-area="A" title="Área A: Observações do Município">A · Insumos</button>
                   <button class="comp-tab-btn" data-area="B" title="Área B: Parametrização Experimental">B · Parâmetros</button>

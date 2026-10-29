@@ -4,10 +4,14 @@ const $ = id => document.getElementById(id);
 
 let scores = new Map();
 let rawData = new Map();
+let scores2017 = new Map();
+let scores2006 = new Map();
+let rawData2017 = new Map();
+let rawData2006 = new Map();
 let manifest = null;
 let geometry = null;
 let current = null; // Nenhum município selecionado inicialmente
-let activeArea = 'D'; // Área D (Resultados) padrão, ou 'M' (Confronto)
+let activeArea = 'D'; // Área D (Resultados) padrão, ou 'T', 'M', 'A', 'B', 'C'
 let geoBounds = new Map(); // código IBGE -> { x0, y0, width, height }
 let zoomAnim = null;
 
@@ -61,13 +65,22 @@ const palette = ['#08203e', '#0b406e', '#087f8c', '#109789', '#2ea8e8', '#38bdf8
 // Contrato de campos, limites de escala e rótulos
 const fields = {
   resiliencia: ['resiliencia', 0, 90, 'Resiliência (R)'],
+  evolucao: ['evolucao', -10, 10, 'Evolução Temporal (Δ R: 2006➔2017)'],
   ecologica: ['ecologica_multiplicador', 0.5, 1.5, 'Multiplicador Ecológico (E)'],
   produtiva: ['produtiva', 0, 50, 'Dimensão Produtiva (P)'],
   social: ['social', 0, 50, 'Dimensão Social (S)']
 };
 
 function getValue(d) {
-  if (!d || d.status !== 'experimental') return null;
+  if (!d) return null;
+  if (layer === 'evolucao') {
+    const code = d.codigo_ibge;
+    const r17 = scores2017.get(code)?.resiliencia;
+    const r06 = scores2006.get(code)?.resiliencia;
+    if (r17 == null || r06 == null || !Number.isFinite(r17) || !Number.isFinite(r06)) return null;
+    return r17 - r06;
+  }
+  if (d.status !== 'experimental') return null;
   const col = fields[layer][0];
   const v = d[col];
   return Number.isFinite(v) ? v : null;
@@ -75,6 +88,15 @@ function getValue(d) {
 
 function colorForValue(v) {
   if (v == null) return '#1e293b'; // dados incompletos ou ausentes
+  if (layer === 'evolucao') {
+    if (v > 5.0) return '#065f46';   // Ganho muito expressivo (+5 pts)
+    if (v > 2.0) return '#10b981';   // Ganho moderado a forte (+2 a +5 pts)
+    if (v > 0.3) return '#34d399';   // Leve ganho (+0.3 a +2 pts)
+    if (v >= -0.3) return '#64748b'; // Estável (-0.3 a +0.3 pts)
+    if (v >= -2.0) return '#fb923c'; // Leve perda (-0.3 a -2 pts)
+    if (v >= -5.0) return '#f97316'; // Perda moderada (-2 a -5 pts)
+    return '#ef4444';                // Perda expressiva (<-5 pts)
+  }
   const [_, min, max] = fields[layer];
   const t = Math.max(0, Math.min(1, (v - min) / (max - min)));
   const idx = Math.min(palette.length - 1, Math.floor(t * palette.length));
@@ -360,18 +382,39 @@ function renderMap() {
 
   const legend = $('legend');
   if (legend) {
-    const [_, min, max, label] = fields[layer];
-    const swatchesHtml = palette.map(c => `<span class="swatch" style="background:${c}"></span>`).join('');
-    legend.innerHTML = `
-      <div class="legend-item">
-        <strong>${label}:</strong>
-        <span style="opacity: 0.85;">${fmt(min, 1)}</span>
-        <div class="swatch-group">${swatchesHtml}</div>
-        <span style="opacity: 0.85;">${fmt(max, 1)}</span>
-      </div>
-      <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
-      <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
-    `;
+    if (layer === 'evolucao') {
+      legend.innerHTML = `
+        <div class="legend-item">
+          <strong>Variação Decenal (Δ R: 2006➔2017):</strong>
+          <span style="color:#ef4444; font-weight:700;">-10 (Perda)</span>
+          <div class="swatch-group">
+            <span class="swatch" style="background:#ef4444" title="Perda severa > 5 pts"></span>
+            <span class="swatch" style="background:#f97316" title="Perda moderada 2 a 5 pts"></span>
+            <span class="swatch" style="background:#fb923c" title="Perda leve 0.3 a 2 pts"></span>
+            <span class="swatch" style="background:#64748b" title="Estabilidade (-0.3 a +0.3 pts)"></span>
+            <span class="swatch" style="background:#34d399" title="Ganho leve 0.3 a 2 pts"></span>
+            <span class="swatch" style="background:#10b981" title="Ganho moderado 2 a 5 pts"></span>
+            <span class="swatch" style="background:#065f46" title="Ganho expressivo > 5 pts"></span>
+          </div>
+          <span style="color:#10b981; font-weight:700;">+10 (Ganho)</span>
+        </div>
+        <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
+        <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
+      `;
+    } else {
+      const [_, min, max, label] = fields[layer];
+      const swatchesHtml = palette.map(c => `<span class="swatch" style="background:${c}"></span>`).join('');
+      legend.innerHTML = `
+        <div class="legend-item">
+          <strong>${label}:</strong>
+          <span style="opacity: 0.85;">${fmt(min, 1)}</span>
+          <div class="swatch-group">${swatchesHtml}</div>
+          <span style="opacity: 0.85;">${fmt(max, 1)}</span>
+        </div>
+        <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
+        <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
+      `;
+    }
   }
   if (!geometry) return;
 
@@ -544,6 +587,118 @@ function updateComponentDetail(code) {
       </div>
     `;
   }
+  // ÁREA T: TRAJETÓRIA DECENAL (2006 ➔ 2017)
+  else if (activeArea === 'T') {
+    const raw06 = rawData2006.get(code);
+    const raw17 = rawData2017.get(code);
+    const res06 = computeSingleModel(raw06, activeModel);
+    const res17 = computeSingleModel(raw17, activeModel);
+
+    const r06 = res06?.resiliencia;
+    const r17 = res17?.resiliencia;
+    const deltaR = (r17 != null && r06 != null) ? (r17 - r06) : null;
+
+    let deltaRHtml = '—';
+    let summaryText = '';
+
+    if (deltaR != null) {
+      const cls = deltaR > 0.5 ? 'traj-delta-pos' : (deltaR < -0.5 ? 'traj-delta-neg' : 'traj-delta-neutral');
+      const sign = deltaR > 0 ? '+' : '';
+      deltaRHtml = `<span class="traj-delta-badge ${cls}">${sign}${fmt(deltaR, 2)} pts</span>`;
+
+      if (deltaR > 3.0) {
+        summaryText = `<strong>Trajetória de Expansão de Resiliência (+${fmt(deltaR, 1)} pts):</strong> O município apresentou ganho consistente na década, impulsionado pelo fortalecimento de seus fatores determinantes.`;
+      } else if (deltaR > 0.5) {
+        summaryText = `<strong>Trajetória de Evolução Moderada (+${fmt(deltaR, 1)} pts):</strong> Crescimento positivo gradual da resiliência agroterritorial entre 2006 e 2017.`;
+      } else if (deltaR >= -0.5) {
+        summaryText = `<strong>Trajetória de Estabilidade Relativa (${sign}${fmt(deltaR, 1)} pts):</strong> O município preservou sua estrutura de resiliência territorial praticamente inalterada no decênio.`;
+      } else if (deltaR >= -3.0) {
+        summaryText = `<strong>Trajetória de Perda Moderada (${fmt(deltaR, 1)} pts):</strong> Redução no índice de resiliência, sugerindo aumento de vulnerabilidade territorial ou pressão nos fatores ecológico/produtivos.`;
+      } else {
+        summaryText = `<strong>Trajetória Crítica de Redução (${fmt(deltaR, 1)} pts):</strong> Perda severa de resiliência agroterritorial no período, recomendando auditoria aprofundada nas causas de supressão ou estagnação.`;
+      }
+    } else {
+      summaryText = `<strong>Dados Incompletos em um dos Censos:</strong> Não foi possível calcular a variação decenal estrita para este município devido à ausência de observações completas em 2006 ou 2017 (ex: emancipação política ou sigilo estatístico).`;
+    }
+
+    function rowDiff(label, v06, v17, unit = '', digits = 1, isPercent = false) {
+      if (v06 == null && v17 == null) return `<tr><td>${label}</td><td class="val">—</td><td class="val">—</td><td class="val">—</td></tr>`;
+      const d06 = v06 != null ? fmt(v06, digits) + unit : '—';
+      const d17 = v17 != null ? fmt(v17, digits) + unit : '—';
+      let dHtml = '—';
+      if (v06 != null && v17 != null) {
+        const diff = v17 - v06;
+        const sign = diff > 0 ? '+' : '';
+        const cls = diff > 0.001 ? 'traj-delta-pos' : (diff < -0.001 ? 'traj-delta-neg' : 'traj-delta-neutral');
+        const pcent = v06 !== 0 ? ` (${sign}${fmt((diff / Math.abs(v06)) * 100, 1)}%)` : '';
+        dHtml = `<span class="traj-delta-badge ${cls}">${sign}${fmt(diff, digits)}${unit}${isPercent ? '' : pcent}</span>`;
+      }
+      return `<tr><td>${label}</td><td class="val">${d06}</td><td class="val">${d17}</td><td class="val" style="text-align:right;">${dHtml}</td></tr>`;
+    }
+
+    const e06 = res06?.ecologica_multiplicador;
+    const e17 = res17?.ecologica_multiplicador;
+    const p06 = res06?.produtiva;
+    const p17 = res17?.produtiva;
+    const s06 = res06?.social;
+    const s17 = res17?.social;
+
+    const area06 = raw06?.area_estabelecimentos_ha;
+    const area17 = raw17?.area_estabelecimentos_ha;
+    const mata06 = raw06?.mata_natural_ha;
+    const mata17 = raw17?.mata_natural_ha;
+    const past06 = raw06?.pastagem_natural_ha;
+    const past17 = raw17?.pastagem_natural_ha;
+    const vp06 = raw06?.valor_producao_reais;
+    const vp17 = raw17?.valor_producao_reais;
+
+    const orient06 = (raw06?.estabelecimentos_total > 0 && raw06?.estabelecimentos_orientacao_tecnica != null) ? (raw06.estabelecimentos_orientacao_tecnica / raw06.estabelecimentos_total * 100) : null;
+    const orient17 = (raw17?.estabelecimentos_total > 0 && raw17?.estabelecimentos_orientacao_tecnica != null) ? (raw17.estabelecimentos_orientacao_tecnica / raw17.estabelecimentos_total * 100) : null;
+
+    box.innerHTML = `
+      <div class="comp-title-bar">
+        <strong>Área T · Trajetória Decenal (2006 ➔ 2017)</strong>
+        ${deltaRHtml}
+      </div>
+      <p style="font-size: 0.72rem; color: #475569; margin: 4px 0 8px;">
+        Evolução multitemporal observada entre os Censos Agropecuários Oficiais do IBGE:
+      </p>
+      <table class="comp-table">
+        <thead>
+          <tr style="border-bottom: 1px solid var(--line); font-size: 0.70rem; color: var(--muted);">
+            <th>Componente / Insumo</th>
+            <th style="text-align:right;">2006</th>
+            <th style="text-align:right;">2017</th>
+            <th style="text-align:right;">Variação (Δ)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="font-weight: 750; background: var(--bg);">
+            <td>Resiliência Territorial (R)</td>
+            <td class="val">${r06 != null ? fmt(r06, 2) : '—'}</td>
+            <td class="val">${r17 != null ? fmt(r17, 2) : '—'}</td>
+            <td class="val" style="text-align:right;">${deltaRHtml}</td>
+          </tr>
+          ${rowDiff('Multiplicador Ecológico (E)', e06, e17, activeModel === 'EPS-EXP-002' ? ' pts' : '×', 3)}
+          ${rowDiff('Dimensão Produtiva (P)', p06, p17, '', 2)}
+          ${rowDiff('Dimensão Social (S)', s06, s17, '', 2)}
+          <tr style="border-top: 1px dashed var(--line);"><td colspan="4" style="padding: 2px 0;"></td></tr>
+          ${rowDiff('Mata Natural', mata06, mata17, ' ha', 0)}
+          ${rowDiff('Pastagem Natural', past06, past17, ' ha', 0)}
+          ${rowDiff('Área Estabelecimentos', area06, area17, ' ha', 0)}
+          ${rowDiff('Valor da Produção', vp06 != null ? vp06 / 1e6 : null, vp17 != null ? vp17 / 1e6 : null, ' M R$', 2)}
+          ${rowDiff('Assistência Técnica', orient06, orient17, '%', 1, true)}
+        </tbody>
+      </table>
+      <div class="traj-summary-box" style="margin-top: 8px;">
+        ${summaryText}
+      </div>
+      <div class="comp-provenance-box" style="margin-top: 6px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Série Histórica Auditada · IBGE Censo 2006 e 2017</span>
+      </div>
+    `;
+  }
   // ÁREA M: CONFRONTO MULTIMODELO PARA O MUNICÍPIO
   else if (activeArea === 'M') {
     const mRef = computeSingleModel(raw, 'EPS-REF-001');
@@ -647,6 +802,13 @@ function updateComponentDetail(code) {
   // ÁREA B: PARAMETRIZAÇÃO EXPERIMENTAL
   else if (activeArea === 'B') {
     let paramControlsHtml = '';
+    const isFrozen = (activeTrajectory === 'historica');
+    const disabledAttr = isFrozen ? 'disabled="disabled"' : '';
+    const frozenBanner = isFrozen ? `
+      <div class="frozen-params-banner">
+        🔒 <strong>Trajetória Histórica Imutável:</strong> Os parâmetros estão fixados no padrão homologado para reprodução científica. Para simular e calibrar valores interativamente, selecione <strong>Experimental</strong> no Eixo 3.
+      </div>
+    ` : '';
 
     if (activeModel === 'EPS-REF-001') {
       paramControlsHtml = `
@@ -666,21 +828,21 @@ function updateComponentDetail(code) {
             <strong>Peso Ecológico (we):</strong>
             <span id="disp-we">${fmt(paramWe, 2)}</span>
           </div>
-          <input type="range" class="param-slider" id="slider-we" min="0.1" max="0.8" step="0.05" value="${paramWe}"/>
+          <input type="range" class="param-slider" id="slider-we" min="0.1" max="0.8" step="0.05" value="${paramWe}" ${disabledAttr}/>
         </div>
         <div class="param-control-group">
           <div class="param-control-header">
             <strong>Peso Produtivo (wp):</strong>
             <span id="disp-wp">${fmt(paramWp, 2)}</span>
           </div>
-          <input type="range" class="param-slider" id="slider-wp" min="0.1" max="0.8" step="0.05" value="${paramWp}"/>
+          <input type="range" class="param-slider" id="slider-wp" min="0.1" max="0.8" step="0.05" value="${paramWp}" ${disabledAttr}/>
         </div>
         <div class="param-control-group">
           <div class="param-control-header">
             <strong>Escala k (Produtiva):</strong>
             <span id="disp-k2">${fmt(paramK, 0)} R$/ha</span>
           </div>
-          <input type="range" class="param-slider" id="slider-k2" min="300" max="6000" step="100" value="${paramK}"/>
+          <input type="range" class="param-slider" id="slider-k2" min="300" max="6000" step="100" value="${paramK}" ${disabledAttr}/>
         </div>
       `;
     } else if (activeModel === 'EPS-EXP-003') {
@@ -690,14 +852,14 @@ function updateComponentDetail(code) {
             <strong>Intensidade Sinergia (λ):</strong>
             <span id="disp-lambda">${fmt(paramLambda, 2)}</span>
           </div>
-          <input type="range" class="param-slider" id="slider-lambda" min="0" max="1.0" step="0.05" value="${paramLambda}"/>
+          <input type="range" class="param-slider" id="slider-lambda" min="0" max="1.0" step="0.05" value="${paramLambda}" ${disabledAttr}/>
         </div>
         <div class="param-control-group">
           <div class="param-control-header">
             <strong>Escala k (Produtiva):</strong>
             <span id="disp-k3">${fmt(paramK, 0)} R$/ha</span>
           </div>
-          <input type="range" class="param-slider" id="slider-k3" min="300" max="6000" step="100" value="${paramK}"/>
+          <input type="range" class="param-slider" id="slider-k3" min="300" max="6000" step="100" value="${paramK}" ${disabledAttr}/>
         </div>
       `;
     } else {
@@ -709,8 +871,8 @@ function updateComponentDetail(code) {
             <span id="param-k-display">${fmt(paramK, 0)} R$/ha</span>
           </div>
           <div class="param-input-wrap">
-            <input type="range" class="param-slider" id="param-k-slider" min="300" max="6000" step="100" value="${paramK}"/>
-            <input type="number" class="param-val-input" id="param-k-input" min="100" max="20000" step="50" value="${paramK}"/>
+            <input type="range" class="param-slider" id="param-k-slider" min="300" max="6000" step="100" value="${paramK}" ${disabledAttr}/>
+            <input type="number" class="param-val-input" id="param-k-input" min="100" max="20000" step="50" value="${paramK}" ${disabledAttr}/>
           </div>
         </div>
       `;
@@ -718,16 +880,17 @@ function updateComponentDetail(code) {
 
     box.innerHTML = `
       <div class="comp-title-bar">
-        <strong>Área B · Parametrização Experimental</strong>
+        <strong>Área B · Parametrização ${isFrozen ? 'Homologada (Fixa)' : 'Experimental'}</strong>
         <span class="score-tag">${activeModel}</span>
       </div>
+      ${frozenBanner}
       ${paramControlsHtml}
       <div class="comp-note-box" style="margin-top: 8px;">
-        Em modalidade experimental, a alteração dos parâmetros reconfigura o modelo e atualiza a cartografia territorial e o diagnóstico municipal em tempo real.
+        ${isFrozen ? 'Parâmetros imutáveis protegidos pela portaria científica.' : 'Em modalidade experimental, a alteração dos parâmetros reconfigura o modelo e atualiza a cartografia e o diagnóstico em tempo real.'}
       </div>
       <div class="comp-provenance-box">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>Trajetória: ${activeTrajectory === 'experimental' ? 'Experimental (Interativa)' : 'Histórica (Fixa)'}</span>
+        <span>Trajetória: ${activeTrajectory === 'experimental' ? 'Experimental (Interativa)' : 'Histórica (Fixa / Imutável)'}</span>
       </div>
     `;
 
@@ -868,75 +1031,54 @@ function choose(code, name) {
   zoomToMunicipality(code);
 }
 
-// Carregamento de dados para ano específico
-async function loadYearScores(year) {
-  const btnQuick = $('btn-quick-load');
-  if (btnQuick) {
-    btnQuick.disabled = true;
-    btnQuick.textContent = `Carregando dados ${year}...`;
+// Seleção de ano ativo na memória
+function loadYearScores(year) {
+  activeYear = String(year);
+  scores = (activeYear === '2006') ? scores2006 : scores2017;
+  rawData = (activeYear === '2006') ? rawData2006 : rawData2017;
+
+  if (activeTrajectory !== 'historica') {
+    recalculateAllScores();
   }
-
-  const scoresUrl = year === '2006' 
-    ? '/results/RS_497_RESULTADOS_2006.csv'
-    : '/results/RS_497_RESULTADOS.csv';
-  const manifestUrl = year === '2006'
-    ? '/results/RS_497_RESULTADOS_2006.manifest.json'
-    : '/results/RS_497_RESULTADOS.manifest.json';
-  const rawUrl = year === '2006'
-    ? '/data/gerados/municipios_rs_2006_homologado.csv'
-    : '/data/gerados/municipios_rs_2017_homologado.csv';
-
-  try {
-    const rMan = await fetch(manifestUrl);
-    if (rMan.ok) {
-      manifest = await rMan.json();
-      if (manifest?.parametrizacao?.k_produtiva) {
-        paramK = Number(manifest.parametrizacao.k_produtiva);
-      }
-    }
-  } catch (_) {}
-
-  try {
-    const rScores = await fetch(scoresUrl);
-    if (rScores.ok) {
-      scores = parseScores(await rScores.text());
-    }
-  } catch (_) {}
-
-  try {
-    const rRaw = await fetch(rawUrl);
-    if (rRaw.ok) {
-      rawData = parseRaw(await rRaw.text());
-      recalculateAllScores();
-    }
-  } catch (_) {}
 
   refreshMetrics();
   if (geometry) {
     renderMap();
     if (current) choose(current);
-    else choose(null);
-  }
-
-  if (btnQuick) {
-    btnQuick.disabled = false;
-    btnQuick.textContent = `✓ Dados Oficiais ${year} Carregados (497)`;
   }
 }
 
-// Inicialização automática dos dados
+// Inicialização automática das séries oficiais 2006 e 2017 e da malha vetorial
 async function autoLoadAll() {
-  const btnQuick = $('btn-quick-load');
   try {
-    if (btnQuick) {
-      btnQuick.disabled = true;
-      btnQuick.textContent = 'Carregando resultados oficiais...';
+    // 1. Carregar paralelamente os manifestos e CSVs oficiais homologados (2017 e 2006)
+    const [rMan17, rScores17, rRaw17, rScores06, rRaw06] = await Promise.all([
+      fetch('/results/RS_497_RESULTADOS.manifest.json'),
+      fetch('/results/RS_497_RESULTADOS.csv'),
+      fetch('/data/gerados/municipios_rs_2017_homologado.csv'),
+      fetch('/results/RS_497_RESULTADOS_2006.csv'),
+      fetch('/data/gerados/municipios_rs_2006_homologado.csv')
+    ]);
+
+    if (rMan17.ok) {
+      manifest = await rMan17.json();
+      if (manifest?.parametrizacao?.k_produtiva) {
+        paramK = Number(manifest.parametrizacao.k_produtiva);
+      }
     }
 
-    await loadYearScores(activeYear);
+    if (rScores17.ok) scores2017 = parseScores(await rScores17.text());
+    if (rScores06.ok) scores2006 = parseScores(await rScores06.text());
+    if (rRaw17.ok) rawData2017 = parseRaw(await rRaw17.text());
+    if (rRaw06.ok) rawData2006 = parseRaw(await rRaw06.text());
 
-    // Carregar GeoJSON
-    if (btnQuick) btnQuick.textContent = 'Carregando malha RS 2022 (24MB)...';
+    // Associar os dados do ano ativo
+    scores = (activeYear === '2006') ? scores2006 : scores2017;
+    rawData = (activeYear === '2006') ? rawData2006 : rawData2017;
+    recalculateAllScores();
+    refreshMetrics();
+
+    // 2. Carregar a malha GeoJSON oficial do IBGE 2022
     const rGeo = await fetch('/data/gerados/municipios_rs_2022.geojson');
     if (rGeo.ok) {
       const o = await rGeo.json();
@@ -954,17 +1096,8 @@ async function autoLoadAll() {
         else choose(null);
       }
     }
-
-    if (btnQuick) {
-      btnQuick.disabled = false;
-      btnQuick.textContent = `✓ Dados Oficiais ${activeYear} Carregados (497)`;
-    }
   } catch (err) {
-    console.warn('Carregamento automático pendente ou offline:', err);
-    if (btnQuick) {
-      btnQuick.disabled = false;
-      btnQuick.textContent = '⚡ Carregar dados oficiais (RS 497)';
-    }
+    console.warn('Carregamento automático de dados offline ou em rede restrita:', err);
   }
 }
 
@@ -989,7 +1122,7 @@ if (btnResetZoom) {
   btnResetZoom.addEventListener('click', () => resetZoom());
 }
 
-// Alternância de camadas de tendência territorial (R por padrão, ou E, P, S)
+// Alternância de camadas de tendência territorial (R por padrão, ou Evolução, E, P, S)
 document.querySelectorAll('[data-layer]').forEach(b => {
   b.addEventListener('click', () => {
     layer = b.dataset.layer;
@@ -1002,7 +1135,7 @@ document.querySelectorAll('[data-layer]').forEach(b => {
   });
 });
 
-// Abas do ambiente analítico municipal (Áreas D, A, B, C)
+// Abas do ambiente analítico municipal (Áreas D, T, M, A, B, C)
 document.querySelectorAll('.comp-tab-btn').forEach(b => {
   b.addEventListener('click', () => {
     activeArea = b.dataset.area;
@@ -1010,47 +1143,6 @@ document.querySelectorAll('.comp-tab-btn').forEach(b => {
     updateComponentDetail(current);
   });
 });
-
-// Botão rápido da sidebar
-const btnQuick = $('btn-quick-load');
-if (btnQuick) {
-  btnQuick.addEventListener('click', () => autoLoadAll());
-}
-
-// Upload manual de arquivos
-const fScores = $('file-scores');
-if (fScores) {
-  fScores.addEventListener('change', async ev => {
-    try {
-      let file = ev.target.files[0];
-      if (!file) return;
-      scores = parseScores(await file.text());
-      refreshMetrics();
-      renderMap();
-      choose(current);
-    } catch (err) {
-      alert('Falha ao ler CSV de resultados: ' + err.message);
-    }
-  });
-}
-
-const fGeo = $('file-geo');
-if (fGeo) {
-  fGeo.addEventListener('change', async ev => {
-    try {
-      let file = ev.target.files[0];
-      if (!file) return;
-      let o = JSON.parse(await file.text());
-      if (o.type !== 'FeatureCollection') throw Error('GeoJSON inválido');
-      geometry = o;
-      refreshMetrics();
-      renderMap();
-      choose(current);
-    } catch (err) {
-      alert('Falha ao ler GeoJSON: ' + err.message);
-    }
-  });
-}
 
 // Controles da Bancada Epistêmica Triaxial (METIS-DIR-MULTI-002)
 const selModel = $('select-model');
@@ -1070,10 +1162,10 @@ if (selModel) {
 
 const selYear = $('select-year');
 if (selYear) {
-  selYear.addEventListener('change', async ev => {
+  selYear.addEventListener('change', ev => {
     activeYear = ev.target.value;
     updateTriaxialSummary();
-    await loadYearScores(activeYear);
+    loadYearScores(activeYear);
   });
 }
 
@@ -1082,10 +1174,29 @@ if (selTraj) {
   selTraj.addEventListener('change', ev => {
     activeTrajectory = ev.target.value;
     updateTriaxialSummary();
+
+    const hint = $('trajectory-hint');
+    if (hint) {
+      if (activeTrajectory === 'historica') {
+        hint.textContent = '🔒 Série histórica auditada e imutável: parâmetros congelados no padrão homologado para reprodução científica.';
+        hint.style.color = '#0284c7';
+      } else {
+        hint.textContent = '⚡ Modo experimental ativo: permite simular parâmetros k, pesos e testar hipóteses em tempo real.';
+        hint.style.color = '';
+      }
+    }
+
+    if (activeTrajectory === 'historica') {
+      scores = (activeYear === '2006') ? new Map(scores2006) : new Map(scores2017);
+    } else {
+      recalculateAllScores();
+    }
+
+    renderMap();
     if (current) updateComponentDetail(current);
   });
 }
 
-// Executar carga inicial
+// Executar carga inicial imediata dos dados oficiais
 autoLoadAll();
 
