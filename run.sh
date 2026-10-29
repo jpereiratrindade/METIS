@@ -31,6 +31,7 @@ PORT="${METIS_PORT:-${PORT:-8080}}"
 ln -sf web/index.html index.html
 ln -sf web/style.css style.css
 ln -sf web/app.js app.js
+ln -sf web/modelos.html modelos.html
 
 # Detectar IPs da rede local
 LAN_IPS=$(hostname -I 2>/dev/null || echo "127.0.0.1")
