@@ -79,7 +79,8 @@ std::vector<resiliencia::RawMunicipio> converter(const std::vector<std::vector<s
             throw std::runtime_error("Codigo IBGE invalido na linha "+std::to_string(i+1));
         if (id.empty()||!ids.insert(id).second) throw std::runtime_error("ID vazio/duplicado: "+id);
         auto ano=get("ano_referencia");
-        if(ano!="2017") throw std::runtime_error("Este modelo requer referencia 2017; linha "+std::to_string(i+1));
+        if(ano.size()!=4 || !std::all_of(ano.begin(),ano.end(),[](unsigned char c){return c>='0'&&c<='9';}))
+            throw std::runtime_error("Ano de referencia invalido (esperado 4 digitos) na linha "+std::to_string(i+1));
         out.push_back({id,get("municipio"),ano,
             number(get("area_estabelecimentos_ha")),number(get("pastagem_natural_ha")),number(get("mata_natural_ha")),
             number(get("valor_producao_reais")),number(get("estabelecimentos_total")),
@@ -121,7 +122,7 @@ void executar(const std::string& entrada, const std::string& saida, const std::s
     if (!j) throw std::runtime_error("Nao posso criar manifesto");
     j << "{\n  \"model_id\": \"" << modelo << "\",\n"
       << "  \"status\": \"" << (prototipo ? "PROTOTIPO_NAO_HOMOLOGADO" : "CALCULADO_PENDENTE_AUDITORIA_FONTE") << "\",\n"
-      << "  \"referencia\": \"2017\",\n"
+      << "  \"referencia\": \"" << (dados.empty() ? "2017" : dados.front().referencia) << "\",\n"
       << "  \"trajetoria\": \"experimental\",\n"
       << "  \"universo\": \"estabelecimentos agropecuarios, nao todo o municipio\",\n"
       << "  \"entrada\": \"" << escape_json(entrada) << "\",\n"

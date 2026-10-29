@@ -56,6 +56,7 @@ A entrega atende integralmente a todos os critérios de aceite estabelecidos, se
 | **CA-04** | **Rastreabilidade epistêmica e proveniência** | **APROVADO** | Cada registro em `resultados_experimentais` está estritamente vinculado à sua execução (`execucoes_experimentais`), ao modelo formal e versão (`modelos`), aos parâmetros declarados e à fonte censitária (`fontes_dados`). |
 | **CA-05** | **Integridade criptográfica auditável** | **APROVADO** | Todos os hashes SHA-256 gravados nas tabelas conferem com os hashes dos arquivos físicos em disco. |
 | **CA-06** | **Reprodutibilidade em instalação limpa** | **APROVADO** | Procedimento automatizado testado em schema isolado (`metis_teste_limpo`), recriando toda a estrutura DDL e índices espaciais sem intervenção manual. |
+| **CA-07** | **Extensão multitemporal (Censo 2006)** | **APROVADO** | Ingestão e cálculo oficial para o Censo Agropecuário 2006 (497 municípios, 493 válidos e 4 incompletos / territoriais), associados com integridade numérica estrita e rastreabilidade temporal. |
 
 ---
 
@@ -65,11 +66,14 @@ As fontes de dados e os resultados homologados possuem as seguintes somas de ver
 
 ```text
 b7b10c2094241bc7352995c3252bd9b72a81b0acc1a88cccbd1d67b465fff6b6  data/gerados/municipios_rs_2017_homologado.csv
+e030b4bcba83cba7b9de5696ffb2b60a351696dc8133db28399d11fffaf9d39f  data/gerados/municipios_rs_2006_homologado.csv
 423e513822204a3666d933758369ec264663a8a3a9fbff4a19dc8782f7571bef  data/gerados/municipios_rs_2022.geojson
 8a69741a3a6178adbef58bf1c8cc99fde4ba21c0e4446d8bf50396f614c15443  results/historico/RS_497_RESULTADOS_v0.1.0_percentil.csv
 1d42d48caa0501fa7c68b934f5898bc2f89c9e066aaada6761a8727341067568  results/historico/RS_497_RESULTADOS_v0.1.0_percentil.manifest.json
 5f8c9d90bcb661dad6ef6bad5c20808d64d1a987cedf27f9e38493f22784f0bc  results/RS_497_RESULTADOS.csv
 9baa9b4e24a64c57311f504367c6dacc7477765e5ccab08c3176d1d6a85f3cbb  results/RS_497_RESULTADOS.manifest.json
+7f1d6ba64e60cc60be275280db51ea5ade180a8557bd2a0c19bb3331f2a35e68  results/RS_497_RESULTADOS_2006.csv
+ec044520592e094cd7ca26447e68cef10e2267a74c09b714b5ffdfdee195199e  results/RS_497_RESULTADOS_2006.manifest.json
 ```
 
 ---

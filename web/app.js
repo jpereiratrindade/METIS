@@ -868,6 +868,62 @@ function choose(code, name) {
   zoomToMunicipality(code);
 }
 
+// Carregamento de dados para ano específico
+async function loadYearScores(year) {
+  const btnQuick = $('btn-quick-load');
+  if (btnQuick) {
+    btnQuick.disabled = true;
+    btnQuick.textContent = `Carregando dados ${year}...`;
+  }
+
+  const scoresUrl = year === '2006' 
+    ? '/results/RS_497_RESULTADOS_2006.csv'
+    : '/results/RS_497_RESULTADOS.csv';
+  const manifestUrl = year === '2006'
+    ? '/results/RS_497_RESULTADOS_2006.manifest.json'
+    : '/results/RS_497_RESULTADOS.manifest.json';
+  const rawUrl = year === '2006'
+    ? '/data/gerados/municipios_rs_2006_homologado.csv'
+    : '/data/gerados/municipios_rs_2017_homologado.csv';
+
+  try {
+    const rMan = await fetch(manifestUrl);
+    if (rMan.ok) {
+      manifest = await rMan.json();
+      if (manifest?.parametrizacao?.k_produtiva) {
+        paramK = Number(manifest.parametrizacao.k_produtiva);
+      }
+    }
+  } catch (_) {}
+
+  try {
+    const rScores = await fetch(scoresUrl);
+    if (rScores.ok) {
+      scores = parseScores(await rScores.text());
+    }
+  } catch (_) {}
+
+  try {
+    const rRaw = await fetch(rawUrl);
+    if (rRaw.ok) {
+      rawData = parseRaw(await rRaw.text());
+      recalculateAllScores();
+    }
+  } catch (_) {}
+
+  refreshMetrics();
+  if (geometry) {
+    renderMap();
+    if (current) choose(current);
+    else choose(null);
+  }
+
+  if (btnQuick) {
+    btnQuick.disabled = false;
+    btnQuick.textContent = `✓ Dados Oficiais ${year} Carregados (497)`;
+  }
+}
+
 // Inicialização automática dos dados
 async function autoLoadAll() {
   const btnQuick = $('btn-quick-load');
@@ -877,33 +933,7 @@ async function autoLoadAll() {
       btnQuick.textContent = 'Carregando resultados oficiais...';
     }
 
-    // Carregar manifesto oficial
-    try {
-      const rMan = await fetch('/results/RS_497_RESULTADOS.manifest.json');
-      if (rMan.ok) {
-        manifest = await rMan.json();
-        if (manifest?.parametrizacao?.k_produtiva) {
-          paramK = Number(manifest.parametrizacao.k_produtiva);
-        }
-      }
-    } catch (_) {}
-
-    // Carregar CSV calculado
-    const rScores = await fetch('/results/RS_497_RESULTADOS.csv');
-    if (rScores.ok) {
-      scores = parseScores(await rScores.text());
-    }
-
-    // Carregar CSV de dados brutos homologados para exibir no painel
-    try {
-      const rRaw = await fetch('/data/gerados/municipios_rs_2017_homologado.csv');
-      if (rRaw.ok) {
-        rawData = parseRaw(await rRaw.text());
-        recalculateAllScores();
-      }
-    } catch (_) {}
-
-    refreshMetrics();
+    await loadYearScores(activeYear);
 
     // Carregar GeoJSON
     if (btnQuick) btnQuick.textContent = 'Carregando malha RS 2022 (24MB)...';
@@ -927,7 +957,7 @@ async function autoLoadAll() {
 
     if (btnQuick) {
       btnQuick.disabled = false;
-      btnQuick.textContent = '✓ Dados Oficiais Carregados (497)';
+      btnQuick.textContent = `✓ Dados Oficiais ${activeYear} Carregados (497)`;
     }
   } catch (err) {
     console.warn('Carregamento automático pendente ou offline:', err);
@@ -1040,9 +1070,10 @@ if (selModel) {
 
 const selYear = $('select-year');
 if (selYear) {
-  selYear.addEventListener('change', ev => {
+  selYear.addEventListener('change', async ev => {
     activeYear = ev.target.value;
     updateTriaxialSummary();
+    await loadYearScores(activeYear);
   });
 }
 

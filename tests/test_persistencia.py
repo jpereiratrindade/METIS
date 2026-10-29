@@ -141,9 +141,9 @@ class TestPersistenciaMetis(unittest.TestCase):
 
         self.assertEqual(len(divergencias), 0, f"Divergências encontradas nas observações: {divergencias[:5]}")
 
-        # Validar contagem formal de incompletos
-        self.cur.execute("SELECT COUNT(*) FROM observacoes_censitarias WHERE status_observacao = 'dados_incompletos';")
-        self.assertEqual(self.cur.fetchone()[0], 5, "Exatamente 5 municípios devem ter status 'dados_incompletos'")
+        # Validar contagem formal de incompletos para 2017
+        self.cur.execute("SELECT COUNT(*) FROM observacoes_censitarias WHERE ano_referencia = 2017 AND status_observacao = 'dados_incompletos';")
+        self.assertEqual(self.cur.fetchone()[0], 5, "Exatamente 5 municípios devem ter status 'dados_incompletos' em 2017")
 
     def test_04_resultados_v010_identidade_estrita(self):
         """Critério 2: Resultados de EPS-REF-001/0.1.0 no banco devem coincidir exatamente com CSV histórico."""
@@ -334,6 +334,106 @@ class TestPersistenciaMetis(unittest.TestCase):
         # Restaurar search_path e remover schema de teste
         self.cur.execute("SET search_path TO public;")
         self.cur.execute(f"DROP SCHEMA IF EXISTS {schema_teste} CASCADE;")
+
+    def test_09_observacoes_censitarias_2006_identidade_estrita(self):
+        """Critério 2 (Série Histórica): Dados do Censo 2006 no banco devem coincidir 100% com CSV homologado."""
+        csv_path = "data/gerados/municipios_rs_2006_homologado.csv"
+        with open(csv_path, "r", encoding="utf-8") as f:
+            csv_rows = {r["codigo_ibge"].strip(): r for r in csv.DictReader(f)}
+
+        self.assertEqual(len(csv_rows), 497)
+
+        self.cur.execute("""
+            SELECT 
+                codigo_ibge, ano_referencia,
+                area_estabelecimentos_ha, pastagem_natural_ha, mata_natural_ha, valor_producao_reais,
+                estabelecimentos_total, estabelecimentos_orientacao_tecnica, estabelecimentos_associados,
+                status_observacao
+            FROM observacoes_censitarias
+            WHERE fonte_id = 'IBGE_CENSO_AGRO_2006' AND ano_referencia = 2006;
+        """)
+        db_rows = {r[0]: r for r in self.cur.fetchall()}
+        self.assertEqual(len(db_rows), 497, "Deve haver 497 observações para o Censo 2006 no banco")
+
+        def _parse_int(val):
+            v = val.strip()
+            return int(v) if v else None
+
+        divergencias = []
+        for ibge, csv_r in csv_rows.items():
+            db_r = db_rows.get(ibge)
+            self.assertIsNotNone(db_r, f"Município {ibge} não encontrado no banco para 2006")
+
+            est_tot_csv = _parse_int(csv_r["estabelecimentos_total"]) or 0
+            est_ori_csv = _parse_int(csv_r["estabelecimentos_orientacao_tecnica"]) or 0
+            est_ass_csv = _parse_int(csv_r["estabelecimentos_associados"]) or 0
+
+            if db_r[6] != est_tot_csv or db_r[7] != est_ori_csv or db_r[8] != est_ass_csv:
+                divergencias.append(f"{ibge}: contagem de estabelecimentos 2006 diverge")
+
+            for idx, col_name in [(2, "area_estabelecimentos_ha"), (3, "pastagem_natural_ha"),
+                                  (4, "mata_natural_ha"), (5, "valor_producao_reais")]:
+                csv_val = csv_r[col_name].strip()
+                db_val = db_r[idx]
+                if csv_val == "":
+                    if db_val is not None:
+                        divergencias.append(f"{ibge} {col_name}: CSV é nulo mas banco tem {db_val}")
+                else:
+                    csv_f = float(csv_val)
+                    db_f = float(db_val)
+                    if abs(csv_f - db_f) > 1e-4:
+                        divergencias.append(f"{ibge} {col_name}: CSV={csv_f} != DB={db_f}")
+
+        self.assertEqual(len(divergencias), 0, f"Divergências nas observações 2006: {divergencias[:5]}")
+
+    def test_10_resultados_2006_identidade_estrita(self):
+        """Critério 2 (Série Histórica): Resultados do Censo 2006 no banco devem coincidir com RS_497_RESULTADOS_2006.csv."""
+        csv_path = "results/RS_497_RESULTADOS_2006.csv"
+        with open(csv_path, "r", encoding="utf-8") as f:
+            csv_rows = {r["codigo_ibge"].strip(): r for r in csv.DictReader(f)}
+
+        self.assertEqual(len(csv_rows), 497)
+
+        exec_id = "EXEC-EXP-EPS-REF-001-v0.2.0-2006"
+        self.cur.execute("""
+            SELECT 
+                codigo_ibge, densidade_monetaria_ha, ecologica_indice, ecologica_multiplicador,
+                produtiva, social, resiliencia, status
+            FROM resultados_experimentais
+            WHERE execucao_id = %s;
+        """, (exec_id,))
+        db_rows = {r[0]: r for r in self.cur.fetchall()}
+        self.assertEqual(len(db_rows), 497, "Deve haver 497 resultados para a execução 2006")
+
+        divergencias = []
+        for ibge, csv_r in csv_rows.items():
+            db_r = db_rows.get(ibge)
+            self.assertIsNotNone(db_r)
+
+            cols = [
+                ("densidade_monetaria_ha", 1),
+                ("ecologica_indice", 2),
+                ("ecologica_multiplicador", 3),
+                ("produtiva", 4),
+                ("social", 5),
+                ("resiliencia", 6),
+            ]
+            for col_name, db_idx in cols:
+                csv_val = csv_r[col_name].strip()
+                db_val = db_r[db_idx]
+                if csv_val == "":
+                    if db_val is not None:
+                        divergencias.append(f"{ibge} {col_name}: CSV vazio != DB={db_val}")
+                else:
+                    if db_val is None:
+                        divergencias.append(f"{ibge} {col_name}: CSV={csv_val} != DB None")
+                    else:
+                        csv_f = float(csv_val)
+                        db_f = float(db_val)
+                        if abs(csv_f - db_f) > 1e-4:
+                            divergencias.append(f"{ibge} {col_name}: CSV={csv_f:.4f} != DB={db_f:.4f}")
+
+        self.assertEqual(len(divergencias), 0, f"Divergências na execução 2006: {divergencias[:5]}")
 
 if __name__ == "__main__":
     unittest.main()

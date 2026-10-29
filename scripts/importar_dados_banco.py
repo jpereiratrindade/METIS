@@ -53,31 +53,41 @@ def checar_se_ja_populado(cur) -> bool:
         cur.execute("SELECT COUNT(*) FROM municipios;")
         total_mun = cur.fetchone()[0]
         cur.execute("SELECT COUNT(*) FROM resultados_experimentais WHERE execucao_id = 'EXEC-HISTORICA-EPS-REF-001-v0.1.0-2017';")
-        total_res = cur.fetchone()[0]
-        return total_mun == 497 and total_res == 497
+        total_res_2017 = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM resultados_experimentais WHERE execucao_id = 'EXEC-EXP-EPS-REF-001-v0.2.0-2006';")
+        total_res_2006 = cur.fetchone()[0]
+        return total_mun == 497 and total_res_2017 == 497 and total_res_2006 == 497
     except Exception:
         return False
 
 def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
-    print("=== MÉTIS: Iniciando Importação Científica Versionada ===")
+    print("=== MÉTIS: Iniciando Importação Científica Versionada (2017 e 2006) ===")
     print(f"Destino: {db_url}")
 
     with psycopg.connect(db_url, autocommit=False) as conn:
         with conn.cursor() as cur:
             if not forcar and checar_se_ja_populado(cur):
-                print("[OK] Base de dados já populada e íntegra (497 municípios).")
+                print("[OK] Base de dados já populada e íntegra (497 municípios, séries 2017 e 2006).")
                 print("     Importação ignorada para agilidade. Use '--force' para reprocessar.\n")
                 return 0
 
     # Arquivos obrigatórios
-    f_censo_csv = "data/gerados/municipios_rs_2017_homologado.csv"
+    f_censo_2017_csv = "data/gerados/municipios_rs_2017_homologado.csv"
+    f_censo_2006_csv = "data/gerados/municipios_rs_2006_homologado.csv"
     f_malha_geo = "data/gerados/municipios_rs_2022.geojson"
     f_res_v010_csv = "results/historico/RS_497_RESULTADOS_v0.1.0_percentil.csv"
     f_res_v010_man = "results/historico/RS_497_RESULTADOS_v0.1.0_percentil.manifest.json"
     f_res_v020_csv = "results/RS_497_RESULTADOS.csv"
     f_res_v020_man = "results/RS_497_RESULTADOS.manifest.json"
+    f_res_2006_csv = "results/RS_497_RESULTADOS_2006.csv"
+    f_res_2006_man = "results/RS_497_RESULTADOS_2006.manifest.json"
 
-    arquivos = [f_censo_csv, f_malha_geo, f_res_v010_csv, f_res_v010_man, f_res_v020_csv, f_res_v020_man]
+    arquivos = [
+        f_censo_2017_csv, f_censo_2006_csv, f_malha_geo,
+        f_res_v010_csv, f_res_v010_man,
+        f_res_v020_csv, f_res_v020_man,
+        f_res_2006_csv, f_res_2006_man
+    ]
     for f in arquivos:
         if not os.path.isfile(f):
             print(f"ERRO: Arquivo obrigatório não encontrado: {f}", file=sys.stderr)
@@ -98,6 +108,7 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                 INSERT INTO fontes_dados (id, nome, instituicao, ano_referencia, tabelas_origem, arquivo_origem, sha256_origem, descricao)
                 VALUES 
                 (%s, %s, %s, %s, %s, %s, %s, %s),
+                (%s, %s, %s, %s, %s, %s, %s, %s),
                 (%s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (id) DO UPDATE SET
                     nome = EXCLUDED.nome,
@@ -110,10 +121,19 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                 "IBGE",
                 2017,
                 ["6881", "6898", "6780", "6773"],
-                f_censo_csv,
-                hashes[f_censo_csv],
+                f_censo_2017_csv,
+                hashes[f_censo_2017_csv],
                 "Dados estatísticos censitários agregados em nível municipal sobre uso da terra, produção e cooperativismo.",
                 
+                "IBGE_CENSO_AGRO_2006",
+                "IBGE - Censo Agropecuário 2006",
+                "IBGE",
+                2006,
+                ["1011", "836", "1016"],
+                f_censo_2006_csv,
+                hashes[f_censo_2006_csv],
+                "Dados estatísticos censitários do Censo Agropecuário 2006 para análise multitemporal e trajetórias históricas.",
+
                 "IBGE_MALHA_2022",
                 "IBGE - Malha Municipal Digital do Brasil 2022",
                 "IBGE",
@@ -124,7 +144,7 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                 "Limites político-administrativos vetoriais dos municípios do Rio Grande do Sul (UF 43)."
             ))
             conn.commit()
-            print("  -> Fontes cadastradas.")
+            print("  -> Fontes cadastradas (2017, 2006 e Malha 2022).")
 
             # -------------------------------------------------------------
             # 2. Importar Municípios e Geometrias PostGIS
@@ -162,55 +182,58 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
             print(f"  -> Municípios cadastrados/atualizados: {municipios_inseridos}")
 
             # -------------------------------------------------------------
-            # 3. Importar Observações Censitárias Brutas
+            # 3. Importar Observações Censitárias Brutas (2017 e 2006)
             # -------------------------------------------------------------
-            print("\n3. Importando observações censitárias (2017)...")
-            obs_inseridas = 0
-            obs_incompletas = 0
+            print("\n3. Importando observações censitárias (2017 e 2006)...")
+            for ano_csv, f_csv, f_id in [
+                (2017, f_censo_2017_csv, "IBGE_CENSO_AGRO_2017"),
+                (2006, f_censo_2006_csv, "IBGE_CENSO_AGRO_2006")
+            ]:
+                obs_inseridas = 0
+                obs_incompletas = 0
+                with open(f_csv, "r", encoding="utf-8") as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        ibge = row["codigo_ibge"].strip()
+                        ano = int(row["ano_referencia"])
+                        area_est = float_ou_none(row["area_estabelecimentos_ha"])
+                        past_nat = float_ou_none(row["pastagem_natural_ha"])
+                        mata_nat = float_ou_none(row["mata_natural_ha"])
+                        val_prod = float_ou_none(row["valor_producao_reais"])
+                        est_tot = int_ou_none(row["estabelecimentos_total"]) or 0
+                        est_ori = int_ou_none(row["estabelecimentos_orientacao_tecnica"]) or 0
+                        est_ass = int_ou_none(row["estabelecimentos_associados"]) or 0
 
-            with open(f_censo_csv, "r", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    ibge = row["codigo_ibge"].strip()
-                    ano = int(row["ano_referencia"])
-                    area_est = float_ou_none(row["area_estabelecimentos_ha"])
-                    past_nat = float_ou_none(row["pastagem_natural_ha"])
-                    mata_nat = float_ou_none(row["mata_natural_ha"])
-                    val_prod = float_ou_none(row["valor_producao_reais"])
-                    est_tot = int_ou_none(row["estabelecimentos_total"]) or 0
-                    est_ori = int_ou_none(row["estabelecimentos_orientacao_tecnica"]) or 0
-                    est_ass = int_ou_none(row["estabelecimentos_associados"]) or 0
+                        incompleto = (area_est is None or past_nat is None or mata_nat is None or val_prod is None)
+                        status_obs = "dados_incompletos" if incompleto else "valido"
+                        if incompleto:
+                            obs_incompletas += 1
 
-                    incompleto = (area_est is None or past_nat is None or mata_nat is None or val_prod is None)
-                    status_obs = "dados_incompletos" if incompleto else "valido"
-                    if incompleto:
-                        obs_incompletas += 1
+                        cur.execute("""
+                            INSERT INTO observacoes_censitarias (
+                                codigo_ibge, fonte_id, ano_referencia,
+                                area_estabelecimentos_ha, pastagem_natural_ha, mata_natural_ha, valor_producao_reais,
+                                estabelecimentos_total, estabelecimentos_orientacao_tecnica, estabelecimentos_associados,
+                                status_observacao
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            ON CONFLICT (codigo_ibge, fonte_id, ano_referencia) DO UPDATE SET
+                                area_estabelecimentos_ha = EXCLUDED.area_estabelecimentos_ha,
+                                pastagem_natural_ha = EXCLUDED.pastagem_natural_ha,
+                                mata_natural_ha = EXCLUDED.mata_natural_ha,
+                                valor_producao_reais = EXCLUDED.valor_producao_reais,
+                                estabelecimentos_total = EXCLUDED.estabelecimentos_total,
+                                estabelecimentos_orientacao_tecnica = EXCLUDED.estabelecimentos_orientacao_tecnica,
+                                estabelecimentos_associados = EXCLUDED.estabelecimentos_associados,
+                                status_observacao = EXCLUDED.status_observacao;
+                        """, (
+                            ibge, f_id, ano,
+                            area_est, past_nat, mata_nat, val_prod,
+                            est_tot, est_ori, est_ass, status_obs
+                        ))
+                        obs_inseridas += 1
 
-                    cur.execute("""
-                        INSERT INTO observacoes_censitarias (
-                            codigo_ibge, fonte_id, ano_referencia,
-                            area_estabelecimentos_ha, pastagem_natural_ha, mata_natural_ha, valor_producao_reais,
-                            estabelecimentos_total, estabelecimentos_orientacao_tecnica, estabelecimentos_associados,
-                            status_observacao
-                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (codigo_ibge, fonte_id, ano_referencia) DO UPDATE SET
-                            area_estabelecimentos_ha = EXCLUDED.area_estabelecimentos_ha,
-                            pastagem_natural_ha = EXCLUDED.pastagem_natural_ha,
-                            mata_natural_ha = EXCLUDED.mata_natural_ha,
-                            valor_producao_reais = EXCLUDED.valor_producao_reais,
-                            estabelecimentos_total = EXCLUDED.estabelecimentos_total,
-                            estabelecimentos_orientacao_tecnica = EXCLUDED.estabelecimentos_orientacao_tecnica,
-                            estabelecimentos_associados = EXCLUDED.estabelecimentos_associados,
-                            status_observacao = EXCLUDED.status_observacao;
-                    """, (
-                        ibge, "IBGE_CENSO_AGRO_2017", ano,
-                        area_est, past_nat, mata_nat, val_prod,
-                        est_tot, est_ori, est_ass, status_obs
-                    ))
-                    obs_inseridas += 1
-
-            conn.commit()
-            print(f"  -> Observações inseridas: {obs_inseridas} (Válidas: {obs_inseridas - obs_incompletas}, Incompletas: {obs_incompletas})")
+                conn.commit()
+                print(f"  -> Observações {ano} inseridas: {obs_inseridas} (Válidas: {obs_inseridas - obs_incompletas}, Incompletas: {obs_incompletas})")
 
             # -------------------------------------------------------------
             # 4. Registrar Modelos Formais
@@ -431,7 +454,79 @@ def importar_todos(db_url: str = DEFAULT_DB_URL, forcar: bool = False) -> int:
                     res_v020_count += 1
 
             conn.commit()
-            print(f"  -> Resultados da execução vigente importados: {res_v020_count}")
+            print(f"  -> Resultados da execução vigente (2017) importados: {res_v020_count}")
+
+            # -------------------------------------------------------------
+            # 7. Registrar Execução e Importar Resultados: EPS-REF-001 (Censo 2006)
+            # -------------------------------------------------------------
+            print("\n7. Importando execução histórica EPS-REF-001 (Censo 2006)...")
+            exec_id_2006 = "EXEC-EXP-EPS-REF-001-v0.2.0-2006"
+
+            with open(f_res_2006_man, "r", encoding="utf-8") as f:
+                man_2006 = json.load(f)
+
+            cur.execute("""
+                INSERT INTO execucoes_experimentais (
+                    id, modelo_id, modelo_versao, fonte_id, ano_referencia,
+                    trajetoria, status_execucao, parametros, metadados,
+                    arquivo_saida, sha256_saida, arquivo_manifesto, sha256_manifesto
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO UPDATE SET
+                    status_execucao = EXCLUDED.status_execucao,
+                    parametros = EXCLUDED.parametros,
+                    metadados = EXCLUDED.metadados,
+                    sha256_saida = EXCLUDED.sha256_saida,
+                    sha256_manifesto = EXCLUDED.sha256_manifesto;
+            """, (
+                exec_id_2006,
+                "EPS-REF-001",
+                "0.2.0",
+                "IBGE_CENSO_AGRO_2006",
+                2006,
+                man_2006.get("trajetoria", "historica"),
+                man_2006.get("status", "CALCULADO_PENDENTE_AUDITORIA_FONTE"),
+                json.dumps(man_2006.get("parametrizacao", {})),
+                json.dumps(man_2006),
+                f_res_2006_csv,
+                hashes[f_res_2006_csv],
+                f_res_2006_man,
+                hashes[f_res_2006_man]
+            ))
+
+            res_2006_count = 0
+            with open(f_res_2006_csv, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    ibge = row["codigo_ibge"].strip()
+                    dens = float_ou_none(row.get("densidade_monetaria_ha"))
+                    eco_ind = float_ou_none(row.get("ecologica_indice"))
+                    eco_mul = float_ou_none(row.get("ecologica_multiplicador"))
+                    prod = float_ou_none(row.get("produtiva"))
+                    soc = float_ou_none(row.get("social"))
+                    res = float_ou_none(row.get("resiliencia"))
+                    status = row.get("status", "experimental").strip()
+
+                    cur.execute("""
+                        INSERT INTO resultados_experimentais (
+                            execucao_id, codigo_ibge, densidade_monetaria_ha,
+                            ecologica_indice, ecologica_multiplicador, produtiva, social, resiliencia, status
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (execucao_id, codigo_ibge) DO UPDATE SET
+                            densidade_monetaria_ha = EXCLUDED.densidade_monetaria_ha,
+                            ecologica_indice = EXCLUDED.ecologica_indice,
+                            ecologica_multiplicador = EXCLUDED.ecologica_multiplicador,
+                            produtiva = EXCLUDED.produtiva,
+                            social = EXCLUDED.social,
+                            resiliencia = EXCLUDED.resiliencia,
+                            status = EXCLUDED.status;
+                    """, (
+                        exec_id_2006, ibge, dens,
+                        eco_ind, eco_mul, prod, soc, res, status
+                    ))
+                    res_2006_count += 1
+
+            conn.commit()
+            print(f"  -> Resultados da série 2006 importados: {res_2006_count}")
 
     print("\n=== Importação Concluída com Sucesso! ===")
     return 0

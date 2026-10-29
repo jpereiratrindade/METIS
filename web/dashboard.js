@@ -403,35 +403,60 @@ function exportCSV() {
   a.click();
 }
 
-// Inicialização
-async function initDashboard() {
+// Popular dropdown de municípios
+function populateMunicipioDropdown() {
+  const selMun = $('select-municipio');
+  if (selMun && rawData.size > 0) {
+    selMun.innerHTML = '';
+    const list = [...rawData.entries()].map(([code, d]) => ({
+      code,
+      nome: d.municipio || scores.get(code)?.municipio || code
+    })).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+    for (const item of list) {
+      const opt = document.createElement('option');
+      opt.value = item.code;
+      opt.textContent = `${item.nome} (${item.code})`;
+      if (item.code === currentCode) opt.selected = true;
+      selMun.appendChild(opt);
+    }
+  }
+}
+
+// Carregar dados de ano específico para o Dashboard
+async function loadDashboardYear(year) {
+  const scoresUrl = year === '2006' 
+    ? '/results/RS_497_RESULTADOS_2006.csv'
+    : '/results/RS_497_RESULTADOS.csv';
+  const rawUrl = year === '2006'
+    ? '/data/gerados/municipios_rs_2006_homologado.csv'
+    : '/data/gerados/municipios_rs_2017_homologado.csv';
+
   try {
-    // 1. Carregar CSVs via fetch
     const [rScores, rRaw] = await Promise.all([
-      fetch('/results/RS_497_RESULTADOS.csv'),
-      fetch('/data/gerados/municipios_rs_2017_homologado.csv')
+      fetch(scoresUrl),
+      fetch(rawUrl)
     ]);
 
     if (rScores.ok) scores = parseScores(await rScores.text());
     if (rRaw.ok) rawData = parseRaw(await rRaw.text());
 
-    // 2. Popular o dropdown de municípios
+    populateMunicipioDropdown();
+    renderDashboard();
+  } catch (err) {
+    console.error('Erro ao carregar dados do ano no dashboard:', err);
+  }
+}
+
+// Inicialização
+async function initDashboard() {
+  try {
+    // 1. Carregar CSVs via fetch
+    await loadDashboardYear(activeYear);
+
+    // 2. Event listener do dropdown de municípios
     const selMun = $('select-municipio');
-    if (selMun && rawData.size > 0) {
-      selMun.innerHTML = '';
-      const list = [...rawData.entries()].map(([code, d]) => ({
-        code,
-        nome: d.municipio || scores.get(code)?.municipio || code
-      })).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-
-      for (const item of list) {
-        const opt = document.createElement('option');
-        opt.value = item.code;
-        opt.textContent = `${item.nome} (${item.code})`;
-        if (item.code === currentCode) opt.selected = true;
-        selMun.appendChild(opt);
-      }
-
+    if (selMun) {
       selMun.addEventListener('change', e => {
         if (e.target.value) {
           currentCode = e.target.value;
@@ -479,10 +504,10 @@ async function initDashboard() {
       renderDashboard();
     });
 
-    $('dash-select-year')?.addEventListener('change', e => {
+    $('dash-select-year')?.addEventListener('change', async e => {
       activeYear = e.target.value;
       updateTriaxialBadge();
-      renderDashboard();
+      await loadDashboardYear(activeYear);
     });
 
     $('dash-select-trajectory')?.addEventListener('change', e => {

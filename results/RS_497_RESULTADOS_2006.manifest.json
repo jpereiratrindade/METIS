@@ -1,0 +1,17 @@
+{
+  "model_id": "EPS-REF-001",
+  "status": "CALCULADO_PENDENTE_AUDITORIA_FONTE",
+  "referencia": "2006",
+  "trajetoria": "experimental",
+  "universo": "estabelecimentos agropecuarios, nao todo o municipio",
+  "entrada": "data/gerados/municipios_rs_2006_homologado.csv",
+  "municipios": 497,
+  "validos": 493,
+  "incompletos": 4,
+  "inconsistentes": 0,
+  "parametrizacao": {
+    "modelo": "EPS-REF-001",
+    "k_produtiva": 1500.00
+  },
+  "aviso": "Metodologia METIS-DIR-MULTI-002: laboratorio multimodelo. Resiliencia nao validada empiricamente."
+}
