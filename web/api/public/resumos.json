@@ -1,0 +1,28 @@
+{
+  "versao_api": "0.1.0",
+  "data_atualizacao": "2026-10-29T07:30:00-03:00",
+  "ecossistema": "SisTer",
+  "resumos": [
+    {
+      "id": "RES-001",
+      "topico": "O que investiga o MÉTIS?",
+      "texto_acessivel": "O MÉTIS é um laboratório computacional que analisa como a preservação de campos e matas nativas (Ecologia), a receita da produção agropecuária (Produção) e o cooperativismo com orientação técnica (Sociedade) se combinam para dar a cada município do Rio Grande do Sul capacidade de resistir e se adaptar a perturbações.",
+      "publico_alvo": "Geral e Totens Digitais",
+      "versao_metis": "0.1.0"
+    },
+    {
+      "id": "RES-002",
+      "topico": "Por que o MÉTIS não ranqueia municípios?",
+      "texto_acessivel": "Cada município possui uma trajetória ambiental, social e econômica única. O MÉTIS não cria um pódio de quem é 'melhor' ou 'pior'. Ele funciona como um microscópio para cada território entender seus pontos fortes e suas vulnerabilidades através de múltiplos modelos matemáticos abertos.",
+      "publico_alvo": "Geral e Totens Digitais",
+      "versao_metis": "0.1.0"
+    },
+    {
+      "id": "RES-003",
+      "topico": "Como realizar um experimento?",
+      "texto_acessivel": "Basta acessar o Dashboard Analítico, escolher um município gaúcho e alternar entre os modelos disponíveis ou alterar parâmetros como a escala produtiva. O sistema recalcula os índices instantaneamente e permite baixar o manifesto científico completo.",
+      "publico_alvo": "Pesquisadores e Estudantes",
+      "versao_metis": "0.1.0"
+    }
+  ]
+}

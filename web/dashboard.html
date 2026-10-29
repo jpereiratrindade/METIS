@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#071e38"/>
+  <meta name="description" content="MÉTIS — Dashboard analítico independente de mapa para exploração de variáveis, calibração e confronto de modelos"/>
+  <title>MÉTIS · Dashboard Analítico &amp; Experimentação</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    /* ESTILOS ESPECÍFICOS DO DASHBOARD ANALÍTICO */
+    .dash-selector-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    }
+    .dash-selector-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      align-items: center;
+    }
+    .dash-input-wrap {
+      position: relative;
+    }
+    .dash-select-input {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      background: #f8fafc;
+      color: var(--navy);
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+    .dash-select-input:focus {
+      outline: none;
+      border-color: var(--teal);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(8, 127, 140, 0.15);
+    }
+    .dash-quick-pills {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .dash-quick-btn {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .dash-quick-btn:hover {
+      background: var(--teal);
+      color: #fff;
+      border-color: var(--teal);
+    }
+    .dash-results-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+    .dash-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 24px 28px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .dash-card-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--navy);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .dash-scores-deck {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .dash-score-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .dash-score-label {
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .dash-score-val {
+      font-size: 1.6rem;
+      font-weight: 850;
+      font-family: var(--font-mono);
+      color: var(--navy);
+    }
+    .dash-score-meta {
+      font-size: 0.70rem;
+      color: #64748b;
+    }
+    /* Sliders de Calibração */
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .slider-row-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #334155;
+    }
+    .slider-val-tag {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--teal);
+      font-weight: 800;
+    }
+    .dash-slider {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: #e2e8f0;
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+    .dash-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--teal);
+      border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+    .dash-export-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-top: 8px;
+    }
+    .dash-btn-export {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 16px;
+      font-size: 0.82rem;
+      font-weight: 750;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .dash-btn-export:hover {
+      background: #1e3a5f;
+      transform: translateY(-1px);
+    }
+    .dash-btn-export.secondary {
+      background: #ffffff;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+    }
+    .dash-btn-export.secondary:hover {
+      background: #f8fafc;
+      color: var(--navy);
+      border-color: #94a3b8;
+    }
+    @media (max-width: 990px) {
+      .dash-selector-grid {
+        grid-template-columns: 1fr;
+      }
+      .dash-results-grid {
+        grid-template-columns: 1fr;
+      }
+      .dash-scores-deck {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR IDENTIDADE MORFO / SISTER-GIT -->
+  <aside class="sidebar">
+    <a class="brand" href="index.html" aria-label="MÉTIS Início">
+      <div class="brand-logo-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/>
+          <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/>
+          <circle cx="9" cy="8" r="0.75" fill="currentColor"/>
+          <circle cx="15" cy="8" r="0.75" fill="currentColor"/>
+          <circle cx="8" cy="14" r="0.75" fill="currentColor"/>
+          <circle cx="16" cy="14" r="0.75" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="brand-words">
+        <span>Ecossistema SisTer</span>
+        <strong>MÉTIS</strong>
+      </div>
+    </a>
+    <p class="sidebar-subtitle">Inteligência Adaptativa &amp; Epistêmica</p>
+
+    <div class="navlabel">ESPAÇOS DE TRABALHO</div>
+    <nav id="sidebarNav" aria-label="Navegação">
+      <a class="nav-item" href="index.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </span>
+        <span class="navtxt">Apresentação &amp; Notícias</span>
+        <span class="navtag">Hub</span>
+      </a>
+      <a class="nav-item" href="mapa.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+            <line x1="8" y1="2" x2="8" y2="18"/>
+            <line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
+        </span>
+        <span class="navtxt">Visão Territorial</span>
+        <span class="navtag">RS 497</span>
+      </a>
+      <a class="nav-item active" href="dashboard.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+        </span>
+        <span class="navtxt">Dashboard Analítico</span>
+        <span class="navtag">Sem Mapa</span>
+      </a>
+      <a class="nav-item" href="modelos.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </span>
+        <span class="navtxt">Modelos &amp; Algoritmos</span>
+        <span class="navtag">Catálogo</span>
+      </a>
+    </nav>
+
+    <div class="navlabel">ACESSO PÚBLICO ABERTO</div>
+    <div class="sidebar-model-nav">
+      <a class="sidebar-doc-link" href="api/public/achados.json" target="_blank">
+        <span>📄 API: Achados Científicos</span>
+      </a>
+      <a class="sidebar-doc-link" href="api/public/noticias.json" target="_blank">
+        <span>📰 API: Notícias do Lab</span>
+      </a>
+      <a class="sidebar-doc-link" href="api/public/modelos.json" target="_blank">
+        <span>📐 API: Metadados Modelos</span>
+      </a>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="side-note">
+        <small>PRINCÍPIO DE DESENVOLVIMENTO</small>
+        <strong>Sempre pronto.<br>Sempre incompleto.</strong>
+        <p>Identidade e evolução documental sob proveniência Git do ecossistema SisTer.</p>
+      </div>
+
+      <div class="sidebar-auth">
+        <div class="auth-badge-status">
+          <span class="dot-auth" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+          <span>Acesso Aberto Público</span>
+        </div>
+        <span class="btn-auth-action">GPL v3.0</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- WORKSPACE PRINCIPAL -->
+  <div class="workspace">
+    <!-- TOPBAR ESTILO SISTER-GIT -->
+    <header class="topbar">
+      <div class="crumb">
+        <a href="index.html" class="crumb-root">MÉTIS</a>
+        <span class="crumb-slash">/</span>
+        <span>Experiência Territorial 001</span>
+        <span class="crumb-slash">/</span>
+        <strong>Dashboard Analítico</strong>
+      </div>
+
+      <div class="topbar-search">
+        <span class="search-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </span>
+        <input type="text" id="dash-search-input" placeholder="Buscar município (ex: Bento Gonçalves, Alegrete, Passo Fundo)..." autocomplete="off"/>
+      </div>
+
+      <div class="topbar-right">
+        <div class="top-status">
+          <span class="status-pulse"></span>
+          <span>Acesso Público Seguro • C++26 Nativo</span>
+        </div>
+
+        <div class="user-badge-top" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3);">
+          <span class="user-avatar-tiny" style="background: #10b981;">OPEN</span>
+          <span class="topbar-user-name">Visitante Científico</span>
+          <span class="user-role-pill" style="background: #10b981;">PÚBLICO</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL (DENTRO DE MAIN #APP) -->
+    <main id="app">
+      <!-- HERO DO DASHBOARD -->
+      <section class="hero-editorial" style="margin-bottom: 24px;">
+        <div class="hero-left">
+          <div class="hero-kicker-bar">
+            <span class="hero-kicker">ECOSSISTEMA SISTER · INVESTIGAÇÃO ANALÍTICA</span>
+            <span class="hero-tag">• Sem Mapa Cartográfico</span>
+          </div>
+          <h1 class="hero-title">Dashboard Analítico Municipal</h1>
+          <div class="hero-subtitle">Exploração de Dados, Decomposição das Variáveis e Simulação Paramétrica em Tempo Real</div>
+          <p class="hero-desc">
+            Investigue as dimensões ecológica, produtiva e social de qualquer município gaúcho com rapidez e profundidade. Ajuste parâmetros de calibração, confronte modelos concorrentes e exporte manifestos científicos reproduzíveis.
+          </p>
+          <div class="hero-pills">
+            <span class="hero-pill accent" id="pill-selected-mun">Selecione um município</span>
+            <span class="hero-pill" id="pill-active-model">EPS-REF-001</span>
+            <span class="hero-pill">497 Municípios Carregados</span>
+            <span class="hero-pill">Licença GPL v3.0</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SELETOR DE MUNICÍPIO -->
+      <section class="dash-selector-card">
+        <div class="dash-selector-grid">
+          <div>
+            <label for="select-municipio" style="display: block; font-size: 0.82rem; font-weight: 800; color: var(--navy); margin-bottom: 8px;">
+              📍 ESCOLHA O MUNICÍPIO PARA INVESTIGAÇÃO INDIVIDUAL:
+            </label>
+            <div class="dash-input-wrap">
+              <select id="select-municipio" class="dash-select-input">
+                <option value="">Carregando lista dos 497 municípios...</option>
+              </select>
+            </div>
+            <div class="dash-quick-pills">
+              <span style="font-size: 0.72rem; color: #64748b; font-weight: 700; align-self: center;">Sugestões de contraste:</span>
+              <button type="button" class="dash-quick-btn" data-code="4302105">Bento Gonçalves</button>
+              <button type="button" class="dash-quick-btn" data-code="4300406">Alegrete</button>
+              <button type="button" class="dash-quick-btn" data-code="4314100">Passo Fundo</button>
+              <button type="button" class="dash-quick-btn" data-code="4316907">Santa Maria</button>
+              <button type="button" class="dash-quick-btn" data-code="4322400">Uruguaiana</button>
+              <button type="button" class="dash-quick-btn" data-code="4303905">Campo Bom</button>
+            </div>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <div style="font-size: 0.70rem; font-weight: 800; color: var(--teal); text-transform: uppercase;">POSTURA EPISTÊMICA</div>
+            <div style="font-size: 0.80rem; color: #475569; margin-top: 4px; line-height: 1.45;">
+              O MÉTIS não ranqueia municípios. A análise destina-se a investigar relações internas entre conservação, produção e organização social.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BANCADA EPISTÊMICA TRIAXIAL -->
+      <section class="triaxial-bench-card" style="margin-bottom: 24px;" aria-label="Controles Epistêmicos">
+        <div class="triaxial-header">
+          <div class="triaxial-titles">
+            <span class="triaxial-kicker">LABORATÓRIO MULTIMODELO &amp; MULTITEMPORAL</span>
+            <h3>Bancada de Investigação Epistêmica</h3>
+          </div>
+          <div class="triaxial-header-actions">
+            <a href="modelos.html" class="triaxial-model-link" title="Consultar formulação matemática detalhada">
+              <span>📖 Guia dos Modelos</span>
+            </a>
+            <div class="active-config-pill" id="dash-config-badge">
+              <span class="pulse-green"></span>
+              <strong id="badge-dash-config">EPS-REF-001 · 2017 · Trajetória Experimental</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="triaxial-controls-grid">
+          <!-- EIXO 1: MODELO -->
+          <div class="triaxial-field">
+            <label for="dash-select-model" class="triaxial-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              <span>Eixo 1 · Modelo Teórico</span>
+            </label>
+            <select id="dash-select-model" class="triaxial-select">
+              <option value="EPS-REF-001" selected>EPS-REF-001 — Referência E-P-S (q10/q90)</option>
+              <option value="EPS-EXP-002">EPS-EXP-002 — Aditivo Linear Ponderado</option>
+              <option value="EPS-EXP-003">EPS-EXP-003 — Interativo (Acoplamento Não-Linear)</option>
+              <option value="EPS-EXP-004">EPS-EXP-004 — Autônomo Municipal (DIR-MUN-001)</option>
+            </select>
+            <span class="triaxial-hint" id="dash-model-hint">Formulação clássica preservada como linha de base.</span>
+          </div>
+
+          <!-- EIXO 2: ANO -->
+          <div class="triaxial-field">
+            <label for="dash-select-year" class="triaxial-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>Eixo 2 · Ano de Referência</span>
+            </label>
+            <select id="dash-select-year" class="triaxial-select">
+              <option value="2017" selected>2017 — Censo Agropecuário Oficial (IBGE)</option>
+              <option value="2006" disabled>2006 — Série Histórica (Em auditoria)</option>
+            </select>
+            <span class="triaxial-hint">Base censitária oficial homologada (497 municípios).</span>
+          </div>
+
+          <!-- EIXO 3: TRAJETÓRIA -->
+          <div class="triaxial-field">
+            <label for="dash-select-trajectory" class="triaxial-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <span>Eixo 3 · Tipo de Trajetória</span>
+            </label>
+            <select id="dash-select-trajectory" class="triaxial-select">
+              <option value="experimental" selected>Experimental — Calibração ativa e sensibilidade</option>
+              <option value="historica">Histórica — Leitura estrita de dados consolidados</option>
+            </select>
+            <span class="triaxial-hint">Permite alterar parâmetros k, pesos e sinergias em tempo real.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULTADOS E INDICADORES DO MUNICÍPIO -->
+      <div class="dash-results-grid">
+        <!-- COLUNA 1: ESCORES DO MODELO ATIVO -->
+        <article class="dash-card">
+          <div class="dash-card-title">
+            <span id="card-mun-title">Resultados do Município</span>
+            <span class="score-tag" id="tag-active-model">EPS-REF-001</span>
+          </div>
+
+          <div class="dash-scores-deck">
+            <div class="dash-score-box">
+              <span class="dash-score-label" style="color: var(--teal);">Resiliência (R)</span>
+              <span class="dash-score-val" id="dash-val-r">—</span>
+              <span class="dash-score-meta">Escore Relacional</span>
+            </div>
+            <div class="dash-score-box">
+              <span class="dash-score-label" style="color: #14805e;">Ecológico (E)</span>
+              <span class="dash-score-val" id="dash-val-e">—</span>
+              <span class="dash-score-meta">Multiplicador</span>
+            </div>
+            <div class="dash-score-box">
+              <span class="dash-score-label" style="color: #f59e0b;">Produtivo (P)</span>
+              <span class="dash-score-val" id="dash-val-p">—</span>
+              <span class="dash-score-meta">Densidade</span>
+            </div>
+            <div class="dash-score-box">
+              <span class="dash-score-label" style="color: #8b5cf6;">Social (S)</span>
+              <span class="dash-score-val" id="dash-val-s">—</span>
+              <span class="dash-score-meta">Coesão</span>
+            </div>
+          </div>
+
+          <!-- BARRAS COMPARATIVAS DE INTENSIDADE -->
+          <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 4px;">
+            <div class="breakdown-item">
+              <div class="breakdown-item-header">
+                <span class="breakdown-item-label">Resiliência Calculada (R)</span>
+                <span class="breakdown-item-val" id="b-text-r">—</span>
+              </div>
+              <div class="breakdown-bar"><div class="breakdown-bar-fill" id="b-fill-r" style="width: 0%; background: #087f8c;"></div></div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-item-header">
+                <span class="breakdown-item-label">Componente Ecológico (E)</span>
+                <span class="breakdown-item-val" id="b-text-e">—</span>
+              </div>
+              <div class="breakdown-bar"><div class="breakdown-bar-fill" id="b-fill-e" style="width: 0%; background: #14805e;"></div></div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-item-header">
+                <span class="breakdown-item-label">Componente Produtivo (P)</span>
+                <span class="breakdown-item-val" id="b-text-p">—</span>
+              </div>
+              <div class="breakdown-bar"><div class="breakdown-bar-fill" id="b-fill-p" style="width: 0%; background: #f59e0b;"></div></div>
+            </div>
+            <div class="breakdown-item">
+              <div class="breakdown-item-header">
+                <span class="breakdown-item-label">Componente Social (S)</span>
+                <span class="breakdown-item-val" id="b-text-s">—</span>
+              </div>
+              <div class="breakdown-bar"><div class="breakdown-bar-fill" id="b-fill-s" style="width: 0%; background: #8b5cf6;"></div></div>
+            </div>
+          </div>
+
+          <!-- EXPORTAÇÃO CIENTÍFICA -->
+          <div class="dash-export-bar">
+            <div>
+              <strong style="font-size: 0.82rem; color: var(--navy); display: block;">Exportar Dados do Experimento</strong>
+              <small style="font-size: 0.70rem; color: #64748b;">Manifesto reproduzível com proveniência e parâmetros</small>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button type="button" id="btn-export-json" class="dash-btn-export">
+                <span>Baixar JSON</span>
+              </button>
+              <button type="button" id="btn-export-csv" class="dash-btn-export secondary">
+                <span>Baixar CSV</span>
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <!-- COLUNA 2: CALIBRAÇÃO EXPERIMENTAL EM TEMPO REAL -->
+        <article class="dash-card">
+          <div class="dash-card-title">
+            <span>Calibração Experimental em Tempo Real</span>
+            <span class="score-tag" style="background: #e0f2fe; color: #0369a1;">Sensibilidade</span>
+          </div>
+          <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.45;">
+            Altere os parâmetros do laboratório para avaliar a robustez das hipóteses para o município selecionado:
+          </p>
+
+          <div class="slider-group">
+            <div class="slider-row">
+              <div class="slider-row-header">
+                <span>Parâmetro k de Produtividade (Hill):</span>
+                <span class="slider-val-tag" id="lbl-param-k">1500 R$/ha</span>
+              </div>
+              <input type="range" id="slider-k" class="dash-slider" min="300" max="4000" step="50" value="1500"/>
+              <small style="font-size: 0.70rem; color: #94a3b8;">Determina a densidade monetária onde a produtividade atinge 50% do máximo.</small>
+            </div>
+
+            <div class="slider-row" id="group-pesos">
+              <div class="slider-row-header">
+                <span>Peso Ecológico (w_e) no Modelo Aditivo:</span>
+                <span class="slider-val-tag" id="lbl-param-we">0,33</span>
+              </div>
+              <input type="range" id="slider-we" class="dash-slider" min="0.10" max="0.80" step="0.05" value="0.33"/>
+            </div>
+
+            <div class="slider-row" id="group-sinergia">
+              <div class="slider-row-header">
+                <span>Intensidade de Sinergia (λ) no Modelo Interativo:</span>
+                <span class="slider-val-tag" id="lbl-param-lambda">0,50</span>
+              </div>
+              <input type="range" id="slider-lambda" class="dash-slider" min="0.00" max="1.00" step="0.05" value="0.50"/>
+              <small style="font-size: 0.70rem; color: #94a3b8;">Amplificação gerada pela cooperação entre assistência técnica e produção.</small>
+            </div>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-top: auto;">
+            <strong style="font-size: 0.76rem; color: var(--navy); display: block;">Auditabilidade C++26:</strong>
+            <span style="font-size: 0.72rem; color: #64748b;">
+              Toda alteração de parâmetro é recalculada instantaneamente via dedução matemática, preservando o modelo oficial no repositório.
+            </span>
+          </div>
+        </article>
+      </div>
+
+      <!-- SEÇÃO 2: VARIÁVEIS ORIGINAIS E TRANSFORMAÇÕES MATEMÁTICAS -->
+      <section class="dash-card" style="margin-bottom: 24px;">
+        <div class="dash-card-title">
+          <span>Variáveis Originais do Censo Agropecuário 2017 &amp; Transformações Matemáticas</span>
+          <span class="score-tag">IBGE SIDRA</span>
+        </div>
+        <p style="margin: 0; font-size: 0.84rem; color: #64748b;">
+          Dados observados nos estabelecimentos agropecuários do município selecionado, idênticos para todas as análises:
+        </p>
+
+        <div style="overflow-x: auto;">
+          <table class="comp-table" style="width: 100%; font-size: 0.84rem;">
+            <thead style="background: #f1f5f9;">
+              <tr>
+                <th style="padding: 9px 12px; text-align: left; color: var(--navy);">Variável Censitária / Transformação</th>
+                <th style="padding: 9px 12px; text-align: left; color: var(--navy);">Notação</th>
+                <th style="padding: 9px 12px; text-align: right; color: var(--navy);">Valor Observado</th>
+                <th style="padding: 9px 12px; text-align: left; color: var(--navy);">Papel na Formulação</th>
+              </tr>
+            </thead>
+            <tbody id="dash-raw-tbody">
+              <tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px;">Carregando variáveis do município...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SEÇÃO 3: CONFRONTO DIRETO DOS 4 MODELOS PARA O MUNICÍPIO -->
+      <section class="dash-card" style="margin-bottom: 24px;">
+        <div class="dash-card-title">
+          <span>Confronto Intramunicipal de Modelos</span>
+          <span class="score-tag">Critério 5 METIS-DIR-MULTI-002</span>
+        </div>
+        <p style="margin: 0; font-size: 0.84rem; color: #64748b;">
+          Comparação direta entre as quatro hipóteses teóricas aplicadas aos mesmos dados do município selecionado:
+        </p>
+
+        <div style="overflow-x: auto;">
+          <table class="confrontation-table" style="width: 100%; font-size: 0.84rem;">
+            <thead>
+              <tr>
+                <th style="text-align: left;">Modelo</th>
+                <th style="text-align: center;">Ecológico (E)</th>
+                <th style="text-align: center;">Produtivo (P)</th>
+                <th style="text-align: center;">Social (S)</th>
+                <th style="text-align: center;">Resiliência (R)</th>
+                <th style="text-align: center;">Δ vs Referência</th>
+              </tr>
+            </thead>
+            <tbody id="dash-confront-tbody">
+              <tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 20px;">Aguardando seleção municipal...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER SISTER-GIT -->
+    <footer class="app-footer">
+      <div>
+        <strong>MÉTIS</strong> — <em>Inteligência adaptativa &amp; Laboratório de estados de referência</em>
+      </div>
+      <div>
+        Código sob licença <strong>GNU GPL v3.0</strong> · Ecossistema <em>SisTer</em>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script src="dashboard.js"></script>
+</body>
+</html>

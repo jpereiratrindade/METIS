@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#071e38"/>
+  <meta name="description" content="MÉTIS — Inteligência adaptativa: laboratório territorial e investigação de limites representacionais"/>
+  <title>MÉTIS · Inteligência Adaptativa &amp; Laboratório Territorial</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div class="shell">
+  <!-- SIDEBAR IDENTIDADE MORFO / SISTER-GIT -->
+  <aside class="sidebar">
+    <a class="brand" href="#/" aria-label="MÉTIS Início">
+      <div class="brand-logo-wrap">
+        <!-- ÍCONE CÉREBRO (BRAIN) -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/>
+          <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/>
+          <circle cx="9" cy="8" r="0.75" fill="currentColor"/>
+          <circle cx="15" cy="8" r="0.75" fill="currentColor"/>
+          <circle cx="8" cy="14" r="0.75" fill="currentColor"/>
+          <circle cx="16" cy="14" r="0.75" fill="currentColor"/>
+        </svg>
+      </div>
+      <div class="brand-words">
+        <span>Ecossistema SisTer</span>
+        <strong>MÉTIS</strong>
+      </div>
+    </a>
+    <p class="sidebar-subtitle">Inteligência Adaptativa &amp; Epistêmica</p>
+
+    <div class="navlabel">ESPAÇOS DE TRABALHO</div>
+    <nav id="sidebarNav" aria-label="Navegação">
+      <a class="nav-item" href="index.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </span>
+        <span class="navtxt">Apresentação &amp; Notícias</span>
+        <span class="navtag">Hub</span>
+      </a>
+      <a class="nav-item active" href="mapa.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+            <line x1="8" y1="2" x2="8" y2="18"/>
+            <line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
+        </span>
+        <span class="navtxt">Visão Territorial</span>
+        <span class="navtag">RS 497</span>
+      </a>
+      <a class="nav-item" href="dashboard.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+        </span>
+        <span class="navtxt">Dashboard Analítico</span>
+        <span class="navtag">Sem Mapa</span>
+      </a>
+      <a class="nav-item" href="modelos.html">
+        <span class="navico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </span>
+        <span class="navtxt">Modelos &amp; Algoritmos</span>
+        <span class="navtag">Catálogo</span>
+      </a>
+    </nav>
+
+    <div class="navlabel">DADOS DE ENTRADA</div>
+    <div class="sidebar-data-actions">
+      <button id="btn-quick-load" class="btn-sidebar-quick" type="button">
+        ⚡ Carregar dados oficiais (RS 497)
+      </button>
+      <label class="file-upload-btn" for="file-scores">
+        ① Carregar resultados CSV
+        <input id="file-scores" type="file" accept=".csv,text/csv"/>
+      </label>
+      <label class="file-upload-btn" for="file-geo">
+        ② Carregar malha GeoJSON
+        <input id="file-geo" type="file" accept=".geojson,.json,application/json"/>
+      </label>
+      <div class="source-status-box" id="source-state">
+        Aguardando carregamento de dados...
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="side-note">
+        <small>PRINCÍPIO DE DESENVOLVIMENTO</small>
+        <strong>Sempre pronto.<br>Sempre incompleto.</strong>
+        <p>Identidade e evolução documental sob proveniência Git do ecossistema SisTer.</p>
+      </div>
+
+      <div class="sidebar-auth">
+        <div class="auth-badge-status">
+          <span class="dot-auth" style="background: #10b981; box-shadow: 0 0 6px #10b981;"></span>
+          <span>Acesso Aberto Público</span>
+        </div>
+        <span class="btn-auth-action">GPL v3.0</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- WORKSPACE PRINCIPAL -->
+  <div class="workspace">
+    <!-- TOPBAR ESTILO SISTER-GIT -->
+    <header class="topbar">
+      <div class="crumb">
+        <a href="index.html" class="crumb-root">MÉTIS</a>
+        <span class="crumb-slash">/</span>
+        <span>Experiência Territorial 001</span>
+        <span class="crumb-slash">/</span>
+        <strong>Visão Territorial (RS 497)</strong>
+      </div>
+
+      <div class="topbar-search">
+        <span class="search-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </span>
+        <input type="text" id="search-input" placeholder="Buscar município (ex: Bento Gonçalves, Alegrete, Santa Maria)..." autocomplete="off"/>
+      </div>
+
+      <div class="topbar-right">
+        <div class="top-status">
+          <span class="status-pulse"></span>
+          <span>Acesso Público Aberto • C++26 Nativo</span>
+        </div>
+
+        <div class="user-badge-top" style="background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3);">
+          <span class="user-avatar-tiny" style="background: #10b981;">OPEN</span>
+          <span class="topbar-user-name">Visitante Científico</span>
+          <span class="user-role-pill" style="background: #10b981;">PÚBLICO</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main id="app">
+      <!-- HERO BANNER SISTER-GIT -->
+      <section class="hero-editorial">
+        <div class="hero-left">
+          <div class="hero-kicker-bar">
+            <span class="hero-kicker">ECOSSISTEMA SISTER</span>
+            <span class="hero-tag">• C++26 Nativo</span>
+          </div>
+          <h1 class="hero-title">MÉTIS</h1>
+          <div class="hero-subtitle">Inteligência adaptativa &amp; Investigação de Limites Representacionais</div>
+          <p class="hero-desc">
+            O MÉTIS é um laboratório computacional para investigar as condições ecológicas, produtivas e sociais dos territórios, sustentando múltiplos modelos teóricos e a <strong>reconfiguração verificável</strong> de suas próprias premissas.
+          </p>
+          <div class="hero-pills">
+            <span class="hero-pill accent">R = E × (P + S)</span>
+            <span class="hero-pill">Catálogo Multimodelo</span>
+            <span class="hero-pill">497 Municípios do RS</span>
+            <span class="hero-pill">Licença GPL v3.0</span>
+          </div>
+        </div>
+
+        <!-- GRÁFICO CÉREBRO GLOW -->
+        <div class="hero-right-brain" title="MÉTIS: Inteligência prática e adaptativa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04z"/>
+            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04z"/>
+            <circle cx="8" cy="8" r="1.2" fill="#2ea8e8"/>
+            <circle cx="16" cy="8" r="1.2" fill="#2ea8e8"/>
+            <circle cx="7.5" cy="13.5" r="1.2" fill="#087f8c"/>
+            <circle cx="16.5" cy="13.5" r="1.2" fill="#087f8c"/>
+            <line x1="8" y1="8" x2="12" y2="10" stroke="#2ea8e8" stroke-dasharray="1 1"/>
+            <line x1="16" y1="8" x2="12" y2="10" stroke="#2ea8e8" stroke-dasharray="1 1"/>
+            <line x1="12" y1="10" x2="7.5" y2="13.5" stroke="#087f8c" stroke-dasharray="1 1"/>
+            <line x1="12" y1="10" x2="16.5" y2="13.5" stroke="#087f8c" stroke-dasharray="1 1"/>
+          </svg>
+        </div>
+      </section>
+
+      <!-- BANCADA EPISTÊMICA TRIAXIAL (METIS-DIR-MULTI-002) -->
+      <section class="triaxial-bench-card" aria-label="Controles Epistêmicos do Laboratório">
+        <div class="triaxial-header">
+          <div class="triaxial-titles">
+            <span class="triaxial-kicker">LABORATÓRIO MULTIMODELO &amp; MULTITEMPORAL</span>
+            <h3>Bancada de Investigação Epistêmica</h3>
+          </div>
+          <div class="triaxial-header-actions">
+            <a href="modelos.html" class="triaxial-model-link" title="Consultar formulação matemática e hipóteses detalhadas dos modelos">
+              <span>📖 Guia dos Modelos &amp; Algoritmo</span>
+            </a>
+            <div class="active-config-pill" id="active-config-badge">
+              <span class="pulse-green"></span>
+              <strong id="badge-config-summary">EPS-REF-001 · 2017 · Trajetória Experimental</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="triaxial-controls-grid">
+          <!-- EIXO 1: MODELO -->
+          <div class="triaxial-field">
+            <label for="select-model" class="triaxial-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              <span>Eixo 1 · Modelo Teórico</span>
+            </label>
+            <select id="select-model" class="triaxial-select">
+              <option value="EPS-REF-001" selected>EPS-REF-001 — Referência E-P-S (q10/q90)</option>
+              <option value="EPS-EXP-002">EPS-EXP-002 — Aditivo Ponderado Linear</option>
+              <option value="EPS-EXP-003">EPS-EXP-003 — Interativo (Acoplamento Não-Linear)</option>
+              <option value="EPS-EXP-004">EPS-EXP-004 — Autônomo Municipal (DIR-MUN-001)</option>
+            </select>
+            <span class="triaxial-hint" id="model-hypothesis-hint">Formulação original E–P–S preservada para reprodução e confronto.</span>
+          </div>
+
+          <!-- EIXO 2: ANO -->
+          <div class="triaxial-field">
+            <label for="select-year" class="triaxial-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <span>Eixo 2 · Ano de Referência</span>
+            </label>
+            <select id="select-year" class="triaxial-select">
+              <option value="2017" selected>2017 — Censo Agropecuário Oficial (IBGE)</option>
+              <option value="2006" disabled>2006 — Série Histórica (Em homologação)</option>
+            </select>
+            <span class="triaxial-hint">Base censitária oficial homologada (497 municípios).</span>
+          </div>
+
+          <!-- EIXO 3: TRAJETÓRIA -->
+          <div class="triaxial-field">
+            <label for="select-trajectory" class="triaxial-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              <span>Eixo 3 · Tipo de Trajetória</span>
+            </label>
+            <select id="select-trajectory" class="triaxial-select">
+              <option value="experimental" selected>Experimental — Cenários, parâmetros e sensibilidade</option>
+              <option value="historica">Histórica — Leitura estrita de dados consolidados</option>
+            </select>
+            <span class="triaxial-hint" id="trajectory-hint">Permite alterar parâmetros k, pesos e sinergias em tempo real.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- STAT CARDS (METIS-DIR-MULTI-002) -->
+      <section class="statgrid" aria-label="Indicadores metodológicos gerais">
+        <article class="stat-card">
+          <span class="stat-card-label">Universo Territorial</span>
+          <strong class="stat-card-value" id="metric-total">497</strong>
+          <span class="stat-card-meta">Municípios do RS (IBGE UF 43)</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-card-label">Modelo Ativo</span>
+          <strong class="stat-card-value" id="metric-unit" style="color: var(--teal); font-size: 1.15rem;">EPS-REF-001</strong>
+          <span class="stat-card-meta" id="metric-model-sub">Referência histórica E-P-S</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-card-label">Registros Homologados</span>
+          <strong class="stat-card-value" id="metric-valid">492</strong>
+          <span class="stat-card-meta">5 com dados_incompletos no Censo</span>
+        </article>
+        <article class="stat-card">
+          <span class="stat-card-label">Referência Temporal</span>
+          <strong class="stat-card-value" id="metric-year">2017</strong>
+          <span class="stat-card-meta">Censo Agropecuário oficial</span>
+        </article>
+      </section>
+
+      <!-- CARTOGRAFIA E DETALHAMENTO -->
+      <section class="cartography-card" id="inicio">
+        <div class="card-header-bar">
+          <div class="card-header-titles">
+            <h2>Cartografia Agroterritorial do Rio Grande do Sul</h2>
+            <p>Tendência territorial no estado caracterizada por <strong>R</strong> (com alternância para E, P e S). Selecione para abrir a análise individual.</p>
+          </div>
+          <div class="layer-buttons" role="group" aria-label="Camada territorial de tendência">
+            <button class="layer-btn selected" data-layer="resiliencia" title="Estado de Resiliência Experimental R = E(P+S)">Resiliência (R)</button>
+            <button class="layer-btn" data-layer="ecologica" title="Multiplicador Ecológico E">Ecológica (E)</button>
+            <button class="layer-btn" data-layer="produtiva" title="Densidade Produtiva P(k)">Produtiva (P)</button>
+            <button class="layer-btn" data-layer="social" title="Dimensão Social S">Social (S)</button>
+          </div>
+        </div>
+
+        <div class="cartography-body">
+          <div class="map-view-container">
+            <button id="btn-reset-zoom" class="map-reset-zoom-btn" style="display: none;" title="Restaurar visão estadual do Rio Grande do Sul">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+              <span>↺ Visão Estadual</span>
+            </button>
+            <svg id="map" viewBox="0 0 740 590" preserveAspectRatio="xMidYMid meet" aria-label="Mapa dos municípios do RS"></svg>
+            <div id="map-placeholder" class="map-empty-state">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                <line x1="8" y1="2" x2="8" y2="18"/>
+                <line x1="16" y1="6" x2="16" y2="22"/>
+              </svg>
+              <strong>Carregando malha territorial...</strong>
+              <span>Clique no botão lateral para carregar os 497 municípios.</span>
+            </div>
+            <div class="map-legend-overlay" id="legend"></div>
+          </div>
+
+          <!-- DETALHAMENTO LATERAL -->
+          <aside class="municipio-side-panel">
+            <div class="side-panel-eyebrow">DIAGNÓSTICO TERRITORIAL</div>
+            <h3 class="side-panel-name" id="detail-name">Selecione um município</h3>
+            <div class="side-panel-code" id="detail-code">Clique na malha territorial ou busque acima</div>
+            <div id="status-alert" class="status-alert" style="display: none;"></div>
+
+            <div class="breakdown-list" id="breakdown-list">
+              <div class="breakdown-item">
+                <div class="breakdown-item-header">
+                  <span class="breakdown-item-label">Estado de Resiliência (R)</span>
+                  <span class="breakdown-item-val" id="detail-r">—</span>
+                </div>
+                <div class="breakdown-bar">
+                  <div class="breakdown-bar-fill" id="bar-r" style="width: 0%; background: #087f8c;"></div>
+                </div>
+              </div>
+
+              <div class="breakdown-item">
+                <div class="breakdown-item-header">
+                  <span class="breakdown-item-label">Multiplicador Ecológico (E)</span>
+                  <span class="breakdown-item-val" id="detail-e">—</span>
+                </div>
+                <div class="breakdown-bar">
+                  <div class="breakdown-bar-fill" id="bar-e" style="width: 0%; background: #14805e;"></div>
+                </div>
+              </div>
+
+              <div class="breakdown-item">
+                <div class="breakdown-item-header">
+                  <span class="breakdown-item-label">Dimensão Produtiva (P)</span>
+                  <span class="breakdown-item-val" id="detail-p">—</span>
+                </div>
+                <div class="breakdown-bar">
+                  <div class="breakdown-bar-fill" id="bar-p" style="width: 0%; background: #f59e0b;"></div>
+                </div>
+              </div>
+
+              <div class="breakdown-item">
+                <div class="breakdown-item-header">
+                  <span class="breakdown-item-label">Dimensão Social (S)</span>
+                  <span class="breakdown-item-val" id="detail-s">—</span>
+                </div>
+                <div class="breakdown-bar">
+                  <div class="breakdown-bar-fill" id="bar-s" style="width: 0%; background: #2ea8e8;"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- AMBIENTE ANALÍTICO MUNICIPAL EM 4 ÁREAS (METIS-DIR-MUN-001) -->
+            <div class="comp-section">
+              <div class="comp-section-header">
+                <span class="comp-section-title">AMBIENTE ANALÍTICO MUNICIPAL</span>
+                <div class="comp-tabs" id="comp-tabs">
+                  <button class="comp-tab-btn active" data-area="D" title="Área D: Resultados e Decomposição">D · Resultados</button>
+                  <button class="comp-tab-btn" data-area="M" title="Confronto Direto de Modelos para o Município">M · Confronto</button>
+                  <button class="comp-tab-btn" data-area="A" title="Área A: Observações do Município">A · Insumos</button>
+                  <button class="comp-tab-btn" data-area="B" title="Área B: Parametrização Experimental">B · Parâmetros</button>
+                  <button class="comp-tab-btn" data-area="C" title="Área C: Hipótese Relacional">C · Hipótese</button>
+                </div>
+              </div>
+
+              <div id="comp-detail-box" class="comp-detail-box">
+                <p class="comp-empty-hint">Selecione um município no mapa para abrir sua investigação analítica individual (METIS-DIR-MUN-001).</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- CARD INFERIOR: APROFUNDAMENTO DOS MODELOS E DO ALGORITMO -->
+      <section class="models-gateway-card" id="modelos-algoritmo" aria-label="Aprofundamento dos Modelos e Algoritmos">
+        <div class="models-gateway-body">
+          <div class="models-gateway-info">
+            <div class="models-gateway-kicker">ECOSSISTEMA SISTER · ALGORITMOS &amp; MODELOS</div>
+            <h2 class="models-gateway-title">Modelos e Algoritmos</h2>
+            <p class="models-gateway-desc">
+              O MÉTIS disponibiliza formulações matemáticas e parametrizações experimentais para investigar as relações entre conservação ecológica, capacidade produtiva e organização social no Rio Grande do Sul.
+            </p>
+            <div class="models-gateway-tags">
+              <span class="m-pill">EPS-REF-001 · Referência Linear</span>
+              <span class="m-pill">EPS-EXP-002 · Aditivo Ponderado</span>
+              <span class="m-pill">EPS-EXP-003 · Não-Linear</span>
+              <span class="m-pill">EPS-EXP-004 · Autônomo Municipal</span>
+            </div>
+          </div>
+          <div class="models-gateway-action">
+            <a href="modelos.html" class="btn-explore-models">
+              <span>Conhecer Modelos e Algoritmos</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- PILARES DO MÉTIS (ESTILO SISTER-GIT) -->
+      <section id="pilares">
+        <div class="section-head-bar">
+          <div>
+            <h2 class="section-title">Pilares da Investigação Adaptativa</h2>
+            <p class="section-sub">MÉTIS: da resiliência observada à inteligência capaz de reconfigurar suas próprias premissas.</p>
+          </div>
+        </div>
+
+        <div class="pillars-grid">
+          <article class="pillar-card">
+            <div class="pillar-icon-box blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                <path d="M2 12h20"/>
+              </svg>
+            </div>
+            <div class="pillar-tag blue">PERCEPÇÃO RELACIONAL</div>
+            <h3>O Estado Resulta de Relações</h3>
+            <p>
+              A resiliência expressa o acoplamento relacional entre conservação de ecossistemas nativos ($E$), viabilidade produtiva ($P$) e coesão associativa ($S$).
+            </p>
+          </article>
+
+          <article class="pillar-card" id="reconfiguracao">
+            <div class="pillar-icon-box amber">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                <polyline points="2 17 12 22 22 17"/>
+                <polyline points="2 12 12 17 22 12"/>
+              </svg>
+            </div>
+            <div class="pillar-tag amber">CONFRONTO COM A REALIDADE</div>
+            <h3>Limites Representacionais</h3>
+            <p>
+              Ao confrontar modelos com realidades territoriais locais, o sistema identifica descompassos em métricas unidimensionais, acolhendo a necessidade de reconfigurar e evoluir sua própria representação.
+            </p>
+          </article>
+
+          <article class="pillar-card">
+            <div class="pillar-icon-box teal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div class="pillar-tag teal">RECONFIGURAÇÃO VERIFICÁVEL</div>
+            <h3>Memória &amp; Proveniência Imutável</h3>
+            <p>
+              Toda nova hipótese científica de calibração preserva a configuração anterior em manifestos versionados, mantendo a auditabilidade integral sob a licença livre <strong>GPL v3.0</strong>.
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER SISTER-GIT -->
+    <footer class="app-footer">
+      <div>
+        <strong>MÉTIS</strong> — <em>Inteligência adaptativa &amp; Laboratório de estados de referência</em>
+      </div>
+      <div>
+        Código sob licença <strong>GNU GPL v3.0</strong> · Ecossistema <em>SisTer</em>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

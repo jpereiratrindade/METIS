@@ -1,0 +1,34 @@
+{
+  "versao_api": "0.1.0",
+  "data_atualizacao": "2026-10-29T07:30:00-03:00",
+  "ecossistema": "SisTer",
+  "noticias": [
+    {
+      "id": "NOT-2026-001",
+      "titulo": "MÉTIS abre acesso público universal para experimentação agroterritorial",
+      "data": "2026-10-29",
+      "autor": "Coordenação Científica SisTer",
+      "categoria": "Institucional",
+      "resumo": "Sob a diretriz METIS-OPEN-001, o laboratório passa a operar sem autenticação, permitindo que pesquisadores, técnicos e cidadãos formulem hipóteses, ajustem parâmetros e baixem manifestos reproduzíveis dos 497 municípios gaúchos.",
+      "link": "index.html"
+    },
+    {
+      "id": "NOT-2026-002",
+      "titulo": "Implementado novo Dashboard Analítico sem dependência cartográfica",
+      "data": "2026-10-29",
+      "autor": "Equipe de Engenharia MÉTIS",
+      "categoria": "Ferramenta",
+      "resumo": "O novo dashboard analítico viabiliza investigação rápida e focada em variáveis numéricas, decomposição de pilares e sensibilidade de parâmetros sem exigir o carregamento de malhas geoespaciais pesadas.",
+      "link": "dashboard.html"
+    },
+    {
+      "id": "NOT-2026-003",
+      "titulo": "Diretriz METIS-DIR-MULTI-002 consolida quatro modelos no laboratório",
+      "data": "2026-10-28",
+      "autor": "Laboratório SisTer",
+      "categoria": "Metodologia",
+      "resumo": "O sistema concluiu a homologação do catálogo experimental contendo quatro leituras matemáticas distintas da capacidade de adaptação territorial, preservando a referência histórica e expandindo para modelos autônomos municipais.",
+      "link": "modelos.html"
+    }
+  ]
+}

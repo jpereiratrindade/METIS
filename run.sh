@@ -32,6 +32,10 @@ ln -sf web/index.html index.html
 ln -sf web/style.css style.css
 ln -sf web/app.js app.js
 ln -sf web/modelos.html modelos.html
+ln -sf web/mapa.html mapa.html
+ln -sf web/dashboard.html dashboard.html
+ln -sf web/dashboard.js dashboard.js
+ln -sf web/api api
 
 # Detectar IPs da rede local
 LAN_IPS=$(hostname -I 2>/dev/null || echo "127.0.0.1")

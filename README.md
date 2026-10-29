@@ -1,10 +1,30 @@
-# MÉTIS — Laboratório Multimodelo e Multitemporal de Resiliência Agroterritorial (v0.3.0)
+# MÉTIS — Laboratório Científico Aberto de Resiliência Agroterritorial (v0.3.0)
 
 > **"A inteligência que queremos investigar não é simplesmente a capacidade de produzir uma resposta correta, mas a capacidade de reconhecer, diante da realidade, quando suas próprias referências precisam ser reconsideradas."**
 
-**MÉTIS** integra o ecossistema científico do **LABECO** (SisTer, MORFO, SisTer-Git). Constitui um laboratório computacional para formular, parametrizar, experimentar, confrontar e revisar hipóteses sobre as relações entre condições ecológicas, produtivas e sociais e a resiliência de sistemas agroterritoriais.
+**MÉTIS** integra o **Ecossistema SisTer** (SisTer, MORFO, SisTer-Git). Constitui um laboratório computacional público e aberto para formular, parametrizar, experimentar, confrontar e revisar hipóteses sobre as relações entre condições ecológicas, produtivas e sociais e a capacidade adaptativa de sistemas agroterritoriais.
 
-Conforme a diretriz **`METIS-DIR-MULTI-002`**, o MÉTIS evolui de um calculador de índice estático para um **laboratório de múltiplos modelos experimentais**, permitindo ao pesquisador selecionar um município e investigar como diferentes formulações teóricas e parametrizações produzem interpretações distintas das condições territoriais.
+Sob a diretriz **`METIS-OPEN-001`**, o MÉTIS consolida o **acesso público universal sem autenticação**, estruturado em quatro ambientes complementares com proveniência e exportação reproduzível de experimentos.
+
+---
+
+## 🌐 Ambientes e Espaços de Trabalho Web
+
+| Espaço | Rota Local | Descrição |
+| :--- | :--- | :--- |
+| **Apresentação & Notícias** | [`index.html`](http://localhost:8080/) | Portal institucional SisTer, fundamentos científicos, feed dinâmico de achados e notícias. |
+| **Visão Territorial** | [`mapa.html`](http://localhost:8080/mapa.html) | Cartografia interativa reativa dos 497 municípios do RS com alternância de camadas (R, E, P, S). |
+| **Dashboard Analítico** | [`dashboard.html`](http://localhost:8080/dashboard.html) | Exploração rápida e numérica sem mapa, simulador paramétrico e exportação de manifestos JSON/CSV. |
+| **Modelos & Algoritmos** | [`modelos.html`](http://localhost:8080/modelos.html) | Catálogo matemático formal, pipeline algorítmico e hipóteses dos 4 modelos. |
+
+---
+
+## 📡 API Pública de Distribuição (Somente Leitura)
+
+- `GET /api/public/achados.json`: Catálogo de achados científicos categorizados (`achado_corroborado`, `resultado_calculado`, `hipotese`, `simulacao`, `atualizacao_tecnica`).
+- `GET /api/public/noticias.json`: Notícias e comunicados do laboratório.
+- `GET /api/public/resumos.json`: Resumos em linguagem acessível para totens digitais e portais.
+- `GET /api/public/modelos.json`: Metadados, fórmulas e parâmetros dos 4 modelos.
 
 ---
 
@@ -21,7 +41,7 @@ Para assegurar rigor epistêmico, o sistema distingue quatro elementos fundament
 
 ---
 
-## 🔬 Três Eixos Independentes de Investigação
+## 🔬 Três Eixos Independentes de Investigação (Bancada Triaxial)
 
 1. **Eixo 1 — Modelo Teórico:**
    - **`EPS-REF-001` (Referência):** Formulação original $R = E(P+S)$ com calibração empírica da produtividade por percentis estaduais ($q_{10}$ e $q_{90}$).

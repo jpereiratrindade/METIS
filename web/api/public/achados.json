@@ -1,0 +1,85 @@
+{
+  "versao_api": "0.1.0",
+  "data_atualizacao": "2026-10-29T07:30:00-03:00",
+  "ecossistema": "SisTer",
+  "laboratorio": "MÉTIS",
+  "descricao": "Achados científicos e registros de investigação agroterritorial",
+  "total": 4,
+  "achados": [
+    {
+      "id": "ACH-2026-001",
+      "titulo": "Invariância Intermunicipal no Modelo Autônomo EPS-EXP-004",
+      "resumo": "A formalização do modelo EPS-EXP-004 assegura que a pontuação de um município independa estritamente dos valores observados nos demais 496 municípios gaúchos, superando o acoplamento espúrio gerado por percentis estaduais.",
+      "categoria": "achado_corroborado",
+      "data": "2026-10-28",
+      "municipio_ibge": null,
+      "modelo": "EPS-EXP-004",
+      "ano_referencia": "2017",
+      "trajetoria": "experimental",
+      "natureza_evidencia": "Demonstração formal matemática e verificação no núcleo C++26",
+      "fontes": [
+        "Diretriz METIS-DIR-MUN-001",
+        "Código-fonte src/modelo.cpp"
+      ],
+      "versao_metis": "0.1.0",
+      "limitacoes": "Exige declaração explícita e justificada do parâmetro de escala k em R$/ha.",
+      "situacao_validacao": "aprovado"
+    },
+    {
+      "id": "ACH-2026-002",
+      "titulo": "Saturação Produtiva Hill e Amortecimento de Extremos Econômicos",
+      "resumo": "A aplicação da função de Hill P = 50 · d_m / (d_m + k) previne que municípios com densidade econômica extraordinária distorçam a escala de resiliência territorial de forma desproporcional à conservação ecológica.",
+      "categoria": "resultado_calculado",
+      "data": "2026-10-28",
+      "municipio_ibge": null,
+      "modelo": "EPS-EXP-004",
+      "ano_referencia": "2017",
+      "trajetoria": "experimental",
+      "natureza_evidencia": "Cálculo computacional sobre base Censo Agropecuário 2017 (SIDRA 6881)",
+      "fontes": [
+        "IBGE Censo Agropecuário 2017",
+        "Testes unitários tests/test_model.cpp"
+      ],
+      "versao_metis": "0.1.0",
+      "limitacoes": "Não diferencia a composição interna da cesta de produtos agropecuários no valor da produção.",
+      "situacao_validacao": "aprovado"
+    },
+    {
+      "id": "ACH-2026-003",
+      "titulo": "Hipótese de Acoplamento Não-Linear entre Capital Social e Eficiência Produtiva",
+      "resumo": "Proposição de que a coesão associativa e a assistência técnica atuam como amplificadores sinérgicos da absorção de choques, modelada pelo termo aditivo λ · (P · S / 50) no modelo EPS-EXP-003.",
+      "categoria": "hipotese",
+      "data": "2026-10-27",
+      "municipio_ibge": null,
+      "modelo": "EPS-EXP-003",
+      "ano_referencia": "2017",
+      "trajetoria": "experimental",
+      "natureza_evidencia": "Formula teórica proposta para confronto com eventos climáticos extremos",
+      "fontes": [
+        "Diretriz METIS-DIR-MULTI-002",
+        "Censo Agropecuário 2017 - Tabela 6773"
+      ],
+      "versao_metis": "0.1.0",
+      "limitacoes": "Necessita calibração empírica do coeficiente de sinergia λ perante séries temporais pós-inundações.",
+      "situacao_validacao": "em_analise"
+    },
+    {
+      "id": "ACH-2026-004",
+      "titulo": "Preservação da Formulação Clássica EPS-REF-001 como Linha de Base",
+      "resumo": "O modelo multiplicativo original EPS-REF-001 foi formalmente congelado e mantido no catálogo como referência comparativa imutável para assegurar auditabilidade histórica das análises.",
+      "categoria": "atualizacao_tecnica",
+      "data": "2026-10-26",
+      "municipio_ibge": null,
+      "modelo": "EPS-REF-001",
+      "ano_referencia": "2017",
+      "trajetoria": "historica",
+      "natureza_evidencia": "Manifesto de versionamento Git e suíte de testes C++26",
+      "fontes": [
+        "Documento RESILIENCIA-SISTEMA-EXP-001_v0.1.0.md"
+      ],
+      "versao_metis": "0.1.0",
+      "limitacoes": "Mantém normalização por quantis q10 e q90 do estado.",
+      "situacao_validacao": "aprovado"
+    }
+  ]
+}
