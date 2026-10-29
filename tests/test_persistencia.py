@@ -484,5 +484,34 @@ class TestPersistenciaMetis(unittest.TestCase):
             )
         self.assertIn("VIOLAÇÃO DE IMUTABILIDADE CIENTÍFICA", str(ctx_res_del.exception))
 
+    def test_12_evidencias_climaticas_e_inmet(self):
+        """Critério 6: Migração 003 e integração epistêmica de AdaptaBrasil e avisos INMET."""
+        # 1. Verificar cobertura de AdaptaBrasil para os 497 municípios
+        self.cur.execute("""
+            SELECT COUNT(DISTINCT codigo_ibge) 
+            FROM evidencias_adaptabrasil;
+        """)
+        muni_adapta = self.cur.fetchone()[0]
+        self.assertEqual(muni_adapta, 497, f"AdaptaBrasil deve cobrir 497 municípios, obtido {muni_adapta}")
+
+        # 2. Verificar integridade da tabela de avisos INMET
+        self.cur.execute("SELECT COUNT(*) FROM avisos_meteorologicos_inmet;")
+        total_avisos = self.cur.fetchone()[0]
+        self.assertGreaterEqual(total_avisos, 1, "Deve haver ao menos 1 aviso meteorológico registrado")
+
+        # 3. Verificar que a View espacial PostGIS executa sem erros
+        self.cur.execute("SELECT COUNT(*) FROM vw_municipios_avisos_inmet WHERE uf = 'RS';")
+        total_muni_afetados = self.cur.fetchone()[0]
+        self.assertIsInstance(total_muni_afetados, int)
+
+        # 4. Verificar existência e conformidade do artefato JSON consolidado
+        json_path = os.path.join(REPO_ROOT, "web/api/public/evidencias_rs.json")
+        self.assertTrue(os.path.exists(json_path), f"Arquivo {json_path} deve existir")
+        with open(json_path, "r", encoding="utf-8") as f:
+            dados = json.load(f)
+        self.assertIn("metadados", dados)
+        self.assertIn("municipios", dados)
+        self.assertEqual(len(dados["municipios"]), 497, "JSON consolidado deve cobrir exatamente 497 municípios")
+
 if __name__ == "__main__":
     unittest.main()

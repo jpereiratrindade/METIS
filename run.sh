@@ -200,6 +200,11 @@ case "$CMD" in
     esac
     ;;
 
+  sync|evidencias)
+    echo -e "${CYAN}==> Sincronizando Evidências Epistêmicas (AdaptaBrasil + INMET)...${NC}"
+    python3 scripts/conectores/sincronizar_evidencias.py
+    ;;
+
   help|-h|--help)
     echo -e "${BOLD}MÉTIS — Orquestrador Unificado do Laboratório${NC}"
     echo
@@ -209,6 +214,7 @@ case "$CMD" in
     echo "  (sem argumentos)  Inicia o ecossistema completo: compila C++26, sobe banco PostGIS, migra, importa e abre servidor web"
     echo "  test              Executa todos os testes automatizados (CTest C++26 e PostGIS)"
     echo "  check             Verifica todo o ambiente e valida testes de integridade"
+    echo "  sync              Sincroniza evidências climáticas e alertas (AdaptaBrasil MCTI + INMET)"
     echo "  build             Compila os binários em C++26"
     echo "  db up             Inicia o PostgreSQL/PostGIS e roda migrações"
     echo "  db down           Para o contêiner do banco de dados"

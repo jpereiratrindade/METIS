@@ -9,3 +9,5 @@ __pycache__/
 .env
 web/results
 web/data
+data/evidencias/*/*.json
+!data/evidencias/*/.gitkeep

@@ -8,6 +8,7 @@ let scores2017 = new Map();
 let scores2006 = new Map();
 let rawData2017 = new Map();
 let rawData2006 = new Map();
+let evidenciasData = null;
 let manifest = null;
 let geometry = null;
 let current = null; // Nenhum município selecionado inicialmente
@@ -66,6 +67,8 @@ const palette = ['#08203e', '#0b406e', '#087f8c', '#109789', '#2ea8e8', '#38bdf8
 const fields = {
   resiliencia: ['resiliencia', 0, 90, 'Resiliência (R)'],
   evolucao: ['evolucao', -10, 10, 'Evolução Temporal (Δ R: 2006➔2017)'],
+  inmet: ['inmet', 0, 3, 'Avisos Meteorológicos Ativos (INMET)'],
+  adaptabrasil: ['adaptabrasil', 0, 1, 'Risco Climático Alimentos (AdaptaBrasil MCTI)'],
   ecologica: ['ecologica_multiplicador', 0.5, 1.5, 'Multiplicador Ecológico (E)'],
   produtiva: ['produtiva', 0, 50, 'Dimensão Produtiva (P)'],
   social: ['social', 0, 50, 'Dimensão Social (S)']
@@ -79,6 +82,24 @@ function getValue(d) {
     const r06 = scores2006.get(code)?.resiliencia;
     if (r17 == null || r06 == null || !Number.isFinite(r17) || !Number.isFinite(r06)) return null;
     return r17 - r06;
+  }
+  if (layer === 'inmet') {
+    const code = d.codigo_ibge;
+    const muniEvid = evidenciasData?.municipios?.[code];
+    const avisos = muniEvid?.avisos_inmet || [];
+    if (!avisos.length) return 0;
+    let maxSev = 1;
+    for (const a of avisos) {
+      if (a.severidade === 'Grande Perigo') return 3;
+      if (a.severidade === 'Perigo') maxSev = 2;
+    }
+    return maxSev;
+  }
+  if (layer === 'adaptabrasil') {
+    const code = d.codigo_ibge;
+    const muniEvid = evidenciasData?.municipios?.[code];
+    const ind = muniEvid?.adaptabrasil?.find(x => x.indicador_id === 5001 && x.ano === 2017);
+    return ind ? ind.valor : null;
   }
   if (d.status !== 'experimental') return null;
   const col = fields[layer][0];
@@ -96,6 +117,20 @@ function colorForValue(v) {
     if (v >= -2.0) return '#fb923c'; // Leve perda (-0.3 a -2 pts)
     if (v >= -5.0) return '#f97316'; // Perda moderada (-2 a -5 pts)
     return '#ef4444';                // Perda expressiva (<-5 pts)
+  }
+  if (layer === 'inmet') {
+    if (v === 3) return '#ef4444'; // Grande Perigo (Vermelho)
+    if (v === 2) return '#f97316'; // Perigo (Laranja)
+    if (v === 1) return '#eab308'; // Perigo Potencial (Amarelo)
+    return '#1e293b';              // Sem alertas ativos
+  }
+  if (layer === 'adaptabrasil') {
+    if (v == null) return '#1e293b';
+    if (v > 0.60) return '#ef4444'; // Muito alto
+    if (v > 0.40) return '#f97316'; // Alto
+    if (v > 0.25) return '#eab308'; // Médio
+    if (v > 0.12) return '#84cc16'; // Baixo
+    return '#10b981';               // Muito baixo
   }
   const [_, min, max] = fields[layer];
   const t = Math.max(0, Math.min(1, (v - min) / (max - min)));
@@ -401,6 +436,37 @@ function renderMap() {
         <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
         <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
       `;
+    } else if (layer === 'inmet') {
+      legend.innerHTML = `
+        <div class="legend-item">
+          <strong>Avisos Meteorológicos INMET:</strong>
+          <div class="swatch-group">
+            <span class="swatch" style="background:#1e293b" title="Sem alertas ativos no momento"></span>
+            <span class="swatch" style="background:#eab308" title="Perigo Potencial (Amarelo)"></span>
+            <span class="swatch" style="background:#f97316" title="Perigo Moderado a Severo (Laranja)"></span>
+            <span class="swatch" style="background:#ef4444" title="Grande Perigo Extremo (Vermelho)"></span>
+          </div>
+          <span style="font-size: 0.70rem; color: #94a3b8;">Normalidade ➔ Grande Perigo</span>
+        </div>
+        <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
+        <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
+      `;
+    } else if (layer === 'adaptabrasil') {
+      legend.innerHTML = `
+        <div class="legend-item">
+          <strong>Risco Climático (AdaptaBrasil MCTI):</strong>
+          <div class="swatch-group">
+            <span class="swatch" style="background:#10b981" title="Muito baixo (0 a 0.12)"></span>
+            <span class="swatch" style="background:#84cc16" title="Baixo (0.12 a 0.25)"></span>
+            <span class="swatch" style="background:#eab308" title="Médio (0.25 a 0.40)"></span>
+            <span class="swatch" style="background:#f97316" title="Alto (0.40 a 0.60)"></span>
+            <span class="swatch" style="background:#ef4444" title="Muito alto (> 0.60)"></span>
+          </div>
+          <span style="font-size: 0.70rem; color: #94a3b8;">Muito Baixo ➔ Muito Alto</span>
+        </div>
+        <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
+        <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
+      `;
     } else {
       const [_, min, max, label] = fields[layer];
       const swatchesHtml = palette.map(c => `<span class="swatch" style="background:${c}"></span>`).join('');
@@ -696,6 +762,148 @@ function updateComponentDetail(code) {
       <div class="comp-provenance-box" style="margin-top: 6px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <span>Série Histórica Auditada · IBGE Censo 2006 e 2017</span>
+      </div>
+    `;
+  }
+  // ÁREA E: EVIDÊNCIAS EPISTÊMICAS (AdaptaBrasil MCTI + INMET)
+  else if (activeArea === 'E') {
+    const muniEvid = evidenciasData?.municipios?.[code];
+    const avisos = muniEvid?.avisos_inmet || [];
+    const adapta = muniEvid?.adaptabrasil || [];
+
+    // 1. Avisos INMET
+    let inmetHtml = '';
+    if (avisos.length > 0) {
+      inmetHtml = avisos.map(a => {
+        let cardCls = '';
+        if (a.severidade === 'Grande Perigo') cardCls = '';
+        else if (a.severidade === 'Perigo') cardCls = 'warning-moderate';
+        else cardCls = 'warning-potential';
+
+        const riscosList = (a.riscos || []).map(r => `<li>${r}</li>`).join('');
+        const instrucoesList = (a.instrucoes || []).map(i => `<li>${i}</li>`).join('');
+
+        return `
+          <div class="inmet-alert-card ${cardCls}">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
+              <span class="inmet-badge" style="background:${a.cor || '#eab308'};">⚠️ ${a.severidade}</span>
+              <span style="font-size:0.67rem; color:#64748b; font-weight:600;">INMET Operacional</span>
+            </div>
+            <strong style="color:#0f172a; font-size:0.75rem;">${a.descricao}</strong>
+            <div style="font-size:0.68rem; color:#64748b; margin:2px 0 6px;">
+              <span>Vigência: ${a.inicio.replace('T', ' ').substring(0, 16)} até ${a.fim.replace('T', ' ').substring(0, 16)}</span>
+            </div>
+            ${riscosList ? `<div style="font-size:0.68rem; margin-bottom:4px;"><strong>Riscos:</strong> <ul style="margin:2px 0 0 14px; padding:0;">${riscosList}</ul></div>` : ''}
+            ${instrucoesList ? `<div style="font-size:0.68rem; color:#0369a1;"><strong>Instruções:</strong> <ul style="margin:2px 0 0 14px; padding:0;">${instrucoesList}</ul></div>` : ''}
+          </div>
+        `;
+      }).join('');
+    } else {
+      inmetHtml = `
+        <div class="inmet-calm-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Nenhuma perturbação meteorológica severa ativa no momento para este município (INMET).</span>
+        </div>
+      `;
+    }
+
+    // 2. Indicadores AdaptaBrasil
+    let adaptaHtml = '';
+    if (adapta.length > 0) {
+      const baselines = adapta.filter(x => x.cenario.startsWith('baseline'));
+      const projecoes = adapta.filter(x => !x.cenario.startsWith('baseline'));
+
+      const metersHtml = baselines.map(ind => {
+        const valPct = Math.min(100, Math.max(0, (ind.valor || 0) * 100));
+        return `
+          <div class="climate-meter-row">
+            <div class="climate-meter-label">
+              <span>${ind.nome} (${ind.ano})</span>
+              <strong style="color:${ind.cor || 'var(--navy)'}">${fmt(ind.valor, 2)} · ${ind.classe}</strong>
+            </div>
+            <div class="climate-bar-bg">
+              <div class="climate-bar-fill" style="width:${valPct}%; background:${ind.cor || '#10b981'};"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      let projHtml = '';
+      if (projecoes.length > 0) {
+        const projRows = projecoes.map(p => `
+          <tr>
+            <td>${p.nome}</td>
+            <td style="text-align:center;"><strong>${p.ano}</strong></td>
+            <td style="text-align:right;">${fmt(p.valor, 2)}</td>
+            <td style="text-align:right;"><span style="color:${p.cor || 'var(--navy)'}; font-weight:700;">${p.classe}</span></td>
+          </tr>
+        `).join('');
+
+        projHtml = `
+          <div style="margin-top: 10px;">
+            <span style="font-size:0.70rem; font-weight:700; color:#475569; text-transform:uppercase;">Projeções Climáticas (IPCC AR5 / RCP4.5):</span>
+            <table class="comp-table" style="margin-top: 4px;">
+              <thead>
+                <tr style="font-size:0.67rem; color:var(--muted);">
+                  <th>Dimensão / Cenário</th>
+                  <th style="text-align:center;">Ano</th>
+                  <th style="text-align:right;">Índice</th>
+                  <th style="text-align:right;">Classe</th>
+                </tr>
+              </thead>
+              <tbody>${projRows}</tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      adaptaHtml = `
+        <div style="margin-top: 6px;">
+          ${metersHtml}
+          ${projHtml}
+        </div>
+      `;
+    } else {
+      adaptaHtml = `<p style="font-size: 0.72rem; color: #64748b;">Nenhum dado do AdaptaBrasil sincronizado para este município.</p>`;
+    }
+
+    box.innerHTML = `
+      <div class="comp-title-bar">
+        <strong>Área E · Evidências Epistêmicas &amp; Perturbações</strong>
+        <span class="score-tag">${avisos.length > 0 ? '⚠️ Alerta Ativo' : '✓ Normalidade'}</span>
+      </div>
+      <p style="font-size: 0.72rem; color: #475569; margin: 4px 0 10px;">
+        Confronto empírico do território sob estresse meteorológico e riscos climáticos auditados:
+      </p>
+
+      <div class="evidence-section-block">
+        <div class="evidence-block-header">
+          <span class="evidence-block-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+            INMET · Avisos Meteorológicos Operacionais
+          </span>
+          <span style="font-size:0.67rem; color:#64748b;">${avisos.length} aviso(s) ativo(s)</span>
+        </div>
+        ${inmetHtml}
+      </div>
+
+      <div class="evidence-section-block" style="margin-top:12px;">
+        <div class="evidence-block-header">
+          <span class="evidence-block-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            AdaptaBrasil MCTI · Riscos Climáticos Estruturais
+          </span>
+          <span style="font-size:0.67rem; color:#64748b;">Segurança Alimentar e Desastres</span>
+        </div>
+        ${adaptaHtml}
+      </div>
+
+      <div class="comp-note-box" style="margin-top: 10px;">
+        <strong>Princípio Epistêmico:</strong> Indicadores climáticos e avisos meteorológicos não alteram a fórmula de <em>R</em>. Constituem a bancada empírica para testar se os municípios resilientes efetivamente resistiram e adaptaram-se às perturbações documentadas.
+      </div>
+      <div class="comp-provenance-box" style="margin-top: 6px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <span>Fontes: MCTI/AdaptaBrasil &amp; INMET/CPTEC · Proveniência SHA-256</span>
       </div>
     `;
   }
@@ -1095,6 +1303,23 @@ async function autoLoadAll() {
         if (current) choose(current);
         else choose(null);
       }
+    }
+
+    // 3. Carregar repositório de evidências epistêmicas (AdaptaBrasil + INMET)
+    try {
+      const rEvid = await fetch('/api/public/evidencias_rs.json');
+      if (rEvid.ok) {
+        evidenciasData = await rEvid.json();
+        // Se a camada ativa for inmet ou adaptabrasil, re-renderizar mapa
+        if (layer === 'inmet' || layer === 'adaptabrasil') {
+          renderMap();
+        }
+        if (current && activeArea === 'E') {
+          updateComponentDetail(current);
+        }
+      }
+    } catch (eEvid) {
+      console.warn('Evidências climáticas offline ou pendentes:', eEvid);
     }
   } catch (err) {
     console.warn('Carregamento automático de dados offline ou em rede restrita:', err);

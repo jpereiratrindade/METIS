@@ -86,6 +86,9 @@
         </div>
         Séries censitárias oficiais (IBGE 2006 e 2017) e malha vetorial com validação criptográfica SHA-256 no PostgreSQL/PostGIS. Acesso estritamente somente-leitura.
       </div>
+      <a href="api/public/evidencias_rs.json" target="_blank" style="display:inline-flex; align-items:center; gap:6px; color:#38bdf8; font-size:0.72rem; text-decoration:none; margin-top:8px; padding:4px 8px; background:rgba(56, 189, 248, 0.08); border-radius:4px; border:1px solid rgba(56, 189, 248, 0.2);">
+        <span>⚡ API Pública: Evidências RS (AdaptaBrasil + INMET)</span>
+      </a>
     </div>
 
     <div class="sidebar-bottom">
@@ -276,6 +279,8 @@
           <div class="layer-buttons" role="group" aria-label="Camada territorial de tendência">
             <button class="layer-btn selected" data-layer="resiliencia" title="Estado de Resiliência Experimental R = E(P+S)">Resiliência (R)</button>
             <button class="layer-btn" data-layer="evolucao" title="Evolução Temporal da Resiliência entre os Censos 2006 e 2017 (Δ R)">Evolução (Δ 06-17)</button>
+            <button class="layer-btn" data-layer="inmet" title="Avisos Meteorológicos Ativos do INMET em tempo real (Perturbações)">Alertas INMET</button>
+            <button class="layer-btn" data-layer="adaptabrasil" title="Índice de Risco Climático na Disponibilidade de Alimentos (AdaptaBrasil MCTI)">Risco AdaptaBrasil</button>
             <button class="layer-btn" data-layer="ecologica" title="Multiplicador Ecológico E">Ecológica (E)</button>
             <button class="layer-btn" data-layer="produtiva" title="Densidade Produtiva P(k)">Produtiva (P)</button>
             <button class="layer-btn" data-layer="social" title="Dimensão Social S">Social (S)</button>
@@ -360,6 +365,7 @@
                 <div class="comp-tabs" id="comp-tabs">
                   <button class="comp-tab-btn active" data-area="D" title="Área D: Resultados e Decomposição">D · Resultados</button>
                   <button class="comp-tab-btn" data-area="T" title="Trajetória Decenal (2006 ➔ 2017): Evolução e Confronto Censitário">T · Trajetória</button>
+                  <button class="comp-tab-btn" data-area="E" title="Área E: Evidências Climáticas (AdaptaBrasil MCTI) e Perturbações (INMET)">E · Evidências</button>
                   <button class="comp-tab-btn" data-area="M" title="Confronto Direto de Modelos para o Município">M · Confronto</button>
                   <button class="comp-tab-btn" data-area="A" title="Área A: Observações do Município">A · Insumos</button>
                   <button class="comp-tab-btn" data-area="B" title="Área B: Parametrização Experimental">B · Parâmetros</button>

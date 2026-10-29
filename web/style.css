@@ -1177,6 +1177,89 @@ main#app {
   margin-bottom: 8px;
 }
 
+/* ÁREA E: EVIDÊNCIAS EPISTÊMICAS (AdaptaBrasil + INMET) */
+.evidence-section-block {
+  margin-bottom: 12px;
+}
+.evidence-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.evidence-block-title {
+  font-size: 0.76rem;
+  font-weight: 750;
+  color: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.inmet-alert-card {
+  background: #ffffff;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #ef4444;
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+.inmet-alert-card.warning-moderate {
+  border-left-color: #f97316;
+  border-color: #fed7aa;
+}
+.inmet-alert-card.warning-potential {
+  border-left-color: #eab308;
+  border-color: #fef08a;
+}
+.inmet-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.67rem;
+  font-weight: 750;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+.inmet-calm-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 3px solid #22c55e;
+  color: #15803d;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.climate-meter-row {
+  margin-bottom: 7px;
+}
+.climate-meter-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.71rem;
+  color: #334155;
+  margin-bottom: 2px;
+}
+.climate-bar-bg {
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+.climate-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
 .comp-detail-box {
   background: var(--surface-alt);
   border: 1px solid var(--line);
