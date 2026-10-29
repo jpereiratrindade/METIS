@@ -164,6 +164,114 @@
       box-shadow: 0 1px 4px rgba(0,0,0,0.3);
       cursor: pointer;
     }
+    .dash-slider.purple::-webkit-slider-thumb {
+      background: #7e22ce;
+    }
+    .dash-slider.blue::-webkit-slider-thumb {
+      background: #2563eb;
+    }
+    .dash-slider.green::-webkit-slider-thumb {
+      background: #16a34a;
+    }
+    .calib-model-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .calib-tab-btn {
+      flex: 1 1 auto;
+      padding: 6px 10px;
+      font-size: 0.72rem;
+      font-weight: 750;
+      border-radius: 6px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .calib-tab-btn:hover {
+      background: #f1f5f9;
+      color: var(--navy);
+      border-color: #94a3b8;
+    }
+    .calib-tab-btn.active {
+      background: var(--navy);
+      color: #ffffff;
+      border-color: var(--navy);
+      box-shadow: 0 1px 3px rgba(7, 30, 56, 0.2);
+    }
+    .calib-alert-banner {
+      background: #eff6ff;
+      border: 1px solid #93c5fd;
+      color: #1e40af;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .model-badge-mini {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 750;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .model-badge-mini.purple {
+      background: #f3e8ff;
+      color: #6b21a8;
+    }
+    .model-badge-mini.blue {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .model-badge-mini.green {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .dash-num-input {
+      width: 78px;
+      padding: 4px 6px;
+      font-size: 0.78rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      text-align: right;
+      color: var(--navy);
+      background: #ffffff;
+    }
+    .dash-btn-reset {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 0.72rem;
+      font-weight: 750;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+    }
+    .dash-btn-reset:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .confrontation-table tbody tr {
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .confrontation-table tbody tr:hover {
+      background: #f8fafc;
+    }
     .dash-export-bar {
       display: flex;
       align-items: center;
@@ -554,45 +662,102 @@
         <article class="dash-card">
           <div class="dash-card-title">
             <span>Calibração Experimental em Tempo Real</span>
-            <span class="score-tag" style="background: #e0f2fe; color: #0369a1;">Sensibilidade</span>
+            <span class="score-tag" style="background: #e0f2fe; color: #0369a1;" id="tag-calib-model">Sensibilidade</span>
           </div>
-          <p style="margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.45;">
-            Altere os parâmetros do laboratório para avaliar a robustez das hipóteses para o município selecionado:
-          </p>
+
+          <!-- TABS DE SINCRONIZAÇÃO DIRETA DE MODELO -->
+          <div class="calib-model-tabs" id="calib-model-tabs">
+            <button type="button" class="calib-tab-btn" data-model="EPS-REF-001">EPS-REF-001</button>
+            <button type="button" class="calib-tab-btn" data-model="EPS-EXP-002">EPS-EXP-002 (Aditivo)</button>
+            <button type="button" class="calib-tab-btn" data-model="EPS-EXP-003">EPS-EXP-003 (Sinergia)</button>
+            <button type="button" class="calib-tab-btn" data-model="EPS-EXP-004">EPS-EXP-004 (Autônomo)</button>
+          </div>
+
+          <div id="calib-alert-banner" class="calib-alert-banner" style="display: none;"></div>
 
           <div class="slider-group">
-            <div class="slider-row">
+            <!-- CONTROLE 1: CENÁRIO / ESTADO ECOLÓGICO TRANSVERSAL -->
+            <div class="slider-row" style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 12px;">
+              <div class="slider-row-header">
+                <span style="color: #166534; font-weight: 800;">🌿 Estado Ecológico (Modulação da Cobertura):</span>
+                <span class="slider-val-tag" id="lbl-param-eco" style="color: #15803d;">1,00× (Censitário 100%)</span>
+              </div>
+              <input type="range" id="slider-eco" class="dash-slider green" min="0.50" max="1.50" step="0.05" value="1.00"/>
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem; color: #166534; margin-top: 2px;">
+                <span>-50% degradação</span>
+                <span>Censo Oficial (1,00×)</span>
+                <span>+50% conservação</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                <small style="font-size: 0.70rem; color: #15803d; line-height: 1.35;">Modula a vegetação natural e afeta o componente E em todos os modelos.</small>
+                <span class="model-badge-mini green">Todos os Modelos</span>
+              </div>
+            </div>
+
+            <!-- CONTROLE 2: ESCALA K DE HILL -->
+            <div class="slider-row" id="row-k">
               <div class="slider-row-header">
                 <span>Parâmetro k de Produtividade (Hill):</span>
                 <span class="slider-val-tag" id="lbl-param-k">1500 R$/ha</span>
               </div>
-              <input type="range" id="slider-k" class="dash-slider" min="300" max="4000" step="50" value="1500"/>
-              <small style="font-size: 0.70rem; color: #94a3b8;">Determina a densidade monetária onde a produtividade atinge 50% do máximo.</small>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <input type="range" id="slider-k" class="dash-slider" min="300" max="6000" step="50" value="1500" style="flex: 1;"/>
+                <input type="number" id="input-k" class="dash-num-input" min="100" max="20000" step="50" value="1500" title="Digitar valor numérico de k"/>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+                <small style="font-size: 0.70rem; color: #94a3b8;">Densidade monetária onde a produtividade atinge 50% do teto.</small>
+                <span class="model-badge-mini">EXP-002, EXP-003, EXP-004</span>
+              </div>
             </div>
 
-            <div class="slider-row" id="group-pesos">
-              <div class="slider-row-header">
-                <span>Peso Ecológico (w_e) no Modelo Aditivo:</span>
-                <span class="slider-val-tag" id="lbl-param-we">0,33</span>
+            <!-- CONTROLE 3: PESO ECOLÓGICO E PRODUTIVO (EPS-EXP-002) -->
+            <div class="slider-row" id="group-pesos" style="background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 0.76rem; font-weight: 800; color: #6b21a8; text-transform: uppercase;">Pesos Aditivos Lineares</span>
+                <span class="model-badge-mini purple">Modelo EPS-EXP-002</span>
               </div>
-              <input type="range" id="slider-we" class="dash-slider" min="0.10" max="0.80" step="0.05" value="0.33"/>
+              <div class="slider-row-header">
+                <span style="color: #4c1d95;">Peso Ecológico (w_e):</span>
+                <span class="slider-val-tag" id="lbl-param-we" style="color: #6b21a8;">0,33</span>
+              </div>
+              <input type="range" id="slider-we" class="dash-slider purple" min="0.10" max="0.80" step="0.05" value="0.33"/>
+
+              <div class="slider-row-header" style="margin-top: 8px;">
+                <span style="color: #4c1d95;">Peso Produtivo (w_p):</span>
+                <span class="slider-val-tag" id="lbl-param-wp" style="color: #6b21a8;">0,33</span>
+              </div>
+              <input type="range" id="slider-wp" class="dash-slider purple" min="0.10" max="0.80" step="0.05" value="0.33"/>
+
+              <div style="display: flex; justify-content: space-between; font-size: 0.70rem; color: #7e22ce; margin-top: 4px;">
+                <span>Social (w_s deduzido): <strong id="lbl-param-ws">0,34</strong></span>
+                <span>Soma: 1,00 (Ao mover, ativa EPS-EXP-002)</span>
+              </div>
             </div>
 
-            <div class="slider-row" id="group-sinergia">
-              <div class="slider-row-header">
-                <span>Intensidade de Sinergia (λ) no Modelo Interativo:</span>
-                <span class="slider-val-tag" id="lbl-param-lambda">0,50</span>
+            <!-- CONTROLE 4: SINERGIA (EPS-EXP-003) -->
+            <div class="slider-row" id="group-sinergia" style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <span style="font-size: 0.76rem; font-weight: 800; color: #1e40af; text-transform: uppercase;">Acoplamento Não-Linear</span>
+                <span class="model-badge-mini blue">Modelo EPS-EXP-003</span>
               </div>
-              <input type="range" id="slider-lambda" class="dash-slider" min="0.00" max="1.00" step="0.05" value="0.50"/>
-              <small style="font-size: 0.70rem; color: #94a3b8;">Amplificação gerada pela cooperação entre assistência técnica e produção.</small>
+              <div class="slider-row-header">
+                <span style="color: #1e3a8a;">Intensidade de Sinergia (λ):</span>
+                <span class="slider-val-tag" id="lbl-param-lambda" style="color: #2563eb;">0,50</span>
+              </div>
+              <input type="range" id="slider-lambda" class="dash-slider blue" min="0.00" max="1.00" step="0.05" value="0.50"/>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px;">
+                <small style="font-size: 0.70rem; color: #1d4ed8; line-height: 1.35;">Termo sinérgico λ·(P·S/50) que premia assistência técnica e produção.</small>
+                <small style="font-size: 0.70rem; color: #2563eb;">(Ao mover, ativa EPS-EXP-003)</small>
+              </div>
             </div>
           </div>
 
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-top: auto;">
-            <strong style="font-size: 0.76rem; color: var(--navy); display: block;">Auditabilidade C++26:</strong>
-            <span style="font-size: 0.72rem; color: #64748b;">
-              Toda alteração de parâmetro é recalculada instantaneamente via dedução matemática, preservando o modelo oficial no repositório.
-            </span>
+          <!-- AÇÕES DE CALIBRAÇÃO -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
+            <button type="button" id="btn-reset-calib" class="dash-btn-reset" title="Restaurar parâmetros padrão do laboratório">
+              ↺ Restaurar Padrões
+            </button>
+            <span style="font-size: 0.70rem; color: #64748b;" id="calib-status-msg">Recálculo instantâneo C++26</span>
           </div>
         </article>
       </div>

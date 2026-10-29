@@ -20,7 +20,8 @@ let paramQ90 = 8.932076;
 let paramWe = 0.33;
 let paramWp = 0.33;
 let paramWs = 0.34;
-let paramLambda = 0.5;
+let paramLambda = 0.50;
+let paramEcoFactor = 1.00; // Modulação de estado ecológico (1.00 = 100% censitário)
 
 const modelCatalog = {
   'EPS-REF-001': {
@@ -122,7 +123,8 @@ function computeSingleModel(raw, modelId) {
     return { status: 'dados_incompletos', modelo: modelId };
   }
 
-  const e0 = Math.max(0, Math.min(1, (past + mata) / area));
+  const e0_base = Math.max(0, Math.min(1, (past + mata) / area));
+  const e0 = Math.max(0, Math.min(1, e0_base * paramEcoFactor));
   const dm = vp / area;
   const socBase = (orient + assoc) / estab;
 
@@ -178,6 +180,9 @@ function renderDashboard() {
   if ($('pill-active-model')) $('pill-active-model').textContent = activeModel;
   if ($('card-mun-title')) $('card-mun-title').textContent = `${munName} — ${activeModel}`;
   if ($('tag-active-model')) $('tag-active-model').textContent = activeModel;
+  if ($('tag-calib-model')) $('tag-calib-model').textContent = activeModel;
+
+  updateModelTabs();
 
   const res = computeSingleModel(raw, activeModel);
 
@@ -306,7 +311,7 @@ function renderConfrontation(raw) {
 
     const isActive = mId === activeModel;
     html += `
-      <tr class="${isActive ? 'active-model-row' : ''}">
+      <tr class="${isActive ? 'active-model-row' : ''}" data-model="${mId}" title="Clique para investigar este modelo no painel principal">
         <td>
           <span class="confrontation-model-tag">${mId}</span>
           <span class="confrontation-sub">${modelCatalog[mId].name.split('—')[1] || ''}</span>
@@ -321,6 +326,16 @@ function renderConfrontation(raw) {
   }
 
   tbody.innerHTML = html;
+
+  // Tornar linhas da tabela clicáveis para alternar o modelo ativo
+  tbody.querySelectorAll('tr').forEach(tr => {
+    tr.addEventListener('click', () => {
+      const mId = tr.dataset.model;
+      if (mId && modelCatalog[mId]) {
+        setActiveModelWithAlert(mId, `Modelo alterado para ${mId} via matriz de confronto.`);
+      }
+    });
+  });
 }
 
 // Exportações científicas reproduzíveis
@@ -347,6 +362,7 @@ function exportJSON() {
         k_produtiva_reais_ha: paramK,
         pesos_aditivos: { we: paramWe, wp: paramWp, ws: paramWs },
         sinergia_lambda: paramLambda,
+        fator_estado_ecologico: paramEcoFactor,
         q10_ref: paramQ10,
         q90_ref: paramQ90
       }
@@ -458,6 +474,7 @@ async function initDashboard() {
     $('dash-select-model')?.addEventListener('change', e => {
       activeModel = e.target.value;
       if ($('dash-model-hint')) $('dash-model-hint').textContent = modelCatalog[activeModel]?.hypothesis || '';
+      updateModelTabs();
       updateTriaxialBadge();
       renderDashboard();
     });
@@ -474,38 +491,157 @@ async function initDashboard() {
       renderDashboard();
     });
 
-    // 6. Sliders de sensibilidade
-    $('slider-k')?.addEventListener('input', e => {
-      paramK = Number(e.target.value);
-      if ($('lbl-param-k')) $('lbl-param-k').textContent = `${paramK} R$/ha`;
+    // 6. Tabs de sincronização direta no card de calibração
+    document.querySelectorAll('.calib-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetModel = btn.dataset.model;
+        if (targetModel && modelCatalog[targetModel]) {
+          activeModel = targetModel;
+          updateModelTabs();
+          updateTriaxialBadge();
+          renderDashboard();
+        }
+      });
+    });
+
+    // 7. Modulação do Estado Ecológico (Transversal a todos os modelos)
+    $('slider-eco')?.addEventListener('input', e => {
+      paramEcoFactor = Number(e.target.value);
+      const pct = Math.round(paramEcoFactor * 100);
+      if ($('lbl-param-eco')) {
+        $('lbl-param-eco').textContent = paramEcoFactor === 1.0 ? '1,00× (Censitário 100%)' : `${fmt(paramEcoFactor, 2)}× (${pct}%)`;
+      }
       renderDashboard();
     });
 
+    // 8. Escala Hill k (Produtividade)
+    const onKChange = val => {
+      const num = Number(val);
+      if (num > 0 && Number.isFinite(num)) {
+        paramK = num;
+        if ($('slider-k')) $('slider-k').value = String(num);
+        if ($('input-k')) $('input-k').value = String(num);
+        if ($('lbl-param-k')) $('lbl-param-k').textContent = `${Math.round(paramK)} R$/ha`;
+        if (activeModel === 'EPS-REF-001') {
+          setActiveModelWithAlert('EPS-EXP-004', 'Modelo EPS-EXP-004 ativado para aplicar o parâmetro de escala Hill (k).');
+        } else {
+          renderDashboard();
+        }
+      }
+    };
+    $('slider-k')?.addEventListener('input', e => onKChange(e.target.value));
+    $('input-k')?.addEventListener('input', e => onKChange(e.target.value));
+
+    // 9. Pesos Aditivos (Modelo EPS-EXP-002)
     $('slider-we')?.addEventListener('input', e => {
       paramWe = Number(e.target.value);
-      paramWp = (1.0 - paramWe) / 2;
-      paramWs = 1.0 - paramWe - paramWp;
+      paramWs = Math.max(0.05, 1.0 - paramWe - paramWp);
       if ($('lbl-param-we')) $('lbl-param-we').textContent = fmt(paramWe, 2);
-      renderDashboard();
+      if ($('lbl-param-ws')) $('lbl-param-ws').textContent = fmt(paramWs, 2);
+      if (activeModel !== 'EPS-EXP-002') {
+        setActiveModelWithAlert('EPS-EXP-002', 'Modelo EPS-EXP-002 ativado automaticamente para aplicar os pesos aditivos (we, wp, ws).');
+      } else {
+        renderDashboard();
+      }
     });
 
+    $('slider-wp')?.addEventListener('input', e => {
+      paramWp = Number(e.target.value);
+      paramWs = Math.max(0.05, 1.0 - paramWe - paramWp);
+      if ($('lbl-param-wp')) $('lbl-param-wp').textContent = fmt(paramWp, 2);
+      if ($('lbl-param-ws')) $('lbl-param-ws').textContent = fmt(paramWs, 2);
+      if (activeModel !== 'EPS-EXP-002') {
+        setActiveModelWithAlert('EPS-EXP-002', 'Modelo EPS-EXP-002 ativado automaticamente para aplicar os pesos aditivos (we, wp, ws).');
+      } else {
+        renderDashboard();
+      }
+    });
+
+    // 10. Intensidade de Sinergia (Modelo EPS-EXP-003)
     $('slider-lambda')?.addEventListener('input', e => {
       paramLambda = Number(e.target.value);
       if ($('lbl-param-lambda')) $('lbl-param-lambda').textContent = fmt(paramLambda, 2);
+      if (activeModel !== 'EPS-EXP-003') {
+        setActiveModelWithAlert('EPS-EXP-003', 'Modelo EPS-EXP-003 ativado automaticamente para aplicar a intensidade de sinergia (λ).');
+      } else {
+        renderDashboard();
+      }
+    });
+
+    // 11. Botão de restauração de padrões
+    $('btn-reset-calib')?.addEventListener('click', () => {
+      paramK = 1500.0;
+      paramEcoFactor = 1.00;
+      paramWe = 0.33;
+      paramWp = 0.33;
+      paramWs = 0.34;
+      paramLambda = 0.50;
+
+      if ($('slider-eco')) $('slider-eco').value = '1.00';
+      if ($('lbl-param-eco')) $('lbl-param-eco').textContent = '1,00× (Censitário 100%)';
+      if ($('slider-k')) $('slider-k').value = '1500';
+      if ($('input-k')) $('input-k').value = '1500';
+      if ($('lbl-param-k')) $('lbl-param-k').textContent = '1500 R$/ha';
+      if ($('slider-we')) $('slider-we').value = '0.33';
+      if ($('lbl-param-we')) $('lbl-param-we').textContent = '0,33';
+      if ($('slider-wp')) $('slider-wp').value = '0.33';
+      if ($('lbl-param-wp')) $('lbl-param-wp').textContent = '0,33';
+      if ($('lbl-param-ws')) $('lbl-param-ws').textContent = '0,34';
+      if ($('slider-lambda')) $('slider-lambda').value = '0.50';
+      if ($('lbl-param-lambda')) $('lbl-param-lambda').textContent = '0,50';
+
+      showCalibAlert('Parâmetros restaurados aos padrões originais do laboratório.');
       renderDashboard();
     });
 
-    // 7. Botões de exportação
+    // 12. Botões de exportação
     $('btn-export-json')?.addEventListener('click', exportJSON);
     $('btn-export-csv')?.addEventListener('click', exportCSV);
 
-    // 8. Renderização inicial
+    // 13. Renderização inicial
+    updateModelTabs();
     updateTriaxialBadge();
     renderDashboard();
 
   } catch (err) {
     console.error('Erro na inicialização do dashboard analítico:', err);
   }
+}
+
+function updateModelTabs() {
+  document.querySelectorAll('.calib-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.model === activeModel);
+  });
+  if ($('dash-select-model') && $('dash-select-model').value !== activeModel) {
+    $('dash-select-model').value = activeModel;
+  }
+  if ($('dash-model-hint')) {
+    $('dash-model-hint').textContent = modelCatalog[activeModel]?.hypothesis || '';
+  }
+  if ($('tag-calib-model')) {
+    $('tag-calib-model').textContent = activeModel;
+  }
+}
+
+function showCalibAlert(msg) {
+  const banner = $('calib-alert-banner');
+  if (!banner) return;
+  banner.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg> <span>${msg}</span>`;
+  banner.style.display = 'flex';
+  clearTimeout(banner._timer);
+  banner._timer = setTimeout(() => {
+    banner.style.display = 'none';
+  }, 4000);
+}
+
+function setActiveModelWithAlert(newModel, reason) {
+  if (activeModel !== newModel) {
+    activeModel = newModel;
+    updateModelTabs();
+    updateTriaxialBadge();
+    if (reason) showCalibAlert(reason);
+  }
+  renderDashboard();
 }
 
 function updateTriaxialBadge() {
