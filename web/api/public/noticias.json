@@ -4,6 +4,15 @@
   "ecossistema": "SisTer",
   "noticias": [
     {
+      "id": "NOT-2026-004",
+      "titulo": "AdaptaBrasil (MCTI) e Alertas INMET integrados sob a diretriz METIS-DIR-EVID-001",
+      "data": "2026-10-29",
+      "autor": "Laboratório de Clima & Resiliência SisTer",
+      "categoria": "Metodologia",
+      "resumo": "O MÉTIS concluiu a integração automatizada de 558 indicadores do AdaptaBrasil (MCTI) e avisos meteorológicos do INMET em PostGIS, viabilizando o confronto empírico de resiliência territorial e abertura de episódios de investigação científica.",
+      "link": "mapa.html"
+    },
+    {
       "id": "NOT-2026-001",
       "titulo": "MÉTIS abre acesso público universal para experimentação agroterritorial",
       "data": "2026-10-29",

@@ -314,6 +314,9 @@
       <a class="sidebar-doc-link sub" href="#mod-eps-004">
         <span>• EPS-EXP-004 (Autônomo)</span>
       </a>
+      <a class="sidebar-doc-link" href="#evidencias-confronto">
+        <span>🔬 4. Confrontação: Clima &amp; Alertas</span>
+      </a>
     </div>
 
     <div class="sidebar-bottom">
@@ -624,6 +627,60 @@
               </tr>
             </table>
           </article>
+        </div>
+
+        <!-- 4. CAMADA DE CONFRONTAÇÃO EMPÍRICA (METIS-DIR-EVID-001) -->
+        <div style="margin-top: 36px; padding-top: 28px; border-top: 1px solid var(--line);" id="evidencias-confronto">
+          <h2 class="doc-section-title">
+            <span>🔬</span>
+            <span>4. Camada de Confrontação Empírica: AdaptaBrasil (MCTI) e Avisos Meteorológicos (INMET)</span>
+          </h2>
+          <p class="doc-section-subtitle">
+            Diretriz <code>METIS-DIR-EVID-001</code>: O MÉTIS não adultera as equações matemáticas do indicador <em>R</em> com variáveis climáticas aditivas. Em vez disso, estabelece uma separação epistêmica estrita entre o estado intrínseco de sustentabilidade territorial e o teste de estresse empírico operado por evidências externas.
+          </p>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-bottom: 22px;">
+            <!-- CARD ADAPTABRASIL -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 20px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <strong style="color: #065f46; font-size: 0.95rem;">🌱 AdaptaBrasil MCTI</strong>
+                <span style="font-size: 0.72rem; background: #ecfdf5; color: #047857; padding: 2px 8px; border-radius: 999px; font-weight: 700;">558 Indicadores Oficiais</span>
+              </div>
+              <p style="font-size: 0.82rem; color: #475569; line-height: 1.5; margin: 0 0 10px;">
+                Plataforma do Ministério da Ciência, Tecnologia e Inovação. Fornece índices normalizados [0, 1] de <em>Ameaça, Exposição, Suscetibilidade, Vulnerabilidade, Capacidade Adaptativa</em> e o <em>Índice de Risco</em> na Segurança Alimentar.
+              </p>
+              <div style="font-size: 0.76rem; color: #334155; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; line-height: 1.45;">
+                <strong>Projeções IPCC AR5:</strong> Séries históricas de 2017 e cenários futuros (2030 e 2050 sob RCP4.5) confrontam a capacidade de regeneração ecológica <em>E</em> e a dependência produtiva <em>P</em> com o risco climático futuro.
+              </div>
+            </div>
+
+            <!-- CARD INMET -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 20px;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                <strong style="color: #9a3412; font-size: 0.95rem;">⚡ INMET · Avisos Meteorológicos</strong>
+                <span style="font-size: 0.72rem; background: #fff7ed; color: #c2410c; padding: 2px 8px; border-radius: 999px; font-weight: 700;">PostGIS Operacional</span>
+              </div>
+              <p style="font-size: 0.82rem; color: #475569; line-height: 1.5; margin: 0 0 10px;">
+                Instituto Nacional de Meteorologia. Fornece polígonos geoespaciais de avisos severos (chuvas intensas, tempestades, ventos costeiros) atualizados continuamente e cruzados via <code>ST_Intersects</code> com os 497 municípios do RS.
+              </p>
+              <div style="font-size: 0.76rem; color: #334155; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 10px; line-height: 1.45;">
+                <strong>Vigência e Descarte:</strong> O MÉTIS rastreia a janela temporal exata (<code>inicio</code> até <code>fim</code>). Alertas expirados ou cancelados são marcados como encerrados, prevenindo falsos estados de perturbação.
+              </div>
+            </div>
+          </div>
+
+          <!-- O CONCEITO DE EPISÓDIO INVESTIGATIVO -->
+          <div style="background: #eef2ff; border: 1px solid #c7d2fe; border-left: 4px solid #6366f1; border-radius: 8px; padding: 18px 20px; line-height: 1.55;">
+            <h3 style="margin: 0 0 8px; color: #3730a3; font-size: 0.95rem;">🔬 O Motor de Episódios Investigativos (METIS-DIR-EVID-001)</h3>
+            <p style="margin: 0 0 10px; font-size: 0.84rem; color: #4338ca;">
+              Quando um aviso do INMET atinge um município, o MÉTIS não altera o valor de <em>R</em> na fórmula. Em vez disso, o motor cria um <strong>Episódio de Investigação Científica</strong>:
+            </p>
+            <ol style="margin: 0; padding-left: 20px; font-size: 0.82rem; color: #3730a3; line-height: 1.5;">
+              <li><strong>Congelamento Basal (t₀):</strong> Registra o estado pré-perturbação de <em>R(t₀)</em>, <em>E</em>, <em>P</em> e <em>S</em>, acompanhado dos índices de risco do AdaptaBrasil.</li>
+              <li><strong>Monitoramento de Resposta (t₀ ➔ t₁):</strong> Avalia se a magnitude da perturbação produziu rupturas observáveis nas cadeias agropecuárias ou na cobertura de vegetação.</li>
+              <li><strong>Desfecho Científico:</strong> Confronta se o município com alto <em>R</em> comportou-se de forma resiliente, ou se o modelo superestimou sua robustez real, alimentando o ciclo de evolução epistêmica.</li>
+            </ol>
+          </div>
         </div>
 
         <!-- NOTA EPISTÊMICA -->

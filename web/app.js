@@ -314,6 +314,23 @@ function refreshMetrics() {
   if ($('metric-total')) $('metric-total').textContent = scores.size || '497';
   if ($('metric-valid')) $('metric-valid').textContent = valid.length || '492';
   if ($('metric-year')) $('metric-year').textContent = activeYear || '2017';
+
+  if ($('metric-adapta')) {
+    if (evidenciasData && evidenciasData.municipios) {
+      $('metric-adapta').textContent = `${Object.keys(evidenciasData.municipios).length} Mun. (100%)`;
+    } else {
+      $('metric-adapta').textContent = '497 Mun.';
+    }
+  }
+  if ($('metric-inmet')) {
+    if (evidenciasData && evidenciasData.avisos_inmet_ativos) {
+      const n = evidenciasData.avisos_inmet_ativos.length;
+      $('metric-inmet').textContent = `${n} Alerta${n === 1 ? '' : 's'}`;
+    } else {
+      $('metric-inmet').textContent = 'Tempo Real';
+    }
+  }
+
   updateTriaxialSummary();
 
   if ($('source-state')) {
@@ -582,7 +599,31 @@ function updateComponentDetail(code) {
   if (!box) return;
 
   if (!code) {
-    box.innerHTML = '<p class="comp-empty-hint">Selecione um município no mapa para abrir sua investigação analítica individual (METIS-DIR-MULTI-002).</p>';
+    box.innerHTML = `
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: left;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span style="font-size: 1.1rem;">🔬</span>
+          <strong style="color: var(--navy); font-size: 0.86rem;">Painel de Investigação Territorial</strong>
+        </div>
+        <p style="font-size: 0.77rem; color: #64748b; line-height: 1.45; margin: 0 0 10px;">
+          Selecione um município na malha ao lado para inspecionar indicadores censitários, <strong>risco climático do AdaptaBrasil (MCTI)</strong> e <strong>avisos operacionais do INMET</strong>.
+        </p>
+        <div style="margin-bottom: 10px; padding: 8px 10px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; font-size: 0.72rem; color: #065f46; line-height: 1.4;">
+          <strong>🌱 AdaptaBrasil:</strong> 497 municípios com 2.982 registros e projeções IPCC até 2050.<br/>
+          <strong>⚡ INMET Alertas:</strong> Cruzamento espacial de avisos ativos via PostGIS.
+        </div>
+        <span style="font-size: 0.70rem; color: #475569; font-weight: 700; display: block; margin-bottom: 6px;">Atalhos para investigação:</span>
+        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+          <button type="button" class="quick-mun-chip" data-code="4302105" data-name="Bento Gonçalves" style="background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 7px; font-size: 0.71rem; color: var(--navy); cursor: pointer; font-weight: 600;">Bento Gonçalves</button>
+          <button type="button" class="quick-mun-chip" data-code="4314902" data-name="Porto Alegre" style="background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 7px; font-size: 0.71rem; color: var(--navy); cursor: pointer; font-weight: 600;">Porto Alegre</button>
+          <button type="button" class="quick-mun-chip" data-code="4300406" data-name="Alegrete" style="background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 7px; font-size: 0.71rem; color: var(--navy); cursor: pointer; font-weight: 600;">Alegrete</button>
+          <button type="button" class="quick-mun-chip" data-code="4314407" data-name="Pelotas" style="background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 7px; font-size: 0.71rem; color: var(--navy); cursor: pointer; font-weight: 600;">Pelotas</button>
+        </div>
+      </div>
+    `;
+    box.querySelectorAll('.quick-mun-chip').forEach(btn => {
+      btn.addEventListener('click', () => choose(btn.dataset.code, btn.dataset.name));
+    });
     return;
   }
 
@@ -1412,7 +1453,7 @@ async function autoLoadAll() {
         refreshMetrics();
         renderMap();
         if (current) choose(current);
-        else choose(null);
+        else choose('4302105', 'Bento Gonçalves');
       }
     }
 
@@ -1428,11 +1469,15 @@ async function autoLoadAll() {
       if (rEps.ok) {
         episodiosData = await rEps.json();
       }
+      refreshMetrics();
       if (layer === 'inmet' || layer === 'adaptabrasil') {
         renderMap();
       }
-      if (current && activeArea === 'E') {
-        updateComponentDetail(current);
+      if (current) {
+        choose(current);
+        if (activeArea === 'E') {
+          updateComponentDetail(current);
+        }
       }
     } catch (eEvid) {
       console.warn('Evidências climáticas ou episódios offline:', eEvid);

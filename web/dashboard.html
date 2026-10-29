@@ -762,6 +762,52 @@
         </article>
       </div>
 
+      <!-- EVIDÊNCIAS CLIMÁTICAS & PERTURBAÇÕES (AdaptaBrasil MCTI & Alertas INMET) -->
+      <section class="dash-card" style="margin-bottom: 24px; border-left: 4px solid #059669;">
+        <div class="dash-card-title">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            <span>Evidências Climáticas (AdaptaBrasil MCTI) &amp; Perturbações Operacionais (INMET)</span>
+          </div>
+          <span class="score-tag" style="background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;" id="dash-evid-tag">METIS-DIR-EVID-001</span>
+        </div>
+        <p style="margin: 0 0 12px; font-size: 0.82rem; color: #64748b;">
+          Confrontação das hipóteses de resiliência territorial contra vulnerabilidades climáticas homologadas e alertas meteorológicos em tempo real:
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px;">
+          <!-- COLUNA 1: ADAPTABRASIL INDICADORES -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+              <strong style="font-size: 0.82rem; color: var(--navy); display: flex; align-items: center; gap: 6px;">
+                🌱 AdaptaBrasil MCTI · Riscos &amp; Vulnerabilidade
+              </strong>
+              <small style="font-size: 0.68rem; color: #059669; font-weight: 700;">Base Oficial 2017 &amp; IPCC</small>
+            </div>
+            <div id="dash-adapta-content">
+              <p style="font-size: 0.75rem; color: #64748b;">Carregando indicadores do AdaptaBrasil...</p>
+            </div>
+          </div>
+
+          <!-- COLUNA 2: INMET AVISOS & EPISÓDIO INVESTIGATIVO -->
+          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+              <strong style="font-size: 0.82rem; color: var(--navy); display: flex; align-items: center; gap: 6px;">
+                ⚡ INMET · Avisos &amp; Episódios Investigativos
+              </strong>
+              <small style="font-size: 0.68rem; color: #ea580c; font-weight: 700;">Tempo Real / PostGIS</small>
+            </div>
+            <div id="dash-inmet-content">
+              <p style="font-size: 0.75rem; color: #64748b;">Carregando avisos INMET...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="comp-note-box" style="margin-top: 14px; font-size: 0.72rem; line-height: 1.45;">
+          <strong>Isolamento Epistêmico:</strong> Indicadores climáticos e avisos meteorológicos não adulteram a equação de <em>R</em>. Eles representam o estresse territorial concreto para testar se municípios com alto <em>R</em> mantêm suas funções ecológicas, produtivas e sociais diante dos eventos observados.
+        </div>
+      </section>
+
       <!-- SEÇÃO 2: VARIÁVEIS ORIGINAIS E TRANSFORMAÇÕES MATEMÁTICAS -->
       <section class="dash-card" style="margin-bottom: 24px;">
         <div class="dash-card-title">

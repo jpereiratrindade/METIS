@@ -11,7 +11,7 @@
     /* ESTILOS DO PORTAL PÚBLICO MÉTIS */
     .portal-tools-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 20px;
       margin-bottom: 32px;
     }
@@ -43,6 +43,7 @@
     .tool-gate-card.blue::before { background: linear-gradient(90deg, #0284c7, #38bdf8); }
     .tool-gate-card.teal::before { background: linear-gradient(90deg, #087f8c, #14805e); }
     .tool-gate-card.amber::before { background: linear-gradient(90deg, #d97706, #fbbf24); }
+    .tool-gate-card.emerald::before { background: linear-gradient(90deg, #059669, #34d399); }
 
     .tool-icon-wrap {
       width: 44px;
@@ -57,6 +58,7 @@
     .tool-icon-wrap.blue { background: #0284c7; }
     .tool-icon-wrap.teal { background: #087f8c; }
     .tool-icon-wrap.amber { background: #d97706; }
+    .tool-icon-wrap.emerald { background: #059669; }
 
     .tool-gate-card h3 {
       font-size: 1.25rem;
@@ -271,7 +273,10 @@
       margin: 0;
     }
 
-    @media (max-width: 990px) {
+    @media (max-width: 1200px) {
+      .portal-tools-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
       .portal-tools-grid { grid-template-columns: 1fr; }
       .portal-bottom-grid { grid-template-columns: 1fr; }
     }
@@ -350,6 +355,12 @@
     <div class="sidebar-model-nav">
       <a class="sidebar-doc-link" href="api/public/achados.json" target="_blank">
         <span>📄 API: Achados Científicos</span>
+      </a>
+      <a class="sidebar-doc-link" href="api/public/evidencias_rs.json" target="_blank">
+        <span>⚡ API: Evidências RS (AdaptaBrasil + INMET)</span>
+      </a>
+      <a class="sidebar-doc-link" href="api/public/episodios_rs.json" target="_blank">
+        <span>🔬 API: Episódios Investigativos</span>
       </a>
       <a class="sidebar-doc-link" href="api/public/noticias.json" target="_blank">
         <span>📰 API: Notícias do Lab</span>
@@ -488,6 +499,22 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
           </a>
         </article>
+
+        <article class="tool-gate-card emerald">
+          <div>
+            <div class="tool-icon-wrap emerald">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            </div>
+            <h3>Evidências &amp; Perturbações</h3>
+            <p>
+              AdaptaBrasil MCTI (índices de risco climático e projeções até 2050) e alertas meteorológicos operacionais do INMET para confronto empírico de hipóteses.
+            </p>
+          </div>
+          <a href="mapa.html" class="tool-action-btn">
+            <span>Explorar Evidências Territoriais</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </a>
+        </article>
       </section>
 
       <!-- OS 4 ELEMENTOS CONCEITUAIS DO MÉTIS -->
@@ -525,6 +552,16 @@
             <span class="elem-role">Indicador Experimental</span>
             <p>Função relacional <code>R = f(E, P, S)</code> para confronto científico de hipóteses, sem ranqueamento competitivo entre municípios.</p>
           </div>
+        </div>
+
+        <div style="margin-top: 24px; padding: 18px 20px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+          <h4 style="margin: 0 0 6px; color: #166534; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;">
+            <span>🔬</span>
+            <span>Camada Empírica de Estresse e Confrontação: AdaptaBrasil (MCTI) &amp; INMET (METIS-DIR-EVID-001)</span>
+          </h4>
+          <p style="margin: 0; font-size: 0.84rem; color: #15803d; line-height: 1.55;">
+            O modelo matemático em C++26 calcula o estado basal de sustentabilidade territorial intrínseca a partir de dados censitários e ecológicos. Paralelamente, o MÉTIS ingere de forma contínua e autônoma o <strong>Catálogo Oficial de Risco Climático do AdaptaBrasil (MCTI)</strong> (558 indicadores, projeções até 2050) e <strong>Avisos Meteorológicos Severos do INMET</strong> via PostGIS. Essa camada não modifica a fórmula de <em>R</em>, mas atua como teste de estresse empírico: quando um alerta atinge um município, abre-se um <em>episódio investigativo</em> congelando o estado basal prévio para confrontar a resposta real do território com a resiliência prevista.
+          </p>
         </div>
       </section>
 

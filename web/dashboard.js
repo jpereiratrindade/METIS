@@ -7,6 +7,18 @@ let scores = new Map();
 let rawData = new Map();
 let currentCode = '4302105'; // Bento Gonçalves como padrão inicial representativo
 let manifest = null;
+let evidenciasData = null;
+let episodiosData = null;
+
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 // Eixos Triaxiais
 let activeModel = 'EPS-REF-001';
@@ -223,6 +235,116 @@ function renderDashboard() {
 
   // Renderizar confronto intramunicipal
   renderConfrontation(raw);
+
+  // Renderizar evidências climáticas e alertas (AdaptaBrasil + INMET)
+  renderEvidenceSection(currentCode);
+}
+
+function renderEvidenceSection(code) {
+  const boxAdapta = $('dash-adapta-content');
+  const boxInmet = $('dash-inmet-content');
+  if (!boxAdapta || !boxInmet) return;
+
+  const muniEvid = evidenciasData?.municipios?.[code];
+  const adapta = muniEvid?.adaptabrasil || [];
+  const avisos = muniEvid?.avisos_inmet || [];
+  const eps = episodiosData?.por_municipio?.[code] || [];
+
+  // 1. AdaptaBrasil
+  if (adapta.length > 0) {
+    const baselines = adapta.filter(x => x.cenario.startsWith('baseline'));
+    const projecoes = adapta.filter(x => !x.cenario.startsWith('baseline'));
+
+    const metersHtml = baselines.map(ind => {
+      const valPct = Math.min(100, Math.max(0, (ind.valor || 0) * 100));
+      return `
+        <div style="margin-bottom: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.73rem; color: #334155; margin-bottom: 2px;">
+            <span>${escapeHtml(ind.nome)} (${ind.ano})</span>
+            <strong style="color: ${ind.cor || 'var(--navy)'};">${fmt(ind.valor, 2)} · ${escapeHtml(ind.classe)}</strong>
+          </div>
+          <div style="height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+            <div style="height: 100%; width: ${valPct}%; background: ${ind.cor || '#10b981'}; border-radius: 3px;"></div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    let projHtml = '';
+    if (projecoes.length > 0) {
+      const projRows = projecoes.map(p => `
+        <tr style="border-bottom: 1px solid #f1f5f9; font-size: 0.72rem;">
+          <td style="padding: 4px 6px;">${escapeHtml(p.nome)}</td>
+          <td style="padding: 4px 6px; text-align: center;"><strong>${p.ano}</strong></td>
+          <td style="padding: 4px 6px; text-align: right;">${fmt(p.valor, 2)}</td>
+          <td style="padding: 4px 6px; text-align: right; color: ${p.cor || 'var(--navy)'}; font-weight: 700;">${escapeHtml(p.classe)}</td>
+        </tr>
+      `).join('');
+
+      projHtml = `
+        <div style="margin-top: 10px;">
+          <small style="font-size: 0.70rem; font-weight: 750; color: #475569; text-transform: uppercase;">Projeções Futuras IPCC AR5 (Cenário RCP4.5):</small>
+          <table style="width: 100%; border-collapse: collapse; margin-top: 4px;">
+            <thead>
+              <tr style="border-bottom: 1px solid #e2e8f0; font-size: 0.68rem; color: #64748b;">
+                <th style="text-align: left; padding: 4px 6px;">Indicador</th>
+                <th style="text-align: center; padding: 4px 6px;">Ano</th>
+                <th style="text-align: right; padding: 4px 6px;">Índice</th>
+                <th style="text-align: right; padding: 4px 6px;">Classe</th>
+              </tr>
+            </thead>
+            <tbody>${projRows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    boxAdapta.innerHTML = metersHtml + projHtml;
+  } else {
+    boxAdapta.innerHTML = `<p style="font-size: 0.75rem; color: #64748b;">Carregando ou sem dados do AdaptaBrasil para este município.</p>`;
+  }
+
+  // 2. INMET & Episódios
+  let inmetHtml = '';
+  if (eps.length > 0) {
+    inmetHtml += eps.map(ep => `
+      <div style="background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid #6366f1; border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; font-size: 0.72rem; line-height: 1.4;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <span style="background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; padding: 1px 6px; border-radius: 4px; font-size: 0.66rem; font-weight: 750;">🔬 ${escapeHtml(ep.estado_episodio.toUpperCase())}</span>
+          <span style="font-size: 0.66rem; color: #64748b; font-family: monospace;">${escapeHtml(ep.id)}</span>
+        </div>
+        <strong style="color: var(--navy); display: block;">Ameaça: ${escapeHtml(ep.tipo_ameaca)} (${escapeHtml(ep.severidade)})</strong>
+        <div style="font-size: 0.68rem; color: #64748b; margin-top: 2px;">
+          Vigência: ${ep.janela_inicio ? ep.janela_inicio.substring(0, 16).replace('T', ' ') : '—'} até ${ep.janela_fim ? ep.janela_fim.substring(0, 16).replace('T', ' ') : '—'}
+        </div>
+        <div style="margin-top: 4px; padding: 4px 6px; background: #f8fafc; border-radius: 4px; border: 1px solid #f1f5f9; font-size: 0.69rem;">
+          Estado Basal Congelado: <strong>R = ${fmt(ep.estado_metis_congelado?.resiliencia, 2)}</strong> | Status: <em>${escapeHtml(ep.desfecho_cientifico)}</em>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  if (avisos.length > 0) {
+    inmetHtml += avisos.map(a => `
+      <div style="background: #ffffff; border: 1px solid #fed7aa; border-left: 4px solid #f97316; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; font-size: 0.72rem; line-height: 1.4;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+          <span style="background: ${a.cor || '#f97316'}; color: #fff; padding: 1px 6px; border-radius: 4px; font-size: 0.66rem; font-weight: 750;">⚠️ ${escapeHtml(a.severidade)}</span>
+          <span style="font-size: 0.66rem; color: #64748b;">INMET Operacional (${escapeHtml(a.estado_vigencia || 'vigente')})</span>
+        </div>
+        <strong style="color: #0f172a; display: block;">${escapeHtml(a.descricao)}</strong>
+        <div style="font-size: 0.68rem; color: #64748b;">${escapeHtml(a.inicio.substring(0, 16).replace('T', ' '))} até ${escapeHtml(a.fim.substring(0, 16).replace('T', ' '))}</div>
+      </div>
+    `).join('');
+  } else if (eps.length === 0) {
+    inmetHtml = `
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-left: 3px solid #22c55e; color: #15803d; padding: 8px 10px; border-radius: 6px; font-size: 0.72rem; line-height: 1.4;">
+        <strong>Sem avisos meteorológicos vigentes emitidos pelo INMET</strong>
+        <p style="margin: 2px 0 0; font-size: 0.67rem; opacity: 0.85;">A ausência de alerta meteorológico oficial não comprova ausência de perturbação no território nem garante resiliência.</p>
+      </div>
+    `;
+  }
+
+  boxInmet.innerHTML = inmetHtml;
 }
 
 function renderRawVariables(raw, res) {
@@ -451,8 +573,21 @@ async function loadDashboardYear(year) {
 // Inicialização
 async function initDashboard() {
   try {
-    // 1. Carregar CSVs via fetch
-    await loadDashboardYear(activeYear);
+    // 1. Carregar CSVs e APIs de evidências paralelamente
+    const [rYear, rEvid, rEps] = await Promise.all([
+      loadDashboardYear(activeYear),
+      fetch('/api/public/evidencias_rs.json').catch(() => null),
+      fetch('/api/public/episodios_rs.json').catch(() => null)
+    ]);
+
+    if (rEvid && rEvid.ok) {
+      evidenciasData = await rEvid.json();
+    }
+    if (rEps && rEps.ok) {
+      episodiosData = await rEps.json();
+    }
+
+    renderEvidenceSection(currentCode);
 
     // 2. Event listener do dropdown de municípios
     const selMun = $('select-municipio');

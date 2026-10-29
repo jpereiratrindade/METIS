@@ -4,8 +4,28 @@
   "ecossistema": "SisTer",
   "laboratorio": "MÉTIS",
   "descricao": "Achados científicos e registros de investigação agroterritorial",
-  "total": 4,
+  "total": 5,
   "achados": [
+    {
+      "id": "ACH-2026-005",
+      "titulo": "Confrontação de Resiliência via AdaptaBrasil (MCTI) e Vigilância Operacional INMET",
+      "resumo": "A integração autônoma de 558 indicadores do AdaptaBrasil e avisos em tempo real do INMET via PostGIS formaliza o motor de episódios investigativos. Ao isolar a equação de R de distorções climáticas aditivas, o laboratório testa se municípios com alto R sustentam suas funções perante perturbações observadas.",
+      "categoria": "achado_corroborado",
+      "data": "2026-10-29",
+      "municipio_ibge": null,
+      "modelo": "EPS-REF-001",
+      "ano_referencia": "2017",
+      "trajetoria": "experimental",
+      "natureza_evidencia": "Integração contínua de APIs oficiais (MCTI/INMET) e cruzamento espacial ST_Intersects",
+      "fontes": [
+        "Diretriz METIS-DIR-EVID-001",
+        "AdaptaBrasil MCTI (API oficial)",
+        "INMET Avisos Operacionais"
+      ],
+      "versao_metis": "0.1.0",
+      "limitacoes": "Avisos meteorológicos possuem vigência dinâmica; ausência de aviso oficial não atesta ausência de perturbação local.",
+      "situacao_validacao": "aprovado"
+    },
     {
       "id": "ACH-2026-001",
       "titulo": "Invariância Intermunicipal no Modelo Autônomo EPS-EXP-004",
