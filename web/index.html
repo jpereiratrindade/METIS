@@ -697,6 +697,16 @@
     });
   }
 
+  function escapeHtml(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function renderAchados(cat, query = '') {
     const c = document.getElementById('findings-container');
     if (!c || !window.metisAchados) return;
@@ -717,16 +727,16 @@
     c.innerHTML = list.map(a => `
       <article class="finding-card">
         <div class="finding-top-row">
-          <span class="finding-badge ${a.categoria}">${a.categoria.replace('_', ' ')}</span>
-          <span class="finding-date">${a.data} · ${a.id}</span>
+          <span class="finding-badge ${escapeHtml(a.categoria)}">${escapeHtml(a.categoria.replace('_', ' '))}</span>
+          <span class="finding-date">${escapeHtml(a.data)} · ${escapeHtml(a.id)}</span>
         </div>
-        <h3 class="finding-title">${a.titulo}</h3>
-        <p class="finding-resumo">${a.resumo}</p>
+        <h3 class="finding-title">${escapeHtml(a.titulo)}</h3>
+        <p class="finding-resumo">${escapeHtml(a.resumo)}</p>
         <div class="finding-meta-row">
-          <span>Modelo: <code>${a.modelo}</code></span>
-          <span>Ano: <strong>${a.ano_referencia}</strong></span>
-          <span>Trajetória: <em>${a.trajetoria}</em></span>
-          <span>Natureza: ${a.natureza_evidencia}</span>
+          <span>Modelo: <code>${escapeHtml(a.modelo)}</code></span>
+          <span>Ano: <strong>${escapeHtml(a.ano_referencia)}</strong></span>
+          <span>Trajetória: <em>${escapeHtml(a.trajetoria)}</em></span>
+          <span>Natureza: ${escapeHtml(a.natureza_evidencia)}</span>
         </div>
       </article>
     `).join('');

@@ -22,6 +22,8 @@ Sob a diretriz **`METIS-OPEN-001`**, o MÉTIS consolida o **acesso público univ
 ## 📡 API Pública de Distribuição (Somente Leitura)
 
 - `GET /api/public/achados.json`: Catálogo de achados científicos categorizados (`achado_corroborado`, `resultado_calculado`, `hipotese`, `simulacao`, `atualizacao_tecnica`).
+- `GET /api/public/evidencias_rs.json`: Evidências consolidadas de risco climático do AdaptaBrasil (MCTI) e avisos ativos do INMET cruzados espacialmente via PostGIS.
+- `GET /api/public/episodios_rs.json`: Registro de episódios de investigação científica deflagrados sob a diretriz `METIS-DIR-EVID-001`.
 - `GET /api/public/noticias.json`: Notícias e comunicados do laboratório.
 - `GET /api/public/resumos.json`: Resumos em linguagem acessível para totens digitais e portais.
 - `GET /api/public/modelos.json`: Metadados, fórmulas e parâmetros dos 4 modelos.
@@ -64,12 +66,25 @@ Para assegurar rigor epistêmico, o sistema distingue quatro elementos fundament
 
 - **Tendência Territorial Estadual:** O mapa SVG é caracterizado por padrão por **$R$** (com alternância para $E$, $P$ e $S$) e recalcula sua coloração em tempo real ao alternar de modelo ou ajustar parâmetros.
 - **Confronto Exclusivamente Intramunicipal (Aba M · Confronto):** Ao selecionar um município, a interface apresenta uma matriz comparando lado a lado as pontuações e desvios ($\Delta R$ vs REF) de todos os 4 modelos para aquele município específico sob os mesmos dados empíricos observados.
-- **Ambiente Analítico Municipal em Quatro Áreas:**
+- **Ambiente Analítico Municipal em Áreas Integradas:**
   - **Área D — Resultados:** Valores e diagnósticos do modelo ativo.
-  - **Área M — Confronto:** Tabela comparativa dos 4 modelos para o município.
+  - **Área T — Trajetória:** Evolução decenal entre os Censos Agropecuários 2006 e 2017 ($\Delta R$, $\Delta E$, $\Delta P$, $\Delta S$).
+  - **Área E — Evidências:** Indicadores de risco e projeções IPCC do AdaptaBrasil (MCTI) e avisos operacionais do INMET (`METIS-DIR-EVID-001`).
+  - **Área M — Confronto:** Tabela comparativa dos 4 modelos para o município sob a mesma base empírica.
   - **Área A — Insumos:** Variáveis censitárias brutas do IBGE/SIDRA.
   - **Área B — Parâmetros:** Controles de sensibilidade paramétrica do modelo ativo ($k$, pesos, $\lambda$).
   - **Área C — Hipótese:** Equação e justificativa epistemológica da formulação selecionada.
+
+---
+
+## ⚡ Evidências Climáticas e Vigilância Operacional (METIS-DIR-EVID-001)
+
+O MÉTIS conecta-se programaticamente a duas fontes públicas federais:
+1. **AdaptaBrasil MCTI:** Catálogo oficial com 558 indicadores, fornecendo o *Índice de Risco na Segurança Alimentar (5001)*, Exposição (5002), Vulnerabilidade (5003), Capacidade Adaptativa (60041) e projeções decenais do IPCC AR5 (2030 e 2050 sob RCP4.5).
+2. **INMET:** Monitoramento em tempo real de avisos meteorológicos severos através de cruzamento espacial PostGIS (`ST_Intersects`).
+
+> **Isolamento Epistêmico:**  
+> A equação do modelo calcula a capacidade intrínseca territorial $R(t_0)$. As evidências climáticas e os avisos meteorológicos atuam como um **teste de estresse**: a ocorrência de um evento abre um *Episódio de Investigação Científica* (`episodios_investigacao`), congelando as condições prévias do território e permitindo confrontar a resposta real frente à resiliência prevista.
 
 ---
 
@@ -120,6 +135,9 @@ O MÉTIS é 100% padronizado para operar através de um único orquestrador unif
 
 # Verificar integridade completa de compilação, banco de dados e testes:
 ./run.sh check
+
+# Sincronizar evidências climáticas e perturbações em tempo real (AdaptaBrasil + INMET):
+./run.sh sync
 
 # Comandos específicos para controle do banco de dados:
 ./run.sh db status       # Inspeciona estado do contêiner

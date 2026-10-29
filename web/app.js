@@ -1453,7 +1453,10 @@ async function autoLoadAll() {
         refreshMetrics();
         renderMap();
         if (current) choose(current);
-        else choose('4302105', 'Bento Gonçalves');
+        else {
+          choose('4302105', 'Bento Gonçalves');
+          resetZoom();
+        }
       }
     }
 
@@ -1487,14 +1490,14 @@ async function autoLoadAll() {
   }
 }
 
-// Busca rápida de municípios
+// Busca rápida de municípios por nome ou geocódigo IBGE
 const searchInput = $('search-input');
 if (searchInput) {
   searchInput.addEventListener('input', ev => {
     const q = ev.target.value.trim().toLowerCase();
     if (!q) return;
     for (const [code, d] of scores) {
-      if (d.municipio && d.municipio.toLowerCase().includes(q)) {
+      if ((d.municipio && d.municipio.toLowerCase().includes(q)) || code.startsWith(q)) {
         choose(code, d.municipio);
         break;
       }

@@ -51,11 +51,14 @@ A cartografia interativa (`web/mapa.html`) e o ambiente analítico implementam c
 │    - Filtro de camadas temáticas no topo do mapa                │
 ├─────────────────────────────────────────────────────────────────┤
 │ 3. DETALHES SOB DEMANDA (Details-on-Demand)                     │
-│    - Painel lateral municipal em 4 áreas especializadas         │
-│      Área A: Insumos censitários brutos                         │
-│      Área B: Parametrização e sensibilidade                     │
+│    - Painel lateral municipal em 7 áreas especializadas:        │
+│      Área D: Resultados e decomposição dimensional              │
+│      Área T: Trajetória decenal comparada (Censos 2006 vs 2017) │
+│      Área E: Evidências climáticas (AdaptaBrasil) e INMET       │
+│      Área M: Matriz de confronto multimodelo                    │
+│      Área A: Insumos censitários brutos (IBGE/SIDRA)            │
+│      Área B: Parametrização e sensibilidade experimental        │
 │      Área C: Hipótese matemática subjacente                     │
-│      Área D: Resultados e matriz de confronto intramunicipal    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

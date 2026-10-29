@@ -576,8 +576,8 @@ async function initDashboard() {
     // 1. Carregar CSVs e APIs de evidências paralelamente
     const [rYear, rEvid, rEps] = await Promise.all([
       loadDashboardYear(activeYear),
-      fetch('/api/public/evidencias_rs.json').catch(() => null),
-      fetch('/api/public/episodios_rs.json').catch(() => null)
+      fetch('api/public/evidencias_rs.json').catch(() => fetch('/api/public/evidencias_rs.json')).catch(() => null),
+      fetch('api/public/episodios_rs.json').catch(() => fetch('/api/public/episodios_rs.json')).catch(() => null)
     ]);
 
     if (rEvid && rEvid.ok) {
