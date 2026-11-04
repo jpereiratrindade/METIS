@@ -9,6 +9,7 @@ let currentCode = '4302105'; // Bento Gonçalves como padrão inicial representa
 let manifest = null;
 let evidenciasData = null;
 let episodiosData = null;
+let evidenceRequestCode = null;
 
 function escapeHtml(str) {
   if (str == null) return '';
@@ -237,7 +238,36 @@ function renderDashboard() {
   renderConfrontation(raw);
 
   // Renderizar evidências climáticas e alertas (AdaptaBrasil + INMET)
-  renderEvidenceSection(currentCode);
+  loadEvidenceSection(currentCode);
+}
+
+async function loadEvidenceSection(code) {
+  evidenceRequestCode = code;
+  const boxAdapta = $('dash-adapta-content');
+  const boxInmet = $('dash-inmet-content');
+  if (boxAdapta) boxAdapta.innerHTML = '<p style="font-size:.75rem;color:#64748b;">Consultando PostgreSQL…</p>';
+  if (boxInmet) boxInmet.innerHTML = '<p style="font-size:.75rem;color:#64748b;">Consultando PostgreSQL…</p>';
+  try {
+    const resposta = await fetch(`/api/v1/municipios/${code}/evidencias?t=${Date.now()}`, { cache: 'no-store' });
+    if (!resposta.ok) throw new Error(`API respondeu ${resposta.status}`);
+    const dados = await resposta.json();
+    if (evidenceRequestCode !== code) return;
+    evidenciasData ||= { municipios: {} };
+    evidenciasData.municipios ||= {};
+    evidenciasData.municipios[code] = {
+      adaptabrasil: dados.adaptabrasil || [],
+      avisos_inmet: dados.avisos_inmet || []
+    };
+    episodiosData ||= { por_municipio: {} };
+    episodiosData.por_municipio ||= {};
+    episodiosData.por_municipio[code] = dados.episodios || [];
+    renderEvidenceSection(code);
+  } catch (erro) {
+    if (evidenceRequestCode !== code) return;
+    const mensagem = `<p style="font-size:.75rem;color:#b91c1c;">Falha ao consultar evidências: ${escapeHtml(erro.message)}</p>`;
+    if (boxAdapta) boxAdapta.innerHTML = mensagem;
+    if (boxInmet) boxInmet.innerHTML = mensagem;
+  }
 }
 
 function renderEvidenceSection(code) {
@@ -574,20 +604,7 @@ async function loadDashboardYear(year) {
 async function initDashboard() {
   try {
     // 1. Carregar CSVs e APIs de evidências paralelamente
-    const [rYear, rEvid, rEps] = await Promise.all([
-      loadDashboardYear(activeYear),
-      fetch('api/public/evidencias_rs.json').catch(() => fetch('/api/public/evidencias_rs.json')).catch(() => null),
-      fetch('api/public/episodios_rs.json').catch(() => fetch('/api/public/episodios_rs.json')).catch(() => null)
-    ]);
-
-    if (rEvid && rEvid.ok) {
-      evidenciasData = await rEvid.json();
-    }
-    if (rEps && rEps.ok) {
-      episodiosData = await rEps.json();
-    }
-
-    renderEvidenceSection(currentCode);
+    await loadDashboardYear(activeYear);
 
     // 2. Event listener do dropdown de municípios
     const selMun = $('select-municipio');

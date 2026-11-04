@@ -860,6 +860,9 @@ function updateComponentDetail(code, targetBox = null) {
                 Status Epistêmico: ${escapeHtml(ep.desfecho_cientifico === 'em_aberto' ? 'Confrontação em aberto (aguardando dados pós-evento)' : ep.desfecho_cientifico)}
               </div>
             </div>
+            <div style="font-size:0.65rem; color:#64748b; margin-top:5px;">
+              Fontes: ameaça e vigência — INMET · R basal — cálculo MÉTIS com dados IBGE · hipótese/status — inferência determinística MÉTIS
+            </div>
           </div>
         `;
       }).join('');
@@ -1410,13 +1413,16 @@ async function refreshInmetVisualization() {
   if (button) button.disabled = true;
   try {
     const cacheBust = `?t=${Date.now()}`;
-    const [rEvid, rEps, rStatus] = await Promise.all([
-      fetch('/api/public/evidencias_rs.json' + cacheBust, { cache: 'no-store' }),
-      fetch('/api/public/episodios_rs.json' + cacheBust, { cache: 'no-store' }),
+    const [rEvid, rStatus] = await Promise.all([
+      fetch('/api/v1/evidencias/resumo' + cacheBust, { cache: 'no-store' }),
       fetch('/api/v1/inmet/status' + cacheBust, { cache: 'no-store' }).catch(() => null)
     ]);
-    if (rEvid.ok) evidenciasData = await rEvid.json();
-    if (rEps.ok) episodiosData = await rEps.json();
+    if (rEvid.ok) {
+      evidenciasData = await rEvid.json();
+      episodiosData = { por_municipio: {} };
+    } else {
+      throw new Error(`API de evidências respondeu ${rEvid.status}`);
+    }
     let coleta = evidenciasData?.metadados?.fontes?.inmet?.ultima_coleta_auditada || null;
     let limite = evidenciasData?.metadados?.fontes?.inmet?.validade_minutos || 30;
     if (rStatus?.ok) {
@@ -1426,11 +1432,14 @@ async function refreshInmetVisualization() {
     }
     if (freshness) {
       const quando = coleta?.finalizada_em || coleta?.iniciada_em;
-      freshness.classList.toggle('stale', !coleta || coleta.desatualizado || coleta.status !== 'sucesso');
-      freshness.classList.toggle('fresh', coleta && !coleta.desatualizado && coleta.status === 'sucesso');
-      freshness.textContent = !coleta
-        ? 'Sem coleta auditada disponível'
-        : `${coleta.desatualizado ? '⚠ Dados desatualizados' : '✓ Coleta válida'} · ${new Date(quando).toLocaleString('pt-BR')} · limite ${limite} min`;
+      const sucesso = coleta?.status === 'sucesso';
+      freshness.classList.toggle('stale', !coleta || coleta.desatualizado || !sucesso);
+      freshness.classList.toggle('fresh', coleta && !coleta.desatualizado && sucesso);
+      if (!coleta) freshness.textContent = 'Sem coleta auditada disponível';
+      else if (coleta.status === 'iniciada') freshness.textContent = '↻ Sincronização em andamento';
+      else if (!sucesso) freshness.textContent = `⚠ Falha na sincronização · ${new Date(quando).toLocaleString('pt-BR')}`;
+      else if (coleta.desatualizado) freshness.textContent = `⚠ Dados desatualizados · ${new Date(quando).toLocaleString('pt-BR')} · limite ${limite} min`;
+      else freshness.textContent = `✓ Coleta válida · ${new Date(quando).toLocaleString('pt-BR')} · limite ${limite} min`;
     }
     refreshMetrics();
     if (layer === 'inmet' || layer === 'adaptabrasil') renderMap();
@@ -1560,7 +1569,7 @@ const evidenceModalContent = $('evidence-modal-content');
 const evidenceModalClose = $('evidence-modal-close');
 let evidenceModalPreviousFocus = null;
 
-function openEvidenceModal(code) {
+async function openEvidenceModal(code) {
   if (!evidenceModal || !evidenceModalContent || !code) return;
   const d = scores.get(code);
   const raw = rawData.get(code);
@@ -1568,14 +1577,68 @@ function openEvidenceModal(code) {
   evidenceModalPreviousFocus = document.activeElement;
   $('evidence-modal-title').textContent = `Evidências · ${nome}`;
   $('evidence-modal-subtitle').textContent = `Código IBGE ${code} · INMET, AdaptaBrasil e episódios investigativos`;
-  const areaAnterior = activeArea;
-  activeArea = 'E';
-  updateComponentDetail(code, evidenceModalContent);
-  activeArea = areaAnterior;
   evidenceModal.hidden = false;
   evidenceModal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-open');
   evidenceModalClose?.focus();
+  evidenceModalContent.innerHTML = '<p class="evidence-loading">Carregando evidências auditadas do banco…</p>';
+  try {
+    const resposta = await fetch(`/api/v1/municipios/${code}/evidencias?t=${Date.now()}`, { cache: 'no-store' });
+    if (!resposta.ok) throw new Error(`API respondeu ${resposta.status}`);
+    const dados = await resposta.json();
+    evidenciasData ||= { municipios: {} };
+    evidenciasData.municipios ||= {};
+    evidenciasData.municipios[code] = {
+      adaptabrasil: dados.adaptabrasil || [],
+      avisos_inmet: dados.avisos_inmet || []
+    };
+    episodiosData ||= { por_municipio: {} };
+    episodiosData.por_municipio ||= {};
+    episodiosData.por_municipio[code] = dados.episodios || [];
+    const areaAnterior = activeArea;
+    activeArea = 'E';
+    updateComponentDetail(code, evidenceModalContent);
+    activeArea = areaAnterior;
+    evidenceModalContent.insertAdjacentHTML('beforeend', `
+      <section class="evidence-history-section">
+        <div class="evidence-block-header">
+          <span class="evidence-block-title">Histórico auditável de versões INMET</span>
+          <span>PostgreSQL · paginado</span>
+        </div>
+        <div id="evidence-history-list"><p class="evidence-loading">Consultando histórico…</p></div>
+        <button type="button" id="evidence-history-more" class="inmet-refresh-btn" hidden>Carregar mais</button>
+      </section>
+    `);
+    loadEvidenceHistory(code, 1);
+  } catch (erro) {
+    evidenceModalContent.innerHTML = `<p class="evidence-load-error">Não foi possível consultar evidências: ${escapeHtml(erro.message)}</p>`;
+  }
+}
+
+async function loadEvidenceHistory(code, pagina) {
+  const lista = $('evidence-history-list');
+  const mais = $('evidence-history-more');
+  if (!lista || !mais) return;
+  try {
+    const resposta = await fetch(`/api/v1/inmet/historico?codigo_ibge=${encodeURIComponent(code)}&pagina=${pagina}&por_pagina=10`, { cache: 'no-store' });
+    if (!resposta.ok) throw new Error(`API respondeu ${resposta.status}`);
+    const dados = await resposta.json();
+    const html = (dados.resultados || []).map(item => `
+      <article class="evidence-history-item">
+        <div><strong>${escapeHtml(item.descricao)}</strong> · ${escapeHtml(item.severidade)}</div>
+        <div>${new Date(item.inicio).toLocaleString('pt-BR')} — ${new Date(item.fim).toLocaleString('pt-BR')}</div>
+        <div>Versão ${item.versao_id} · observada em ${new Date(item.observado_em).toLocaleString('pt-BR')} · estado INMET: ${escapeHtml(item.situacao_origem)}</div>
+      </article>
+    `).join('') || '<p class="comp-empty-hint">Nenhuma versão histórica registrada.</p>';
+    if (pagina === 1) lista.innerHTML = html;
+    else lista.insertAdjacentHTML('beforeend', html);
+    const carregados = pagina * dados.por_pagina;
+    mais.hidden = carregados >= dados.total;
+    mais.onclick = () => loadEvidenceHistory(code, pagina + 1);
+  } catch (erro) {
+    lista.innerHTML = `<p class="evidence-load-error">Falha ao consultar histórico: ${escapeHtml(erro.message)}</p>`;
+    mais.hidden = true;
+  }
 }
 
 function closeEvidenceModal() {

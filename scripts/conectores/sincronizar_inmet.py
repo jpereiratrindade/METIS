@@ -14,7 +14,7 @@ from sincronizar_evidencias import sincronizar_todas_evidencias
 
 def sincronizar_inmet(db_url=DEFAULT_DB_URL, acionamento="manual"):
     resultado = coletar_avisos_inmet(db_url, acionamento=acionamento)
-    if resultado.get("erro"):
+    if resultado.get("erro") or resultado.get("conflito"):
         return resultado
     sincronizar_todas_evidencias(db_url, executar_coleta=False)
     return resultado
@@ -23,4 +23,4 @@ def sincronizar_inmet(db_url=DEFAULT_DB_URL, acionamento="manual"):
 if __name__ == "__main__":
     db = next((arg for arg in sys.argv[1:] if not arg.startswith("--")), DEFAULT_DB_URL)
     resultado = sincronizar_inmet(db, "agendado" if "--scheduled" in sys.argv else "manual")
-    sys.exit(1 if resultado.get("erro") else 0)
+    sys.exit(1 if resultado.get("erro") else (2 if resultado.get("conflito") else 0))

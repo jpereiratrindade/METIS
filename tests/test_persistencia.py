@@ -26,6 +26,7 @@ if REPO_ROOT not in sys.path:
     sys.path.insert(0, REPO_ROOT)
 
 from scripts.importar_dados_banco import importar_todos
+from scripts.conectores.conector_inmet import INMET_ADVISORY_LOCK_ID, coletar_avisos_inmet
 
 DB_URL = os.environ.get("DATABASE_URL", "postgresql://metis:metis@127.0.0.1:5432/metis")
 STRICT_MODE = os.environ.get("METIS_STRICT_TESTS") == "1"
@@ -519,14 +520,9 @@ class TestPersistenciaMetis(unittest.TestCase):
         conectores_op = self.cur.fetchone()[0]
         self.assertGreaterEqual(conectores_op, 1, "Ao menos um conector deve estar com status operacional")
 
-        # 6. Verificar existência e conformidade do artefato JSON consolidado de evidências
-        json_path = os.path.join(REPO_ROOT, "web/api/public/evidencias_rs.json")
-        self.assertTrue(os.path.exists(json_path), f"Arquivo {json_path} deve existir")
-        with open(json_path, "r", encoding="utf-8") as f:
-            dados = json.load(f)
-        self.assertIn("metadados", dados)
-        self.assertIn("municipios", dados)
-        self.assertEqual(len(dados["municipios"]), 497, "JSON consolidado deve cobrir exatamente 497 municípios")
+        # 6. PostgreSQL/PostGIS é fonte operacional; JSON estático não é obrigatório
+        self.cur.execute("SELECT COUNT(DISTINCT codigo_ibge) FROM evidencias_adaptabrasil;")
+        self.assertEqual(self.cur.fetchone()[0], 497)
 
     def test_13_motor_episodios_investigativos(self):
         """Critério 7: Diretriz METIS-DIR-EVID-001 (Motor de Episódios Investigativos e Imutabilidade)."""
@@ -548,15 +544,37 @@ class TestPersistenciaMetis(unittest.TestCase):
             self.assertIsInstance(ep_row[3], (list, dict), "Condições antecedentes devem ser JSON estruturado")
             self.assertIsInstance(ep_row[4], dict, "Estado MÉTIS congelado deve ser objeto JSON")
 
-        # 3. Verificar exportação do arquivo publico episodios_rs.json
-        ep_json_path = os.path.join(REPO_ROOT, "web/api/public/episodios_rs.json")
-        self.assertTrue(os.path.exists(ep_json_path), f"Arquivo {ep_json_path} deve existir")
-        with open(ep_json_path, "r", encoding="utf-8") as f:
-            dados_ep = json.load(f)
-        self.assertIn("metadados", dados_ep)
-        self.assertIn("episodios", dados_ep)
-        self.assertIn("por_municipio", dados_ep)
-        self.assertIn("diretriz", dados_ep["metadados"])
+        # 3. Episódios são consultáveis relacionalmente por município
+        self.cur.execute("""
+            SELECT COUNT(*) FROM episodios_investigacao e
+            LEFT JOIN municipios m ON m.codigo_ibge=e.codigo_ibge
+            WHERE m.codigo_ibge IS NULL;
+        """)
+        self.assertEqual(self.cur.fetchone()[0], 0)
+
+    def test_14_inmet_temporal_e_exclusao_mutua(self):
+        """Critério 8: histórico temporal presente e lock compartilhado bloqueia coleta concorrente."""
+        for tabela in ('inmet_coletas', 'inmet_avisos_versoes', 'inmet_avisos_municipios'):
+            self.cur.execute("SELECT to_regclass(%s);", (tabela,))
+            self.assertEqual(self.cur.fetchone()[0], tabela)
+
+        self.cur.execute("SELECT pg_advisory_lock(%s);", (INMET_ADVISORY_LOCK_ID,))
+        try:
+            resultado = coletar_avisos_inmet(DB_URL, acionamento='teste')
+            self.assertTrue(resultado.get('conflito'))
+            self.assertEqual(resultado.get('status'), 'sincronizacao_em_andamento')
+        finally:
+            self.cur.execute("SELECT pg_advisory_unlock(%s);", (INMET_ADVISORY_LOCK_ID,))
+
+        self.cur.execute("""
+            SELECT COUNT(*) FROM episodios_investigacao e
+            JOIN avisos_meteorologicos_inmet a ON a.id=e.aviso_id
+            WHERE a.situacao_origem IN ('cancelado','indeterminado')
+              AND e.estado_episodio='avaliacao_concluida'
+              AND e.desfecho_cientifico='em_aberto';
+        """)
+        self.assertEqual(self.cur.fetchone()[0], 0,
+                         'Cancelamento meteorológico não pode concluir investigação em aberto')
 
 if __name__ == "__main__":
     unittest.main()

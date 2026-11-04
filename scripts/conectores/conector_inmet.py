@@ -15,6 +15,7 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 OUTPUT_DIR = os.path.join(REPO_ROOT, "data/evidencias/inmet")
 DEFAULT_DB_URL = os.environ.get("DATABASE_URL", "postgresql://metis:metis@127.0.0.1:5432/metis")
 INMET_AVISOS_URL = os.environ.get("INMET_AVISOS_URL", "https://apiprevmet3.inmet.gov.br/avisos/ativos")
+INMET_ADVISORY_LOCK_ID = 0x4D45544953494E4D
 
 
 def calcular_sha256_bytes(dados: bytes) -> str:
@@ -83,8 +84,8 @@ def _registrar_falha(db_url: str, coleta_id, status: str, mensagem: str):
         pass
 
 
-def coletar_avisos_inmet(db_url: str = DEFAULT_DB_URL, salvar_banco: bool = True,
-                         acionamento: str = "manual"):
+def _coletar_avisos_inmet(db_url: str = DEFAULT_DB_URL, salvar_banco: bool = True,
+                          acionamento: str = "manual"):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     coleta_id = None
     if salvar_banco:
@@ -218,7 +219,29 @@ def coletar_avisos_inmet(db_url: str = DEFAULT_DB_URL, salvar_banco: bool = True
         return {"coleta_id": coleta_id, "erro": str(exc), "status": status}
 
 
+def coletar_avisos_inmet(db_url: str = DEFAULT_DB_URL, salvar_banco: bool = True,
+                         acionamento: str = "manual"):
+    """Executa uma coleta sob lock compartilhado entre API, scheduler e CLI."""
+    if not salvar_banco:
+        return _coletar_avisos_inmet(db_url, salvar_banco=False, acionamento=acionamento)
+    with psycopg.connect(db_url, autocommit=True) as lock_conn:
+        with lock_conn.cursor() as cur:
+            cur.execute("SELECT pg_try_advisory_lock(%s)", (INMET_ADVISORY_LOCK_ID,))
+            adquirido = cur.fetchone()[0]
+        if not adquirido:
+            return {
+                "status": "sincronizacao_em_andamento",
+                "conflito": True,
+                "mensagem": "Outra sincronização INMET já possui o lock PostgreSQL",
+            }
+        try:
+            return _coletar_avisos_inmet(db_url, salvar_banco=True, acionamento=acionamento)
+        finally:
+            with lock_conn.cursor() as cur:
+                cur.execute("SELECT pg_advisory_unlock(%s)", (INMET_ADVISORY_LOCK_ID,))
+
+
 if __name__ == "__main__":
     db = next((arg for arg in sys.argv[1:] if not arg.startswith("--")), DEFAULT_DB_URL)
     resultado = coletar_avisos_inmet(db, acionamento="agendado" if "--scheduled" in sys.argv else "manual")
-    sys.exit(1 if resultado.get("erro") else 0)
+    sys.exit(1 if resultado.get("erro") else (2 if resultado.get("conflito") else 0))

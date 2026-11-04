@@ -16,6 +16,7 @@ import psycopg
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 DEFAULT_DB_URL = os.environ.get("DATABASE_URL", "postgresql://metis:metis@127.0.0.1:5432/metis")
 OUTPUT_EPISODIOS_JSON = os.path.join(REPO_ROOT, "web/api/public/episodios_rs.json")
+EXPORTAR_JSON_ESTATICO = os.environ.get("METIS_EXPORT_STATIC_JSON", "0") == "1"
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -41,9 +42,10 @@ def processar_episodios_investigacao(db_url: str = DEFAULT_DB_URL):
                     m.codigo_ibge, m.nome AS municipio_nome,
                     a.id AS aviso_id, a.codigo AS aviso_codigo, a.descricao,
                     a.severidade, a.inicio, a.fim, a.riscos, a.instrucoes,
-                    a.encerrado,
+                    a.situacao_origem,
                     CASE 
-                        WHEN a.encerrado = TRUE THEN 'cancelado'
+                        WHEN a.situacao_origem = 'cancelado' THEN 'cancelado'
+                        WHEN a.situacao_origem = 'indeterminado' THEN 'indeterminado'
                         WHEN CURRENT_TIMESTAMP < a.inicio THEN 'futuro'
                         WHEN CURRENT_TIMESTAMP BETWEEN a.inicio AND a.fim THEN 'vigente'
                         ELSE 'expirado'
@@ -76,8 +78,10 @@ def processar_episodios_investigacao(db_url: str = DEFAULT_DB_URL):
                     estado_episodio = 'ameaca_anunciada'
                 elif vigencia == 'vigente':
                     estado_episodio = 'em_verificacao'
-                elif vigencia == 'cancelado':
-                    estado_episodio = 'avaliacao_concluida'
+                elif vigencia in ('cancelado', 'indeterminado'):
+                    # Ciclo meteorológico e ciclo científico são independentes.
+                    # Cancelamento/legado incerto ainda exige observação de impactos.
+                    estado_episodio = 'impactos_respostas'
                 else: # expirado
                     estado_episodio = 'impactos_respostas'
 
@@ -219,12 +223,16 @@ def processar_episodios_investigacao(db_url: str = DEFAULT_DB_URL):
         "por_municipio": episodios_por_muni
     }
 
-    os.makedirs(os.path.dirname(OUTPUT_EPISODIOS_JSON), exist_ok=True)
-    with open(OUTPUT_EPISODIOS_JSON, "w", encoding="utf-8") as f:
-        json.dump(payload_export, f, cls=DecimalEncoder, ensure_ascii=False, indent=2)
+    if EXPORTAR_JSON_ESTATICO:
+        os.makedirs(os.path.dirname(OUTPUT_EPISODIOS_JSON), exist_ok=True)
+        with open(OUTPUT_EPISODIOS_JSON, "w", encoding="utf-8") as f:
+            json.dump(payload_export, f, cls=DecimalEncoder, ensure_ascii=False, indent=2)
 
     print(f"\n✓ Episódios processados: {episodios_criados} criados, {episodios_atualizados} atualizados.")
-    print(f"✓ Artefato exportado: {OUTPUT_EPISODIOS_JSON} ({len(episodios_list)} episódios em {len(episodios_por_muni)} municípios)")
+    if EXPORTAR_JSON_ESTATICO:
+        print(f"✓ Exportação opcional: {OUTPUT_EPISODIOS_JSON} ({len(episodios_list)} episódios)")
+    else:
+        print(f"✓ Episódios persistidos no PostgreSQL: {len(episodios_list)} em {len(episodios_por_muni)} municípios")
     print("============================================================\n")
     return payload_export
 

@@ -22,8 +22,9 @@ Sob a diretriz **`METIS-OPEN-001`**, o MÉTIS consolida o **acesso público univ
 ## 📡 API Pública de Distribuição (Somente Leitura)
 
 - `GET /api/public/achados.json`: Catálogo de achados científicos categorizados (`achado_corroborado`, `resultado_calculado`, `hipotese`, `simulacao`, `atualizacao_tecnica`).
-- `GET /api/public/evidencias_rs.json`: Evidências consolidadas de risco climático do AdaptaBrasil (MCTI) e avisos ativos do INMET cruzados espacialmente via PostGIS.
-- `GET /api/public/episodios_rs.json`: Registro de episódios de investigação científica deflagrados sob a diretriz `METIS-DIR-EVID-001`.
+- `GET /api/v1/evidencias/resumo`: Camada territorial leve para o mapa.
+- `GET /api/v1/municipios/{ibge}/evidencias`: Evidências e episódios do município, consultados no PostgreSQL.
+- `GET /api/v1/inmet/historico`: Histórico paginado, filtrável por município, período, evento e estado.
 - `GET /api/public/noticias.json`: Notícias e comunicados do laboratório.
 - `GET /api/public/resumos.json`: Resumos em linguagem acessível para totens digitais e portais.
 - `GET /api/public/modelos.json`: Metadados, fórmulas e parâmetros dos 4 modelos.

@@ -95,4 +95,5 @@ flowchart TD
 2. **Sanitização de Entradas Externas:**  
    Todo texto proveniente de APIs governamentais externas passa por filtros estritos de escape HTML (`escapeHtml`), prevenindo injeções de script ou inconsistências de formatação.
 3. **Imutabilidade e Reprodutibilidade:**  
-   A sincronização é auditável via script CLI `./run.sh sync` e exposta em endpoints de leitura pública (`api/public/evidencias_rs.json` e `api/public/episodios_rs.json`).
+   A sincronização é auditável via script CLI `./run.sh sync` e exposta por API dinâmica
+   (`/api/v1/evidencias/resumo`, `/api/v1/municipios/{ibge}/evidencias` e `/api/v1/inmet/historico`).

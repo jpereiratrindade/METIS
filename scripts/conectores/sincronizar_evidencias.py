@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 MÉTIS — Sincronizador de Evidências Climáticas e Perturbações (AdaptaBrasil + INMET)
-Coordena a execução dos conectores, valida os dados persistidos no PostgreSQL/PostGIS
-e gera a camada estática auditada em web/api/public/evidencias_rs.json para consulta direta.
+Coordena conectores e valida dados persistidos no PostgreSQL/PostGIS.
+Exportação JSON é opcional; API dinâmica é o caminho operacional padrão.
 """
 
 import os
@@ -16,6 +16,7 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 OUTPUT_JSON = os.path.join(REPO_ROOT, "web/api/public/evidencias_rs.json")
 DEFAULT_DB_URL = os.environ.get("DATABASE_URL", "postgresql://metis:metis@127.0.0.1:5432/metis")
 INMET_STALE_MINUTES = max(1, int(os.environ.get("METIS_INMET_STALE_MINUTES", "30")))
+EXPORTAR_JSON_ESTATICO = os.environ.get("METIS_EXPORT_STATIC_JSON", "0") == "1"
 
 # Garantir importações locais
 sys.path.insert(0, os.path.dirname(__file__))
@@ -191,11 +192,13 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
         "municipios": municipios_export
     }
 
-    with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
-        json.dump(payload_final, f, cls=DecimalEncoder, ensure_ascii=False, indent=2)
-
-    tam_kb = os.path.getsize(OUTPUT_JSON) / 1024
-    print(f"\n✓ Arquivo de evidências exportado: {OUTPUT_JSON} ({tam_kb:.1f} KB)")
+    if EXPORTAR_JSON_ESTATICO:
+        with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
+            json.dump(payload_final, f, cls=DecimalEncoder, ensure_ascii=False, indent=2)
+        tam_kb = os.path.getsize(OUTPUT_JSON) / 1024
+        print(f"\n✓ Exportação JSON opcional: {OUTPUT_JSON} ({tam_kb:.1f} KB)")
+    else:
+        print("\n✓ Evidências disponíveis pela API/PostgreSQL (exportação JSON desativada)")
     print(f"  • Municípios com AdaptaBrasil: {len(dados_adapta)}/{total_muni_rs} (Catálogo oficial: {total_catalogo})")
     print(f"  • Avisos ativos INMET no RS:   {len(avisos_unicos_rs)}")
     print(f"  • Municípios sob alerta agora: {len(dados_inmet_por_muni)}")

@@ -23,6 +23,9 @@ associados àquela versão. O INMET permanece evidência externa; não altera a 
    define `cancelado`; término da janela define `expirado`.
 7. Falha de rede, validação ou persistência nunca prova ausência de avisos.
 8. Estado público informa última coleta e desatualização. Padrão: 30 minutos.
+9. Exclusão mútua usa advisory lock PostgreSQL compartilhado por CLI, API e agendador.
+10. Cancelamento meteorológico não conclui episódio científico.
+11. Dados legados sem prova de cancelamento recebem estado `indeterminado`.
 
 ## 3. Operações
 
@@ -42,6 +45,8 @@ Nunca inserir token administrativo em HTML ou JavaScript público.
 | `GET /api/v1/inmet/avisos` | Estado vigente/futuro persistido |
 | `GET /api/v1/inmet/coletas?limite=50` | Trilha de auditoria |
 | `GET /api/v1/inmet/avisos/{codigo}/versoes` | Evolução do aviso |
+| `GET /api/v1/inmet/historico?...` | Consulta histórica paginada e filtrada |
+| `GET /api/v1/municipios/{ibge}/evidencias` | Evidências municipais sob demanda |
 
 ## 5. Estados
 

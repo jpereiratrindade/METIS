@@ -1386,6 +1386,32 @@ body.modal-open { overflow: hidden; }
   background: #f8fafc;
   font-size: .78rem;
 }
+.evidence-loading, .evidence-load-error {
+  margin: 18px;
+  padding: 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #475569;
+  text-align: center;
+}
+.evidence-load-error { border-color: #fecaca; color: #b91c1c; }
+.evidence-history-section {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #cbd5e1;
+}
+.evidence-history-item {
+  margin: 7px 0;
+  padding: 9px 11px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #475569;
+  font-size: .7rem;
+  line-height: 1.45;
+}
+.evidence-history-item strong { color: var(--navy); }
 
 @media (max-width: 640px) {
   .evidence-modal { padding: 0; }
