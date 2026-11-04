@@ -1951,6 +1951,156 @@ body.modal-open { overflow: hidden; }
 .inmet-freshness.stale { color: #b91c1c; font-weight: 750; }
 .inmet-freshness.fresh { color: #047857; }
 
+/* BARRA DE SELEÇÃO E FILTRO DE ALERTAS INMET NO MAPA */
+.inmet-filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 24px;
+  background: #fff7ed;
+  border-bottom: 1px solid #fed7aa;
+  flex-wrap: wrap;
+  transition: all 0.2s ease;
+}
+
+.inmet-filter-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 260px;
+}
+
+.inmet-filter-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #9a3412;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.inmet-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ea580c;
+  box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7);
+  animation: inmetPulse 2s infinite;
+}
+
+@keyframes inmetPulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(234, 88, 12, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(234, 88, 12, 0);
+  }
+}
+
+.inmet-alert-select {
+  flex: 1 1 360px;
+  max-width: 660px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #fdba74;
+  border-radius: var(--radius-sm, 6px);
+  padding: 6px 10px;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.inmet-alert-select:focus {
+  border-color: #ea580c;
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.15);
+}
+
+.inmet-alert-select optgroup {
+  font-weight: 800;
+  color: #64748b;
+  font-size: 0.74rem;
+  background: #f8fafc;
+}
+
+.inmet-alert-select option {
+  font-weight: 500;
+  color: #0f172a;
+  padding: 4px;
+}
+
+.inmet-alert-details {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inmet-selected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.inmet-selected-badge.grande-perigo {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.inmet-selected-badge.perigo {
+  background: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+.inmet-selected-badge.perigo-potencial {
+  background: #fef9c3;
+  color: #854d0e;
+  border: 1px solid #fde047;
+}
+
+.inmet-selected-meta {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.inmet-btn-ver-todos {
+  background: #ffffff;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.inmet-btn-ver-todos:hover {
+  background: #fff7ed;
+  border-color: #ea580c;
+  color: #7c2d12;
+}
+
 @media (max-width: 1100px) {
   .shell {
     grid-template-columns: 1fr;

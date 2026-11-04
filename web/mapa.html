@@ -294,6 +294,24 @@
           </div>
         </div>
 
+        <!-- BARRA DE SELEÇÃO E FILTRO DE ALERTAS INMET NO MAPA -->
+        <div id="inmet-filter-toolbar" class="inmet-filter-toolbar" style="display: none;" role="region" aria-label="Seletor de alertas meteorológicos">
+          <div class="inmet-filter-main">
+            <label for="inmet-alert-select" class="inmet-filter-label">
+              <span class="inmet-pulse-dot" aria-hidden="true"></span>
+              <strong>Alerta INMET:</strong>
+            </label>
+            <select id="inmet-alert-select" class="inmet-alert-select" aria-label="Escolher aviso meteorológico no mapa">
+              <option value="todos">⚡ Todos os Alertas Ativos (Visão Consolidada de Risco Máximo)</option>
+            </select>
+          </div>
+          <div id="inmet-alert-details" class="inmet-alert-details" style="display: none;">
+            <span id="inmet-selected-badge" class="inmet-selected-badge"></span>
+            <span id="inmet-selected-meta" class="inmet-selected-meta"></span>
+            <button type="button" id="inmet-btn-ver-todos" class="inmet-btn-ver-todos" title="Voltar à visão consolidada de todos os alertas">↺ Ver todos</button>
+          </div>
+        </div>
+
         <div class="cartography-body">
           <div class="map-view-container">
             <button id="btn-reset-zoom" class="map-reset-zoom-btn" style="display: none;" title="Restaurar visão estadual do Rio Grande do Sul">

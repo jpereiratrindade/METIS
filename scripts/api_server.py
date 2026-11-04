@@ -96,6 +96,22 @@ class MetisHandler(SimpleHTTPRequestHandler):
                     WHERE estado_vigencia IN ('vigente','futuro')
                     ORDER BY codigo_ibge,inicio DESC
                 """)
+                coleta = self._query("""
+                    SELECT id,iniciada_em,finalizada_em,status,acionamento,http_status,
+                           sha256_payload,avisos_recebidos,avisos_validos,versoes_criadas,mensagem,
+                           (finalizada_em < CURRENT_TIMESTAMP-(%s * interval '1 minute')) AS desatualizado
+                    FROM inmet_coletas ORDER BY iniciada_em DESC LIMIT 1
+                """, (STALE_MINUTES,))
+                catalogo_avisos = self._query("""
+                    SELECT aviso_codigo AS codigo, descricao, severidade, aviso_cor AS cor,
+                           min(inicio) AS inicio, max(fim) AS fim, estado_vigencia,
+                           count(distinct codigo_ibge) AS total_municipios
+                    FROM vw_municipios_avisos_inmet
+                    WHERE estado_vigencia IN ('vigente','futuro')
+                    GROUP BY aviso_codigo, descricao, severidade, aviso_cor, estado_vigencia
+                    ORDER BY CASE severidade WHEN 'Grande Perigo' THEN 1 WHEN 'Perigo' THEN 2 ELSE 3 END,
+                             estado_vigencia DESC, inicio ASC
+                """)
                 municipios = {}
                 for item in indicadores:
                     ibge = item.pop("codigo_ibge")
@@ -103,7 +119,20 @@ class MetisHandler(SimpleHTTPRequestHandler):
                 for item in alertas:
                     ibge = item.pop("codigo_ibge")
                     municipios.setdefault(ibge, {"adaptabrasil": [], "avisos_inmet": []})["avisos_inmet"].append(item)
-                return self._json(200, {"metadados": {"modo": "resumo dinâmico"}, "municipios": municipios})
+                return self._json(200, {
+                    "metadados": {
+                        "modo": "resumo dinâmico",
+                        "fontes": {
+                            "inmet": {
+                                "ultima_coleta_auditada": coleta[0] if coleta else None,
+                                "validade_minutos": STALE_MINUTES,
+                                "total_avisos_ativos_rs": len(catalogo_avisos),
+                                "avisos_ativos": catalogo_avisos,
+                            }
+                        }
+                    },
+                    "municipios": municipios
+                })
             if parsed.path == "/api/v1/inmet/historico":
                 pagina = max(1, int(query.get("pagina", ["1"])[0]))
                 por_pagina = min(100, max(1, int(query.get("por_pagina", ["25"])[0])))

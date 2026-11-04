@@ -70,6 +70,7 @@ const modelCatalog = {
 
 // Camada ativa de tendência territorial (R por padrão, com alternância para E, P, S)
 let layer = 'resiliencia';
+let selectedInmetAviso = 'todos';
 
 // Paleta de gradiente SisTer/Morfo para expressar a tendência espacial contínua
 const palette = ['#08203e', '#0b406e', '#087f8c', '#109789', '#2ea8e8', '#38bdf8', '#7dd3fc'];
@@ -99,12 +100,21 @@ function getValue(d) {
     const muniEvid = evidenciasData?.municipios?.[code];
     const avisos = muniEvid?.avisos_inmet || [];
     if (!avisos.length) return 0;
-    let maxSev = 1;
-    for (const a of avisos) {
-      if (a.severidade === 'Grande Perigo') return 3;
-      if (a.severidade === 'Perigo') maxSev = 2;
+
+    if (selectedInmetAviso === 'todos') {
+      let maxSev = 1;
+      for (const a of avisos) {
+        if (a.severidade === 'Grande Perigo') return 3;
+        if (a.severidade === 'Perigo') maxSev = 2;
+      }
+      return maxSev;
     }
-    return maxSev;
+
+    const a = avisos.find(x => x.codigo === selectedInmetAviso);
+    if (!a) return 0;
+    if (a.severidade === 'Grande Perigo') return 3;
+    if (a.severidade === 'Perigo') return 2;
+    return 1;
   }
   if (layer === 'adaptabrasil') {
     const code = d.codigo_ibge;
@@ -465,20 +475,41 @@ function renderMap() {
         <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
       `;
     } else if (layer === 'inmet') {
-      legend.innerHTML = `
-        <div class="legend-item">
-          <strong>Avisos Meteorológicos INMET:</strong>
-          <div class="swatch-group">
-            <span class="swatch" style="background:#1e293b" title="Sem alertas ativos no momento"></span>
-            <span class="swatch" style="background:#eab308" title="Perigo Potencial (Amarelo)"></span>
-            <span class="swatch" style="background:#f97316" title="Perigo Moderado a Severo (Laranja)"></span>
-            <span class="swatch" style="background:#ef4444" title="Grande Perigo Extremo (Vermelho)"></span>
+      if (selectedInmetAviso === 'todos') {
+        legend.innerHTML = `
+          <div class="legend-item">
+            <strong>Avisos Meteorológicos INMET (Consolidação):</strong>
+            <div class="swatch-group">
+              <span class="swatch" style="background:#1e293b" title="Sem alertas ativos no momento"></span>
+              <span class="swatch" style="background:#eab308" title="Perigo Potencial (Amarelo)"></span>
+              <span class="swatch" style="background:#f97316" title="Perigo Moderado a Severo (Laranja)"></span>
+              <span class="swatch" style="background:#ef4444" title="Grande Perigo Extremo (Vermelho)"></span>
+            </div>
+            <span style="font-size: 0.70rem; color: #94a3b8;">Normalidade ➔ Grande Perigo</span>
           </div>
-          <span style="font-size: 0.70rem; color: #94a3b8;">Normalidade ➔ Grande Perigo</span>
-        </div>
-        <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
-        <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
-      `;
+          <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
+          <div class="legend-item"><span class="legend-dot incomplete"></span><span>Incompleto</span></div>
+        `;
+      } else {
+        const catalogo = getInmetAvisosCatalogo();
+        const aviso = catalogo.find(a => a.codigo === selectedInmetAviso);
+        const cor = (aviso?.severidade === 'Grande Perigo') ? '#ef4444' : ((aviso?.severidade === 'Perigo') ? '#f97316' : '#eab308');
+        const desc = aviso ? `${escapeHtml(aviso.descricao)} (${escapeHtml(aviso.severidade)})` : 'Aviso Selecionado';
+        const total = aviso ? (aviso.total_municipios || 0) : 0;
+        const fora = Math.max(0, 497 - total);
+        legend.innerHTML = `
+          <div class="legend-item">
+            <strong>Alerta Selecionado:</strong>
+            <span style="font-size:0.75rem; font-weight:750; color:${cor}; margin-left:4px;">${desc}</span>
+            <div class="swatch-group" style="margin-left:8px;">
+              <span class="swatch" style="background:${cor}" title="${total} municípios abrangidos por este alerta"></span>
+              <span class="swatch" style="background:#1e293b" title="${fora} municípios fora deste alerta"></span>
+            </div>
+            <span style="font-size: 0.70rem; color: #94a3b8;">${total} sob alerta · ${fora} fora</span>
+          </div>
+          <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
+        `;
+      }
     } else if (layer === 'adaptabrasil') {
       legend.innerHTML = `
         <div class="legend-item">
@@ -572,7 +603,28 @@ function renderMap() {
 
     const title = document.createElementNS(ns, 'title');
     const munName = getName(f.properties || {});
-    const valText = d ? (d.status === 'dados_incompletos' ? 'dados incompletos na fonte' : fmt(val)) : 'sem dados';
+    let valText = '';
+    if (layer === 'inmet') {
+      const muniEvid = evidenciasData?.municipios?.[code];
+      const avisos = muniEvid?.avisos_inmet || [];
+      if (selectedInmetAviso === 'todos') {
+        if (avisos.length > 0) {
+          const descs = Array.from(new Set(avisos.map(a => `${a.descricao} (${a.severidade})`))).join(', ');
+          valText = `${avisos.length} alerta(s): ${descs}`;
+        } else {
+          valText = 'Sem alertas ativos';
+        }
+      } else {
+        const a = avisos.find(x => x.codigo === selectedInmetAviso);
+        if (a) {
+          valText = `SOB ALERTA: ${a.descricao} (${a.severidade}) · ${a.estado_vigencia === 'vigente' ? 'Vigente' : 'Previsto'}`;
+        } else {
+          valText = `Fora da área do alerta selecionado`;
+        }
+      }
+    } else {
+      valText = d ? (d.status === 'dados_incompletos' ? 'dados incompletos na fonte' : fmt(val)) : 'sem dados';
+    }
     title.textContent = `${munName} (${code}) · ${fields[layer][3]}: ${valText}`;
     el.append(title);
 
@@ -1343,9 +1395,21 @@ function choose(code, name) {
       climateBadge.style.justifyContent = 'space-between';
       climateBadge.style.gap = '8px';
 
-      const alertStr = avisos.length > 0 
-        ? `⚠️ <span style="color:#b45309; font-weight:700;">${avisos.length} Alerta INMET</span>` 
-        : `✓ <span style="color:#15803d;">Sem alertas INMET</span>`;
+      let alertStr = '';
+      if (avisos.length > 0) {
+        if (selectedInmetAviso !== 'todos') {
+          const avisoSel = avisos.find(a => a.codigo === selectedInmetAviso);
+          if (avisoSel) {
+            alertStr = `⚠️ <span style="color:#b45309; font-weight:750;">Sob o alerta filtrado: ${escapeHtml(avisoSel.descricao)} (${escapeHtml(avisoSel.severidade)})</span>`;
+          } else {
+            alertStr = `ℹ️ <span style="color:#64748b;">Fora do alerta filtrado (${avisos.length} outro(s) ativo(s))</span>`;
+          }
+        } else {
+          alertStr = `⚠️ <span style="color:#b45309; font-weight:700;">${avisos.length} Alerta(s) INMET ativo(s)</span>`;
+        }
+      } else {
+        alertStr = `✓ <span style="color:#15803d;">Sem alertas INMET</span>`;
+      }
 
       climateBadge.innerHTML = `
         <div style="line-height:1.35;">
@@ -1407,6 +1471,125 @@ function loadYearScores(year) {
   }
 }
 
+function getInmetAvisosCatalogo() {
+  let catalogo = evidenciasData?.metadados?.fontes?.inmet?.avisos_ativos;
+  if (!catalogo || !catalogo.length) {
+    const mapaAvisos = new Map();
+    if (evidenciasData?.municipios) {
+      for (const [ibge, m] of Object.entries(evidenciasData.municipios)) {
+        for (const a of (m.avisos_inmet || [])) {
+          if (!mapaAvisos.has(a.codigo)) {
+            mapaAvisos.set(a.codigo, {
+              codigo: a.codigo,
+              descricao: a.descricao,
+              severidade: a.severidade,
+              cor: a.cor,
+              inicio: a.inicio,
+              fim: a.fim,
+              estado_vigencia: a.estado_vigencia || 'vigente',
+              total_municipios: 0
+            });
+          }
+          mapaAvisos.get(a.codigo).total_municipios += 1;
+        }
+      }
+    }
+    catalogo = Array.from(mapaAvisos.values());
+  }
+
+  const ordemSev = { 'Grande Perigo': 1, 'Perigo': 2, 'Perigo Potencial': 3 };
+  return [...catalogo].sort((a, b) => {
+    const sA = ordemSev[a.severidade] || 4;
+    const sB = ordemSev[b.severidade] || 4;
+    if (sA !== sB) return sA - sB;
+    if (a.estado_vigencia !== b.estado_vigencia) {
+      return a.estado_vigencia === 'vigente' ? -1 : 1;
+    }
+    return new Date(a.inicio) - new Date(b.inicio);
+  });
+}
+
+function updateInmetAlertSelector() {
+  const select = $('inmet-alert-select');
+  if (!select) return;
+
+  const catalogo = getInmetAvisosCatalogo();
+  const vigentes = catalogo.filter(a => a.estado_vigencia === 'vigente');
+  const futuros = catalogo.filter(a => a.estado_vigencia !== 'vigente');
+
+  let totalMunSobAlerta = 0;
+  if (evidenciasData?.municipios) {
+    for (const m of Object.values(evidenciasData.municipios)) {
+      if (m.avisos_inmet && m.avisos_inmet.length > 0) totalMunSobAlerta++;
+    }
+  }
+
+  let html = `<option value="todos">⚡ Todos os Alertas Ativos (Consolidação de Risco Máximo) — ${totalMunSobAlerta || 497} mun.</option>`;
+
+  const formatOption = (a) => {
+    const icone = a.severidade === 'Grande Perigo' ? '🔴' : (a.severidade === 'Perigo' ? '🟠' : '🟡');
+    const dtInicio = a.inicio ? new Date(a.inicio).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    const dtFim = a.fim ? new Date(a.fim).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    const periodo = a.estado_vigencia === 'vigente' ? `até ${dtFim}` : `inicia ${dtInicio}`;
+    return `<option value="${escapeHtml(a.codigo)}">${icone} [${escapeHtml(a.severidade)}] ${escapeHtml(a.descricao)} (${a.total_municipios || 0} mun.) · ${periodo}</option>`;
+  };
+
+  if (vigentes.length > 0) {
+    html += `<optgroup label="Avisos Vigentes (Em Andamento)">`;
+    for (const a of vigentes) html += formatOption(a);
+    html += `</optgroup>`;
+  }
+
+  if (futuros.length > 0) {
+    html += `<optgroup label="Avisos Futuros (Previsão)">`;
+    for (const a of futuros) html += formatOption(a);
+    html += `</optgroup>`;
+  }
+
+  select.innerHTML = html;
+
+  if (selectedInmetAviso !== 'todos' && catalogo.some(a => a.codigo === selectedInmetAviso)) {
+    select.value = selectedInmetAviso;
+  } else {
+    selectedInmetAviso = 'todos';
+    select.value = 'todos';
+  }
+
+  updateInmetAlertDetails(catalogo);
+}
+
+function updateInmetAlertDetails(catalogo) {
+  const detailsBox = $('inmet-alert-details');
+  const badge = $('inmet-selected-badge');
+  const meta = $('inmet-selected-meta');
+  if (!detailsBox || !badge || !meta) return;
+
+  if (selectedInmetAviso === 'todos') {
+    detailsBox.style.display = 'none';
+    return;
+  }
+
+  catalogo ||= getInmetAvisosCatalogo();
+  const aviso = catalogo.find(a => a.codigo === selectedInmetAviso);
+  if (!aviso) {
+    detailsBox.style.display = 'none';
+    return;
+  }
+
+  detailsBox.style.display = 'inline-flex';
+  const cls = aviso.severidade === 'Grande Perigo' ? 'grande-perigo' : (aviso.severidade === 'Perigo' ? 'perigo' : 'perigo-potencial');
+  badge.className = `inmet-selected-badge ${cls}`;
+  badge.textContent = `${aviso.severidade}: ${aviso.descricao}`;
+
+  const dtInicio = aviso.inicio ? new Date(aviso.inicio).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  const dtFim = aviso.fim ? new Date(aviso.fim).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  const vigenciaStr = aviso.estado_vigencia === 'vigente' ? 'Vigente' : 'Previsto';
+  const total = aviso.total_municipios || 0;
+  const pct = Math.round((total / 497) * 100);
+
+  meta.textContent = `${vigenciaStr} (${dtInicio} ➔ ${dtFim}) · ${total} municípios atingidos (${pct}% do RS)`;
+}
+
 async function refreshInmetVisualization() {
   const button = $('btn-refresh-inmet');
   const freshness = $('inmet-freshness');
@@ -1441,6 +1624,7 @@ async function refreshInmetVisualization() {
       else if (coleta.desatualizado) freshness.textContent = `⚠ Dados desatualizados · ${new Date(quando).toLocaleString('pt-BR')} · limite ${limite} min`;
       else freshness.textContent = `✓ Coleta válida · ${new Date(quando).toLocaleString('pt-BR')} · limite ${limite} min`;
     }
+    updateInmetAlertSelector();
     refreshMetrics();
     if (layer === 'inmet' || layer === 'adaptabrasil') renderMap();
     if (current) {
@@ -1543,6 +1727,10 @@ document.querySelectorAll('[data-layer]').forEach(b => {
   b.addEventListener('click', () => {
     layer = b.dataset.layer;
     document.querySelectorAll('[data-layer]').forEach(x => x.classList.toggle('selected', x === b));
+    const inmetToolbar = $('inmet-filter-toolbar');
+    if (inmetToolbar) {
+      inmetToolbar.style.display = (layer === 'inmet') ? 'flex' : 'none';
+    }
     renderMap();
     if (current) {
       const activeEl = $('mun-' + current);
@@ -1550,6 +1738,28 @@ document.querySelectorAll('[data-layer]').forEach(b => {
     }
   });
 });
+
+// Eventos do seletor e filtro de alertas meteorológicos INMET no mapa
+const alertSelect = $('inmet-alert-select');
+if (alertSelect) {
+  alertSelect.addEventListener('change', (e) => {
+    selectedInmetAviso = e.target.value;
+    updateInmetAlertDetails();
+    renderMap();
+    if (current) choose(current);
+  });
+}
+
+const btnVerTodos = $('inmet-btn-ver-todos');
+if (btnVerTodos) {
+  btnVerTodos.addEventListener('click', () => {
+    selectedInmetAviso = 'todos';
+    if (alertSelect) alertSelect.value = 'todos';
+    updateInmetAlertDetails();
+    renderMap();
+    if (current) choose(current);
+  });
+}
 
 // Abas do ambiente analítico municipal (Áreas D, T, M, A, B, C)
 document.querySelectorAll('.comp-tab-btn').forEach(b => {
