@@ -15,6 +15,7 @@ import psycopg
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 OUTPUT_JSON = os.path.join(REPO_ROOT, "web/api/public/evidencias_rs.json")
 DEFAULT_DB_URL = os.environ.get("DATABASE_URL", "postgresql://metis:metis@127.0.0.1:5432/metis")
+INMET_STALE_MINUTES = max(1, int(os.environ.get("METIS_INMET_STALE_MINUTES", "30")))
 
 # Garantir importações locais
 sys.path.insert(0, os.path.dirname(__file__))
@@ -133,6 +134,28 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
             cur.execute("SELECT fonte, status, ultima_coleta_sucesso, mensagem FROM status_conectores;")
             status_con = {row[0]: {"status": row[1], "ultima_coleta": row[2].isoformat() if row[2] else None, "mensagem": row[3]} for row in cur.fetchall()}
 
+            cur.execute("""
+                SELECT id, iniciada_em, finalizada_em, status, sha256_payload,
+                       avisos_recebidos, avisos_validos, versoes_criadas,
+                       (finalizada_em < CURRENT_TIMESTAMP - (%s * interval '1 minute')) AS desatualizado
+                FROM inmet_coletas
+                ORDER BY iniciada_em DESC LIMIT 1;
+            """, (INMET_STALE_MINUTES,))
+            coleta_row = cur.fetchone()
+            ultima_coleta_inmet = None
+            if coleta_row:
+                ultima_coleta_inmet = {
+                    "id": coleta_row[0],
+                    "iniciada_em": coleta_row[1].isoformat() if coleta_row[1] else None,
+                    "finalizada_em": coleta_row[2].isoformat() if coleta_row[2] else None,
+                    "status": coleta_row[3],
+                    "sha256_payload": coleta_row[4],
+                    "avisos_recebidos": coleta_row[5],
+                    "avisos_validos": coleta_row[6],
+                    "versoes_criadas": coleta_row[7],
+                    "desatualizado": coleta_row[8],
+                }
+
     municipios_export = {}
     for ibge in dados_adapta.keys():
         municipios_export[ibge] = {
@@ -158,6 +181,8 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
                     "instituicao": "INMET / CPTEC / MAPA",
                     "avisos_ativos_rs": len(avisos_unicos_rs),
                     "municipios_sob_alerta": len(dados_inmet_por_muni),
+                    "validade_minutos": INMET_STALE_MINUTES,
+                    "ultima_coleta_auditada": ultima_coleta_inmet,
                     "status_conector": status_con.get("inmet_avisos", {})
                 }
             }

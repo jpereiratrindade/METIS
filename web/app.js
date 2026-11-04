@@ -594,8 +594,8 @@ function calculateR(e, p, s) {
 
 // Renderizador das 4 áreas do ambiente analítico municipal (METIS-DIR-MUN-001)
 // Renderizador do ambiente analítico municipal com catálogo multimodelo (METIS-DIR-MULTI-002)
-function updateComponentDetail(code) {
-  const box = $('comp-detail-box');
+function updateComponentDetail(code, targetBox = null) {
+  const box = targetBox || $('comp-detail-box');
   if (!box) return;
 
   if (!code) {
@@ -1357,11 +1357,7 @@ function choose(code, name) {
       const btnGo = $('btn-goto-evid');
       if (btnGo) {
         btnGo.onclick = () => {
-          activeArea = 'E';
-          document.querySelectorAll('.comp-tab-btn').forEach(b => {
-            b.classList.toggle('active', b.dataset.area === 'E');
-          });
-          updateComponentDetail(code);
+          openEvidenceModal(code);
         };
       }
     } else {
@@ -1405,6 +1401,51 @@ function loadYearScores(year) {
   if (geometry) {
     renderMap();
     if (current) choose(current);
+  }
+}
+
+async function refreshInmetVisualization() {
+  const button = $('btn-refresh-inmet');
+  const freshness = $('inmet-freshness');
+  if (button) button.disabled = true;
+  try {
+    const cacheBust = `?t=${Date.now()}`;
+    const [rEvid, rEps, rStatus] = await Promise.all([
+      fetch('/api/public/evidencias_rs.json' + cacheBust, { cache: 'no-store' }),
+      fetch('/api/public/episodios_rs.json' + cacheBust, { cache: 'no-store' }),
+      fetch('/api/v1/inmet/status' + cacheBust, { cache: 'no-store' }).catch(() => null)
+    ]);
+    if (rEvid.ok) evidenciasData = await rEvid.json();
+    if (rEps.ok) episodiosData = await rEps.json();
+    let coleta = evidenciasData?.metadados?.fontes?.inmet?.ultima_coleta_auditada || null;
+    let limite = evidenciasData?.metadados?.fontes?.inmet?.validade_minutos || 30;
+    if (rStatus?.ok) {
+      const status = await rStatus.json();
+      coleta = status.ultima_coleta || coleta;
+      limite = status.limite_desatualizacao_minutos || limite;
+    }
+    if (freshness) {
+      const quando = coleta?.finalizada_em || coleta?.iniciada_em;
+      freshness.classList.toggle('stale', !coleta || coleta.desatualizado || coleta.status !== 'sucesso');
+      freshness.classList.toggle('fresh', coleta && !coleta.desatualizado && coleta.status === 'sucesso');
+      freshness.textContent = !coleta
+        ? 'Sem coleta auditada disponível'
+        : `${coleta.desatualizado ? '⚠ Dados desatualizados' : '✓ Coleta válida'} · ${new Date(quando).toLocaleString('pt-BR')} · limite ${limite} min`;
+    }
+    refreshMetrics();
+    if (layer === 'inmet' || layer === 'adaptabrasil') renderMap();
+    if (current) {
+      choose(current);
+      if (activeArea === 'E') updateComponentDetail(current);
+    }
+  } catch (erro) {
+    if (freshness) {
+      freshness.className = 'inmet-freshness stale';
+      freshness.textContent = 'Falha ao atualizar visualização';
+    }
+    console.warn('Evidências climáticas ou episódios offline:', erro);
+  } finally {
+    if (button) button.disabled = false;
   }
 }
 
@@ -1458,30 +1499,7 @@ async function autoLoadAll() {
     }
 
     // 3. Carregar repositório de evidências epistêmicas (AdaptaBrasil + INMET)
-    try {
-      const [rEvid, rEps] = await Promise.all([
-        fetch('/api/public/evidencias_rs.json'),
-        fetch('/api/public/episodios_rs.json')
-      ]);
-      if (rEvid.ok) {
-        evidenciasData = await rEvid.json();
-      }
-      if (rEps.ok) {
-        episodiosData = await rEps.json();
-      }
-      refreshMetrics();
-      if (layer === 'inmet' || layer === 'adaptabrasil') {
-        renderMap();
-      }
-      if (current) {
-        choose(current);
-        if (activeArea === 'E') {
-          updateComponentDetail(current);
-        }
-      }
-    } catch (eEvid) {
-      console.warn('Evidências climáticas ou episódios offline:', eEvid);
-    }
+    await refreshInmetVisualization();
   } catch (err) {
     console.warn('Carregamento automático de dados offline ou em rede restrita:', err);
   }
@@ -1508,6 +1526,9 @@ if (btnResetZoom) {
   btnResetZoom.addEventListener('click', () => choose(null));
 }
 
+const btnRefreshInmet = $('btn-refresh-inmet');
+if (btnRefreshInmet) btnRefreshInmet.addEventListener('click', refreshInmetVisualization);
+
 // Alternância de camadas de tendência territorial (R por padrão, ou Evolução, E, P, S)
 document.querySelectorAll('[data-layer]').forEach(b => {
   b.addEventListener('click', () => {
@@ -1524,10 +1545,54 @@ document.querySelectorAll('[data-layer]').forEach(b => {
 // Abas do ambiente analítico municipal (Áreas D, T, M, A, B, C)
 document.querySelectorAll('.comp-tab-btn').forEach(b => {
   b.addEventListener('click', () => {
+    if (b.dataset.area === 'E' && current) {
+      openEvidenceModal(current);
+      return;
+    }
     activeArea = b.dataset.area;
     document.querySelectorAll('.comp-tab-btn').forEach(x => x.classList.toggle('active', x === b));
     updateComponentDetail(current);
   });
+});
+
+const evidenceModal = $('evidence-modal');
+const evidenceModalContent = $('evidence-modal-content');
+const evidenceModalClose = $('evidence-modal-close');
+let evidenceModalPreviousFocus = null;
+
+function openEvidenceModal(code) {
+  if (!evidenceModal || !evidenceModalContent || !code) return;
+  const d = scores.get(code);
+  const raw = rawData.get(code);
+  const nome = d?.municipio || raw?.municipio || $('detail-name')?.textContent || 'Município';
+  evidenceModalPreviousFocus = document.activeElement;
+  $('evidence-modal-title').textContent = `Evidências · ${nome}`;
+  $('evidence-modal-subtitle').textContent = `Código IBGE ${code} · INMET, AdaptaBrasil e episódios investigativos`;
+  const areaAnterior = activeArea;
+  activeArea = 'E';
+  updateComponentDetail(code, evidenceModalContent);
+  activeArea = areaAnterior;
+  evidenceModal.hidden = false;
+  evidenceModal.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+  evidenceModalClose?.focus();
+}
+
+function closeEvidenceModal() {
+  if (!evidenceModal || evidenceModal.hidden) return;
+  evidenceModal.hidden = true;
+  evidenceModal.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  evidenceModalContent.innerHTML = '';
+  evidenceModalPreviousFocus?.focus?.();
+}
+
+evidenceModalClose?.addEventListener('click', closeEvidenceModal);
+evidenceModal?.querySelectorAll('[data-close-evidence]').forEach(el => {
+  el.addEventListener('click', closeEvidenceModal);
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && evidenceModal && !evidenceModal.hidden) closeEvidenceModal();
 });
 
 // Controles da Bancada Epistêmica Triaxial (METIS-DIR-MULTI-002)

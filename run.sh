@@ -97,6 +97,9 @@ executar_testes() {
 
   echo -e "\n${BOLD}${BLUE}=== Executando Testes de Persistência PostGIS ===${NC}"
   METIS_STRICT_TESTS=1 ./scripts/test_persistencia.sh
+
+  echo -e "\n${BOLD}${BLUE}=== Executando Testes Temporais INMET ===${NC}"
+  python3 -m unittest tests/test_inmet_temporal.py
 }
 
 executar_checagem() {
@@ -139,7 +142,20 @@ iniciar_servidor_web() {
   echo -e " Pressione ${RED}Ctrl+C${NC} para encerrar o servidor web."
   echo
 
-  exec python3 -m http.server "$PORT" --bind "$HOST" --directory web
+  local scheduler_pid=""
+  if [[ "${METIS_INMET_SCHEDULER_ENABLED:-1}" == "1" ]]; then
+    python3 scripts/agendador_inmet.py &
+    scheduler_pid=$!
+    echo -e " ${GREEN}Agendador INMET:${NC} ativo a cada ${METIS_INMET_INTERVAL_SECONDS:-900}s (PID $scheduler_pid)."
+  fi
+  cleanup() {
+    if [[ -n "$scheduler_pid" ]]; then
+      kill "$scheduler_pid" 2>/dev/null || true
+      wait "$scheduler_pid" 2>/dev/null || true
+    fi
+  }
+  trap cleanup EXIT INT TERM
+  python3 scripts/api_server.py
 }
 
 # ------------------------------------------------------------------------------
@@ -205,6 +221,15 @@ case "$CMD" in
     python3 scripts/conectores/sincronizar_evidencias.py
     ;;
 
+  sync-inmet)
+    echo -e "${CYAN}==> Sincronizando somente INMET...${NC}"
+    python3 scripts/conectores/sincronizar_inmet.py
+    ;;
+
+  schedule-inmet)
+    python3 scripts/agendador_inmet.py
+    ;;
+
   help|-h|--help)
     echo -e "${BOLD}MÉTIS — Orquestrador Unificado do Laboratório${NC}"
     echo
@@ -215,6 +240,8 @@ case "$CMD" in
     echo "  test              Executa todos os testes automatizados (CTest C++26 e PostGIS)"
     echo "  check             Verifica todo o ambiente e valida testes de integridade"
     echo "  sync              Sincroniza evidências climáticas e alertas (AdaptaBrasil MCTI + INMET)"
+    echo "  sync-inmet        Sincroniza somente INMET, exporta JSON e processa episódios"
+    echo "  schedule-inmet    Executa sincronização INMET periódica em primeiro plano"
     echo "  build             Compila os binários em C++26"
     echo "  db up             Inicia o PostgreSQL/PostGIS e roda migrações"
     echo "  db down           Para o contêiner do banco de dados"

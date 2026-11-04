@@ -139,6 +139,9 @@ O MÉTIS é 100% padronizado para operar através de um único orquestrador unif
 # Sincronizar evidências climáticas e perturbações em tempo real (AdaptaBrasil + INMET):
 ./run.sh sync
 
+# Sincronizar apenas INMET e recompilar evidências/episódios:
+./run.sh sync-inmet
+
 # Comandos específicos para controle do banco de dados:
 ./run.sh db status       # Inspeciona estado do contêiner
 ./run.sh db down         # Para o serviço de banco
@@ -161,6 +164,10 @@ Acesse no navegador:
 - **Dashboard Analítico:** `http://localhost:8080/dashboard.html`
 - **Modelos & Algoritmos:** `http://localhost:8080/modelos.html`
 - **Rede Local (IP):** `http://<IP_DA_REDE>:8080/` (ex: `http://10.163.80.176:8080/`)
+
+O servidor inclui API dinâmica e agendador INMET (15 minutos por padrão). Configure
+`METIS_ADMIN_TOKEN` para habilitar a sincronização administrativa por API. O botão público
+“Atualizar visualização” apenas relê dados persistidos e nunca dispara coleta externa.
 
 ---
 

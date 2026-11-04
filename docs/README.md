@@ -10,6 +10,7 @@ Bem-vindo ao índice central da documentação científica, arquitetural e norma
 docs/
 ├── README.md                               # Este índice geral do acervo
 ├── METIS-DIR-EVID-001.md                   # [METIS-DIR-EVID-001] Diretriz de evidências climáticas (AdaptaBrasil/INMET) e episódios investigativos
+├── METIS-DIR-INMET-002.md                  # Histórico temporal, auditoria e sincronização INMET
 ├── HOMOLOGACAO-PERSISTENCIA-001.md         # [METIS-REL-PERSIST-001] Relatório de homologação da camada de persistência
 ├── GOVERNANCA-DADOS-E-MARCO-LEGAL.md       # [METIS-DIR-LEG-001] Conformidade LGPD, LAI, Dados Abertos e Disclaimer
 ├── USABILIDADE-ACESSIBILIDADE-E-BOAS-PRATICAS.md # [METIS-DIR-USA-001] Nielsen, Shneiderman, WCAG 2.1 e e-MAG
