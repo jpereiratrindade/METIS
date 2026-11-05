@@ -599,6 +599,8 @@ function renderMap() {
     if (d && d.status === 'dados_incompletos') cls += ' incomplete';
     el.setAttribute('class', cls);
     el.setAttribute('tabindex', '0');
+    el.setAttribute('role', 'button');
+    el.setAttribute('aria-label', `${munName} (${code})`);
     el.setAttribute('id', 'mun-' + code);
 
     const title = document.createElementNS(ns, 'title');
@@ -629,6 +631,12 @@ function renderMap() {
     el.append(title);
 
     el.addEventListener('click', () => choose(code, munName));
+    el.addEventListener('keydown', ev => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        choose(code, munName);
+      }
+    });
     svg.appendChild(el);
   }
 }
@@ -1258,6 +1266,11 @@ function updateComponentDetail(code, targetBox = null) {
       </div>
       ${frozenBanner}
       ${paramControlsHtml}
+      ${!isFrozen && activeModel !== 'EPS-REF-001' ? `
+        <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+          <button type="button" id="btn-reset-params" style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:4px; padding:4px 8px; font-size:0.72rem; color:var(--navy); font-weight:600; cursor:pointer;" title="Restaurar calibração padrão de referência deste modelo">↺ Restaurar Parâmetros Padrão</button>
+        </div>
+      ` : ''}
       <div class="comp-note-box" style="margin-top: 8px;">
         ${isFrozen ? 'Parâmetros imutáveis protegidos pela portaria científica.' : 'Em modalidade experimental, a alteração dos parâmetros reconfigura o modelo e atualiza a cartografia e o diagnóstico em tempo real.'}
       </div>
@@ -1328,6 +1341,20 @@ function updateComponentDetail(code, targetBox = null) {
         renderMap();
       });
     }
+
+    const btnResetParams = $('btn-reset-params');
+    if (btnResetParams) {
+      btnResetParams.addEventListener('click', () => {
+        paramK = 1500.0;
+        paramWe = 0.33;
+        paramWp = 0.33;
+        paramWs = 0.34;
+        paramLambda = 0.50;
+        recalculateAllScores();
+        updateComponentDetail(code);
+        renderMap();
+      });
+    }
   }
   // ÁREA C: HIPÓTESE RELACIONAL
   else if (activeArea === 'C') {
@@ -1358,6 +1385,8 @@ function updateComponentDetail(code, targetBox = null) {
 function choose(code, name) {
   current = code;
   if (!code) {
+    const sInput = $('search-input');
+    if (sInput && document.activeElement !== sInput) sInput.value = '';
     if ($('detail-name')) $('detail-name').textContent = 'Selecione um município';
     if ($('detail-code')) $('detail-code').textContent = 'Clique na malha territorial ou busque acima';
     if ($('climate-quick-badge')) $('climate-quick-badge').style.display = 'none';
@@ -1380,6 +1409,8 @@ function choose(code, name) {
   const raw = rawData.get(code);
 
   const munName = name || d?.municipio || raw?.municipio || 'Município';
+  const sInput = $('search-input');
+  if (sInput && document.activeElement !== sInput) sInput.value = `${munName} (${code})`;
   if ($('detail-name')) $('detail-name').textContent = munName;
   if ($('detail-code')) $('detail-code').textContent = `Código IBGE: ${code} ${d ? '· ' + d.status : ''}`;
 
@@ -1670,6 +1701,7 @@ async function autoLoadAll() {
     scores = (activeYear === '2006') ? scores2006 : scores2017;
     rawData = (activeYear === '2006') ? rawData2006 : rawData2017;
     recalculateAllScores();
+    populateSearchSuggestions();
     refreshMetrics();
 
     // 2. Carregar a malha GeoJSON oficial do IBGE 2022
@@ -1698,17 +1730,68 @@ async function autoLoadAll() {
   }
 }
 
-// Busca rápida de municípios por nome ou geocódigo IBGE
+// Popular lista de sugestões de busca (datalist nativo acessível)
+function populateSearchSuggestions() {
+  const dl = $('mun-suggestions');
+  if (!dl || scores.size === 0) return;
+  dl.innerHTML = '';
+  const list = [...scores.entries()].map(([code, d]) => ({
+    code,
+    nome: d.municipio || code
+  })).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  for (const item of list) {
+    const opt = document.createElement('option');
+    opt.value = `${item.nome} (${item.code})`;
+    dl.appendChild(opt);
+  }
+}
+
+// Busca rápida não-intrusiva de municípios por nome ou geocódigo IBGE
 const searchInput = $('search-input');
 if (searchInput) {
   searchInput.addEventListener('input', ev => {
-    const q = ev.target.value.trim().toLowerCase();
-    if (!q) return;
+    const val = ev.target.value.trim();
+    if (!val) {
+      choose(null);
+      return;
+    }
+    // Se corresponder ao padrão "Nome (43xxxxx)"
+    const codeMatch = val.match(/\b(43\d{5})\b/);
+    if (codeMatch && scores.has(codeMatch[1])) {
+      choose(codeMatch[1]);
+      return;
+    }
+    // Se for o código IBGE exato
+    if (scores.has(val)) {
+      choose(val);
+      return;
+    }
+    // Se corresponder exatamente ao nome oficial de um município
+    const lower = val.toLowerCase();
     for (const [code, d] of scores) {
-      if ((d.municipio && d.municipio.toLowerCase().includes(q)) || code.startsWith(q)) {
+      if (d.municipio && d.municipio.toLowerCase() === lower) {
         choose(code, d.municipio);
-        break;
+        return;
       }
+    }
+  });
+
+  searchInput.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter') {
+      const val = searchInput.value.trim().toLowerCase();
+      if (!val) return;
+      for (const [code, d] of scores) {
+        if ((d.municipio && d.municipio.toLowerCase().includes(val)) || code.startsWith(val)) {
+          choose(code, d.municipio);
+          searchInput.value = `${d.municipio} (${code})`;
+          searchInput.blur();
+          break;
+        }
+      }
+    } else if (ev.key === 'Escape') {
+      searchInput.value = '';
+      choose(null);
+      searchInput.blur();
     }
   });
 }
@@ -1722,11 +1805,15 @@ if (btnResetZoom) {
 const btnRefreshInmet = $('btn-refresh-inmet');
 if (btnRefreshInmet) btnRefreshInmet.addEventListener('click', refreshInmetVisualization);
 
-// Alternância de camadas de tendência territorial (R por padrão, ou Evolução, E, P, S)
+// Alternância de camadas de tendência territorial com ARIA
 document.querySelectorAll('[data-layer]').forEach(b => {
   b.addEventListener('click', () => {
     layer = b.dataset.layer;
-    document.querySelectorAll('[data-layer]').forEach(x => x.classList.toggle('selected', x === b));
+    document.querySelectorAll('[data-layer]').forEach(x => {
+      const isSel = (x === b);
+      x.classList.toggle('selected', isSel);
+      x.setAttribute('aria-pressed', isSel ? 'true' : 'false');
+    });
     const inmetToolbar = $('inmet-filter-toolbar');
     if (inmetToolbar) {
       inmetToolbar.style.display = (layer === 'inmet') ? 'flex' : 'none';
@@ -1761,7 +1848,7 @@ if (btnVerTodos) {
   });
 }
 
-// Abas do ambiente analítico municipal (Áreas D, T, M, A, B, C)
+// Abas do ambiente analítico municipal com ARIA
 document.querySelectorAll('.comp-tab-btn').forEach(b => {
   b.addEventListener('click', () => {
     if (b.dataset.area === 'E' && current) {
@@ -1769,7 +1856,11 @@ document.querySelectorAll('.comp-tab-btn').forEach(b => {
       return;
     }
     activeArea = b.dataset.area;
-    document.querySelectorAll('.comp-tab-btn').forEach(x => x.classList.toggle('active', x === b));
+    document.querySelectorAll('.comp-tab-btn').forEach(x => {
+      const isSel = (x === b);
+      x.classList.toggle('active', isSel);
+      x.setAttribute('aria-selected', isSel ? 'true' : 'false');
+    });
     updateComponentDetail(current);
   });
 });

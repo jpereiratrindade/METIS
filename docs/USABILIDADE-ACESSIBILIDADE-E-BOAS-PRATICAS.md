@@ -1,8 +1,8 @@
 # MÉTIS — Diretrizes de Usabilidade, Acessibilidade e Boas Práticas de Engenharia
 **Documento:** METIS-DIR-USA-001  
-**Versão:** 1.0.0  
-**Data:** 29/10/2026  
-**Natureza:** Avaliação e especificações de usabilidade (Nielsen), exploração visual (Shneiderman), acessibilidade (WCAG 2.1/e-MAG) e integridade de software  
+**Versão:** 1.2.0  
+**Data:** 05/11/2026 (Incorporação do Laudo de Inspeção METIS-REL-USA-002)  
+**Natureza:** Avaliação e especificações de usabilidade (Nielsen), exploração visual (Shneiderman), acessibilidade (WCAG 2.1/e-MAG) e ergonomia cognitiva  
 **Status:** Vigente e Homologado  
 
 ---
@@ -22,16 +22,16 @@ O desenvolvimento de interfaces e fluxos analíticos do **MÉTIS** adota quatro 
 
 | Heurística | Implementação no MÉTIS | Conformidade |
 | :--- | :--- | :---: |
-| **1. Visibilidade do status do sistema** | A barra superior (*Topbar*) informa permanentemente os três eixos da bancada epistêmica: `[ Modelo Ativo ] · [ Ano Censitário ] · [ Trajetória ]`. Ao calcular novos parâmetros (ex: slider de $k$), os valores nas tabelas e no mapa atualizam-se instantaneamente com indicativo numérico preciso. | **Alta** |
+| **1. Visibilidade do status do sistema** | A barra superior (*Topbar*) informa permanentemente os três eixos da bancada epistêmica: `[ Modelo Ativo ] · [ Ano Censitário ] · [ Trajetória ]`. Ao calcular novos parâmetros (ex: slider de $k$), os valores nas tabelas e no mapa atualizam-se instantaneamente com indicativo numérico preciso. Indicador de frescor do INMET informa data e validade da coleta. | **Alta** |
 | **2. Correspondência entre o sistema e o mundo real** | O sistema utiliza a linguagem conceitual agronômica e ecológica consagrada ($VP$, Área em hectares, densidade monetária em R$/ha, percentual de cobertura vegetal). O glossário nas páginas diferencia claramente dado bruto de indicador relacional. | **Alta** |
-| **3. Controle do usuário e liberdade** | No mapa, botões flutuantes (`↺ Visão Estadual`) e cliques no fundo restauram imediatamente a visão panorâmica sem prender o usuário em zooms indesejados. No simulador, o usuário pode resetar parâmetros para as calibrações de referência. | **Alta** |
+| **3. Controle do usuário e liberdade** | No mapa, botões flutuantes (`↺ Visão Estadual`), botão `↺ Ver todos` na barra do INMET e cliques no fundo restauram imediatamente a visão panorâmica. No simulador, o usuário conta com reset de parâmetros. Fechamento de modais via `Escape`. | **Alta** |
 | **4. Consistência e padrões** | Todas as páginas (`index.html`, `mapa.html`, `dashboard.html`, `modelos.html`) compartilham rigorosamente o mesmo *shell* de navegação: mesma barra lateral (*Sidebar*), mesma barra superior (*Topbar*), paleta tipográfica e semântica de cores unificadas. | **Alta** |
 | **5. Prevenção de erros** | Municípios com dados omissos na fonte censitária oficial (IBGE) recebem o rótulo formal `dados_incompletos` e são destacados com padrão hachurado neutro, impedindo cálculos enviesados ou a inserção arbitrária de zero. Controles deslizantes contam com limites matemáticos seguros. | **Alta** |
 | **6. Reconhecimento em vez de memorização** | As fórmulas matemáticas completas e o significado de cada parâmetro (ex: papel de $k$, peso $w_e$, acoplamento $\lambda$) estão visíveis diretamente no painel contextual ativo, sem exigir que o pesquisador memorize equações de outras páginas. | **Alta** |
 | **7. Eficiência e flexibilidade de uso** | Oferece múltiplos modos de exploração: usuários que buscam imersão espacial utilizam a cartografia vetorial (`mapa.html`); usuários focados em números rápidos e conexões lentas contam com o *Dashboard Analítico sem Mapa* (`dashboard.html`). Usuários avançados contam com a CLI em C++26 e a API REST pública em JSON. | **Alta** |
 | **8. Estética e design minimalista** | Interface limpa e despoluída, sem anúncios, sem pop-ups, sem banners promocionais e sem ruído visual. Hierarquia tipográfica orientada pela legibilidade (Inter/SF Pro e fontes monoespaçadas para termos científicos e códigos IBGE). | **Alta** |
 | **9. Auxílio aos usuários para reconhecer, diagnosticar e recuperar erros** | Mensagens de diagnóstico explícitas e em português: quando um município não possui dados de cooperativismo ou orientação técnica, o sistema informa exatamente qual variável ausente impediu o cômputo da dimensão social, indicando o código da tabela censitária de origem. | **Alta** |
-| **10. Ajuda e documentação** | Além dos manuais de arquitetura na pasta `/docs`, o sistema dispõe de página própria de transparência matemática (`modelos.html`) e feed de resumos em linguagem didática simplificada para divulgação científica (`resumos.json`). | **Alta** |
+| **10. Ajuda e documentação** | Além dos manuais de arquitetura na pasta `/docs`, o sistema dispõe de página própria de transparência matemática (`modelos.html`), feed de resumos em linguagem didática simplificada para divulgação científica (`resumos.json`) e rotas documentadas de API. | **Alta** |
 
 ---
 
@@ -43,10 +43,12 @@ A cartografia interativa (`web/mapa.html`) e o ambiente analítico implementam c
 ┌─────────────────────────────────────────────────────────────────┐
 │ 1. VISÃO GERAL (Overview First)                                 │
 │    - Malha vetorial SVG dos 497 municípios do Rio Grande do Sul │
-│    - Distribuição temática global de R, E, P ou S               │
+│    - Inicialização limpa e neutra (sem pré-seleção arbitrária)  │
+│    - Distribuição temática global de R, ΔR, INMET, Adapta, E,P,S│
 ├─────────────────────────────────────────────────────────────────┤
 │ 2. ZOOM E FILTRAGEM (Zoom & Filter)                             │
-│    - Busca dinâmica por nome do município ou código IBGE        │
+│    - Busca por nome do município ou código IBGE com sugestões   │
+│    - Filtro e seleção de alertas meteorológicos individuais     │
 │    - Transição suave de viewBox centrada no município escolhido │
 │    - Filtro de camadas temáticas no topo do mapa                │
 ├─────────────────────────────────────────────────────────────────┤
@@ -64,49 +66,41 @@ A cartografia interativa (`web/mapa.html`) e o ambiente analítico implementam c
 
 ---
 
-## 4. Diretrizes de Acessibilidade Web (WCAG 2.1 AA / e-MAG)
-
-O MÉTIS foi projetado com foco em acessibilidade universal, atendendo aos quatro princípios fundamentais das diretrizes internacionais e do Modelo de Acessibilidade em Governo Eletrônico (e-MAG):
+## 4. Diretrizes Normativas de Acessibilidade Digital (WCAG 2.1 AA / e-MAG)
 
 ### 4.1. Perceptibilidade
-- **Contraste de Cores:** A paleta de cores (fundo escuro/claro com texto de alto contraste) atende à razão mínima de contraste de 4.5:1 para texto normal e 3:1 para texto grande e componentes de interface (conforme critério de sucesso 1.4.3 da WCAG 2.1).
+- **Contraste de Cores:** A paleta de cores atende à razão mínima de contraste de 4.5:1 para texto normal e 3:1 para texto grande e componentes de interface (conforme critério de sucesso 1.4.3 da WCAG 2.1).
 - **Independência de Cores:** Informações sobre incompletude ou estado dos dados não dependem exclusivamente de matiz cromática; utilizam ícones, textos e padrões de preenchimento específicos.
 - **Tipografia Escalonável:** Unidades relativas (`rem`, `%`) em folhas de estilo, permitindo ampliação de fonte em até 200% via navegador sem quebra de layout.
 
 ### 4.2. Operabilidade
-- **Navegação por Teclado:** Todos os elementos interativos (links de menu, seletores de modelos, campos de busca, botões de filtro e sliders numéricos) são focalizáveis e operáveis via teclado (`Tab`, `Shift+Tab`, `Enter`, `Espaço`, `Setas`).
-- **Rótulos ARIA:** Aplicação de `aria-label`, `role="group"`, `role="region"` e `aria-hidden` em SVGs decorativos e controles de busca, assegurando interpretação correta por leitores de tela (ex: NVDA, Orca, VoiceOver).
-- **Sem Limites de Tempo:** As interfaces não impõem timeouts, contagens regressivas ou expirações de sessão.
+- **Navegação Integral por Teclado (Critério 2.1.1):** Todos os elementos interativos — incluindo cada polígono municipal `<path>` no SVG do mapa, botões de abas, seletores de modelos e sliders — devem ser focalizáveis e ativáveis por teclado (`Tab`, `Shift+Tab`, `Enter`, `Espaço`, `Setas`).
+- **Anel de Foco Visível (Critério 2.4.7):** Elementos interativos no mapa e nos painéis devem exibir contorno nítido via `:focus-visible` (`outline: 2px solid var(--sky); outline-offset: 2px`).
+- **Sem Limites de Tempo (Critério 2.2.1):** As interfaces não impõem timeouts, contagens regressivas ou expirações de sessão.
 
 ### 4.3. Compreensibilidade
 - **Idioma Declarado:** Atributo `lang="pt-BR"` declarado explicitamente em todas as páginas HTML.
-- **Previsibilidade:** A alternância de abas e parâmetros atualiza as informações no painel de forma determinística, sem deslocamentos abruptos de tela ou abertura involuntária de novas janelas.
-- **Divulgação Científica em Linguagem Clara:** Existência de um feed específico de resumos explicativos (`resumos.json`) para cidadãos não especializados e totens digitais.
-
-### 4.4. Robustez
-- **HTML5 Válido e Semântico:** Uso correto de tags semânticas estruturantes (`<header>`, `<nav>`, `<main>`, `<aside>`, `<section>`, `<article>`, `<footer>`).
-- **Renderização Nativa e Resiliente:** Ausência de dependência de bibliotecas externas pesadas (sem CDNs terceiros de scripts proprietários), permitindo execução local autônoma e em redes com conectividade restrita.
+- **Entrada Não-Intrusiva (Critério 3.2.2):** O campo de busca municipal não deve sequestrar o foco nem disparar zooms involuntários ao digitar; deve exibir lista de sugestões suspensa navegável e acionar a seleção somente após confirmação (`Enter` ou clique).
+- **Semântica ARIA Robusta (Critério 4.1.2):** Botões de camadas devem conter `aria-pressed="true|false"` e as abas analíticas devem conter `role="tab"`, `aria-selected="true|false"` dentro de container `role="tablist"`.
 
 ---
 
-## 5. Transparência Algorítmica e Salvaguardas Epistêmicas
+## 5. Decisões de Design e Salvaguardas Epistêmicas
 
-### 5.1. Distinção Quádrupla Essencial
-Para assegurar o rigor da comunicação pública dos resultados, a interface e a documentação mantêm distinção formal e visual constante entre:
-1. **Variáveis:** O que foi medido no mundo empírico pelo Censo Agropecuário oficial.
-2. **Indicadores:** Transformações matemáticas e relações (ex: densidade de receita por hectare).
-3. **Modelos:** Estruturas conceituais que articulam os indicadores sob certas premissas teóricas.
-4. **Cenários:** Casos de teste sob calibrações de parâmetros particulares.
+### 5.1. Inicialização em Visão Panorâmica Estadual Limpa
+- **Decisão:** O sistema inicia sem nenhum município pré-selecionado (`current = null`).
+- **Justificativa Ética:** A pré-seleção forçada de qualquer município viola o princípio de neutralidade científica do laboratório, induzindo o usuário a focar em uma localidade arbitrária. A interface acolhe o pesquisador com a visão global do Rio Grande do Sul e um convite explícito para pesquisa ou exploração livre na malha.
 
-### 5.2. Diretriz Anti-Estigmatização e Proibição de Ranqueamento
-- Sistemas públicos que classificam municípios por indicadores únicos correm risco de simplificação perigosa e estigmatização de regiões inteiras.
-- O MÉTIS adota o princípio de **Confronto Intramunicipal**: ao invés de perguntar *"Qual município é melhor?"*, o pesquisador investiga *"Como diferentes formulações teóricas interpretam as características deste município?"*.
+### 5.2. Proibição Expressa de Ranqueamentos Competitivos
+- O MÉTIS veda a classificação unidimensional de municípios como "melhores" ou "piores". O confronto é intra-territorial e multimodelo: como diferentes hipóteses interpretam as condições daquele mesmo território.
 
 ---
 
-## 6. Boas Práticas de Engenharia de Software Adotadas
+## 6. Auditoria Técnica e Backlog de Acessibilidade (METIS-REL-USA-002)
 
-1. **Reprodutibilidade Determinística:** Implementação de núcleo em C++26 com tipagem estrita e testes automatizados de regressão (`nucleo_modelo`).
-2. **Invariância Municipal Testada:** Verificação contínua de que os resultados de um município são matematicamente independentes das variações de outros municípios no modelo `EPS-EXP-004`.
-3. **Imutabilidade e Rastreabilidade Git:** Todas as versões de modelos possuem nomenclatura semântica estrita, integridade com soma de verificação e registros históricos preservados.
-4. **Arquitetura Desacoplada:** Os dados censitários, o núcleo de processamento matemático, a API JSON estática e as interfaces web operam com contratos de dados transparentes e padronizados.
+O laudo pericial formalizado no documento `METIS-REL-USA-002` estabeleceu o backlog priorizado:
+- **P0:** Habilitação de `Enter`/`Espaço` e `:focus-visible` nos `<path>` do mapa SVG;
+- **P0:** Busca não-intrusiva com `<datalist>` e cancelamento suave via `Escape`;
+- **P1:** Alinhamento do estado inicial neutro no Dashboard (`dashboard.js`);
+- **P1:** Enriquecimento de atributos ARIA (`aria-pressed`, `role="tab"`, `aria-selected`);
+- **P1:** Correção da mensagem do `#map-placeholder`.

@@ -555,22 +555,31 @@ function exportCSV() {
   a.click();
 }
 
-// Popular dropdown de municípios
+// Popular dropdown de municípios e datalist de sugestões
 function populateMunicipioDropdown() {
   const selMun = $('select-municipio');
-  if (selMun && rawData.size > 0) {
-    selMun.innerHTML = '';
+  const dashDl = $('dash-suggestions');
+  if (rawData.size > 0) {
+    if (selMun) selMun.innerHTML = '';
+    if (dashDl) dashDl.innerHTML = '';
     const list = [...rawData.entries()].map(([code, d]) => ({
       code,
       nome: d.municipio || scores.get(code)?.municipio || code
     })).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
     for (const item of list) {
-      const opt = document.createElement('option');
-      opt.value = item.code;
-      opt.textContent = `${item.nome} (${item.code})`;
-      if (item.code === currentCode) opt.selected = true;
-      selMun.appendChild(opt);
+      if (selMun) {
+        const opt = document.createElement('option');
+        opt.value = item.code;
+        opt.textContent = `${item.nome} (${item.code})`;
+        if (item.code === currentCode) opt.selected = true;
+        selMun.appendChild(opt);
+      }
+      if (dashDl) {
+        const optDl = document.createElement('option');
+        optDl.value = `${item.nome} (${item.code})`;
+        dashDl.appendChild(optDl);
+      }
     }
   }
 }
@@ -617,20 +626,54 @@ async function initDashboard() {
       });
     }
 
-    // 3. Busca de municípios pelo input da topbar
+    // 3. Busca de municípios pelo input da topbar não-intrusiva
     const searchInput = $('dash-search-input');
     if (searchInput) {
       searchInput.addEventListener('input', e => {
-        const q = e.target.value.trim().toLowerCase();
-        if (!q) return;
+        const val = e.target.value.trim();
+        if (!val) return;
+        const codeMatch = val.match(/\b(43\d{5})\b/);
+        if (codeMatch && rawData.has(codeMatch[1])) {
+          currentCode = codeMatch[1];
+          if (selMun) selMun.value = currentCode;
+          renderDashboard();
+          return;
+        }
+        if (rawData.has(val)) {
+          currentCode = val;
+          if (selMun) selMun.value = currentCode;
+          renderDashboard();
+          return;
+        }
+        const lower = val.toLowerCase();
         for (const [code, d] of rawData) {
-          const nome = (d.municipio || '').toLowerCase();
-          if (nome.includes(q) || code.includes(q)) {
+          if (d.municipio && d.municipio.toLowerCase() === lower) {
             currentCode = code;
-            if (selMun) selMun.value = code;
+            if (selMun) selMun.value = currentCode;
             renderDashboard();
-            break;
+            return;
           }
+        }
+      });
+
+      searchInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          const val = searchInput.value.trim().toLowerCase();
+          if (!val) return;
+          for (const [code, d] of rawData) {
+            const nome = (d.municipio || '').toLowerCase();
+            if (nome.includes(val) || code.startsWith(val)) {
+              currentCode = code;
+              if (selMun) selMun.value = code;
+              searchInput.value = `${d.municipio} (${code})`;
+              searchInput.blur();
+              renderDashboard();
+              break;
+            }
+          }
+        } else if (e.key === 'Escape') {
+          searchInput.value = '';
+          searchInput.blur();
         }
       });
     }

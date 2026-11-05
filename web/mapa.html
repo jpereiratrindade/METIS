@@ -130,7 +130,8 @@
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
         </span>
-        <input type="text" id="search-input" placeholder="Buscar município (ex: Bento Gonçalves, Alegrete, Santa Maria)..." aria-label="Buscar município por nome ou código IBGE" autocomplete="off"/>
+        <input type="text" id="search-input" list="mun-suggestions" placeholder="Buscar município (ex: Bento Gonçalves, Alegrete, Santa Maria)..." aria-label="Buscar município por nome ou código IBGE" autocomplete="off"/>
+        <datalist id="mun-suggestions"></datalist>
       </div>
 
       <div class="topbar-right">
@@ -284,13 +285,13 @@
             <p>Tendência territorial no estado caracterizada por <strong>R</strong> (com alternância para E, P e S). Selecione para abrir a análise individual.</p>
           </div>
           <div class="layer-buttons" role="group" aria-label="Camada territorial de tendência">
-            <button class="layer-btn selected" data-layer="resiliencia" title="Estado de Resiliência Experimental R = E(P+S)">Resiliência (R)</button>
-            <button class="layer-btn" data-layer="evolucao" title="Evolução Temporal da Resiliência entre os Censos 2006 e 2017 (Δ R)">Evolução (Δ 06-17)</button>
-            <button class="layer-btn" data-layer="inmet" title="Avisos Meteorológicos Ativos do INMET em tempo real (Perturbações)">Alertas INMET</button>
-            <button class="layer-btn" data-layer="adaptabrasil" title="Índice de Risco Climático na Disponibilidade de Alimentos (AdaptaBrasil MCTI)">Risco AdaptaBrasil</button>
-            <button class="layer-btn" data-layer="ecologica" title="Multiplicador Ecológico E">Ecológica (E)</button>
-            <button class="layer-btn" data-layer="produtiva" title="Densidade Produtiva P(k)">Produtiva (P)</button>
-            <button class="layer-btn" data-layer="social" title="Dimensão Social S">Social (S)</button>
+            <button class="layer-btn selected" data-layer="resiliencia" aria-pressed="true" title="Estado de Resiliência Experimental R = E(P+S)">Resiliência (R)</button>
+            <button class="layer-btn" data-layer="evolucao" aria-pressed="false" title="Evolução Temporal da Resiliência entre os Censos 2006 e 2017 (Δ R)">Evolução (Δ 06-17)</button>
+            <button class="layer-btn" data-layer="inmet" aria-pressed="false" title="Avisos Meteorológicos Ativos do INMET em tempo real (Perturbações)">Alertas INMET</button>
+            <button class="layer-btn" data-layer="adaptabrasil" aria-pressed="false" title="Índice de Risco Climático na Disponibilidade de Alimentos (AdaptaBrasil MCTI)">Risco AdaptaBrasil</button>
+            <button class="layer-btn" data-layer="ecologica" aria-pressed="false" title="Multiplicador Ecológico E">Ecológica (E)</button>
+            <button class="layer-btn" data-layer="produtiva" aria-pressed="false" title="Densidade Produtiva P(k)">Produtiva (P)</button>
+            <button class="layer-btn" data-layer="social" aria-pressed="false" title="Dimensão Social S">Social (S)</button>
           </div>
         </div>
 
@@ -329,7 +330,7 @@
                 <line x1="16" y1="6" x2="16" y2="22"/>
               </svg>
               <strong>Carregando malha territorial...</strong>
-              <span>Clique no botão lateral para carregar os 497 municípios.</span>
+              <span>Carregando dados dos 497 municípios do Rio Grande do Sul...</span>
             </div>
             <div class="map-legend-overlay" id="legend"></div>
           </div>
@@ -388,14 +389,14 @@
             <div class="comp-section">
               <div class="comp-section-header">
                 <span class="comp-section-title">AMBIENTE ANALÍTICO MUNICIPAL</span>
-                <div class="comp-tabs" id="comp-tabs">
-                  <button class="comp-tab-btn active" data-area="D" title="Área D: Resultados e Decomposição">D · Resultados</button>
-                  <button class="comp-tab-btn" data-area="T" title="Trajetória Decenal (2006 ➔ 2017): Evolução e Confronto Censitário">T · Trajetória</button>
-                  <button class="comp-tab-btn" data-area="E" title="Área E: Evidências Climáticas (AdaptaBrasil MCTI) e Perturbações (INMET)">E · Evidências</button>
-                  <button class="comp-tab-btn" data-area="M" title="Confronto Direto de Modelos para o Município">M · Confronto</button>
-                  <button class="comp-tab-btn" data-area="A" title="Área A: Observações do Município">A · Insumos</button>
-                  <button class="comp-tab-btn" data-area="B" title="Área B: Parametrização Experimental">B · Parâmetros</button>
-                  <button class="comp-tab-btn" data-area="C" title="Área C: Hipótese Relacional">C · Hipótese</button>
+                <div class="comp-tabs" id="comp-tabs" role="tablist" aria-label="Áreas de análise municipal">
+                  <button class="comp-tab-btn active" role="tab" aria-selected="true" data-area="D" title="Área D: Resultados e Decomposição">D · Resultados</button>
+                  <button class="comp-tab-btn" role="tab" aria-selected="false" data-area="T" title="Trajetória Decenal (2006 ➔ 2017): Evolução e Confronto Censitário">T · Trajetória</button>
+                  <button class="comp-tab-btn" role="tab" aria-selected="false" data-area="E" title="Área E: Evidências Climáticas (AdaptaBrasil MCTI) e Perturbações (INMET)">E · Evidências</button>
+                  <button class="comp-tab-btn" role="tab" aria-selected="false" data-area="M" title="Confronto Direto de Modelos para o Município">M · Confronto</button>
+                  <button class="comp-tab-btn" role="tab" aria-selected="false" data-area="A" title="Área A: Observações do Município">A · Insumos</button>
+                  <button class="comp-tab-btn" role="tab" aria-selected="false" data-area="B" title="Área B: Parametrização Experimental">B · Parâmetros</button>
+                  <button class="comp-tab-btn" role="tab" aria-selected="false" data-area="C" title="Área C: Hipótese Relacional">C · Hipótese</button>
                 </div>
               </div>
 
