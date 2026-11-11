@@ -257,3 +257,9 @@ Distribuído sob a licença **GNU General Public License v3.0 (GPL v3.0)**. Cons
 ```bash
 git remote add origin git@github.com:jpereiratrindade/METIS.git
 ```
+
+## Premissas de desenvolvimento
+
+**Simples, leve. Sempre pronto. Sempre incompleto!**
+
+[Significado e símbolos das premissas](docs/sister-principles/README.md).
