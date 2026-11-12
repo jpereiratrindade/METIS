@@ -80,6 +80,7 @@ const fields = {
   resiliencia: ['resiliencia', 0, 90, 'Resiliência (R)'],
   evolucao: ['evolucao', -10, 10, 'Evolução Temporal (Δ R: 2006➔2017)'],
   inmet: ['inmet', 0, 3, 'Avisos Meteorológicos Ativos (INMET)'],
+  simagro: ['simagro', 0, 3, 'Alertas Agroclimáticos (SIMAGRO-RS 7d)'],
   adaptabrasil: ['adaptabrasil', 0, 1, 'Risco Climático Alimentos (AdaptaBrasil MCTI)'],
   ecologica: ['ecologica_multiplicador', 0.5, 1.5, 'Multiplicador Ecológico (E)'],
   produtiva: ['produtiva', 0, 50, 'Dimensão Produtiva (P)'],
@@ -122,6 +123,12 @@ function getValue(d) {
     const ind = muniEvid?.adaptabrasil?.find(x => x.indicador_id === 5001 && x.ano === 2017);
     return ind ? ind.valor : null;
   }
+  if (layer === 'simagro') {
+    const code = d.codigo_ibge;
+    const s = evidenciasData?.municipios?.[code]?.simagro_alertas;
+    const item = Array.isArray(s) ? (s.find(x => x.janela === '7d') || s[0]) : s;
+    return item ? item.nivel_maximo : null;
+  }
   if (d.status !== 'experimental') return null;
   const col = fields[layer][0];
   const v = d[col];
@@ -144,6 +151,12 @@ function colorForValue(v) {
     if (v === 2) return '#f97316'; // Perigo (Laranja)
     if (v === 1) return '#eab308'; // Perigo Potencial (Amarelo)
     return '#1e293b';              // Sem alertas ativos
+  }
+  if (layer === 'simagro') {
+    if (v === 3) return '#ef4444'; // Alerta Severo (Vermelho)
+    if (v === 2) return '#f97316'; // Alerta (Laranja)
+    if (v === 1) return '#eab308'; // Atenção (Amarelo)
+    return '#10b981';              // Normalidade (Verde)
   }
   if (layer === 'adaptabrasil') {
     if (v == null) return '#1e293b';
@@ -510,6 +523,21 @@ function renderMap() {
           <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
         `;
       }
+    } else if (layer === 'simagro') {
+      legend.innerHTML = `
+        <div class="legend-item">
+          <strong>Alertas Agroclimáticos (SIMAGRO-RS · 7d):</strong>
+          <div class="swatch-group">
+            <span class="swatch" style="background:#10b981" title="Normalidade (nível 0)"></span>
+            <span class="swatch" style="background:#eab308" title="Atenção (nível 1)"></span>
+            <span class="swatch" style="background:#f97316" title="Alerta (nível 2)"></span>
+            <span class="swatch" style="background:#ef4444" title="Alerta Severo (nível 3)"></span>
+          </div>
+          <span style="font-size: 0.70rem; color: #94a3b8;">Normalidade (0) ➔ Atenção (1) ➔ Alerta (2) ➔ Severo (3)</span>
+        </div>
+        <div class="legend-item"><span class="legend-dot active"></span><span>Selecionado</span></div>
+        <div class="legend-item"><span class="legend-dot incomplete"></span><span>Sem coleta</span></div>
+      `;
     } else if (layer === 'adaptabrasil') {
       legend.innerHTML = `
         <div class="legend-item">
@@ -623,6 +651,24 @@ function renderMap() {
         } else {
           valText = `Fora da área do alerta selecionado`;
         }
+      }
+    } else if (layer === 'simagro') {
+      const s = evidenciasData?.municipios?.[code]?.simagro_alertas;
+      const item = Array.isArray(s) ? (s.find(x => x.janela === '7d') || s[0]) : s;
+      if (!item) {
+        valText = 'Sem dados SIMAGRO-RS';
+      } else {
+        const ativos = [
+          ['Estiagem Agrícola', item.estiagem_agricola],
+          ['Estiagem', item.estiagem],
+          ['Precipitação', item.prec],
+          ['Geada', item.geada],
+          ['Calor', item.t_acima],
+          ['Frio', item.t_abaixo],
+          ['ITU', item.itu],
+          ['CI Ovino', item.ci_ovino]
+        ].filter(([, v]) => v > 0).map(([k, v]) => `${k} (${v})`);
+        valText = ativos.length > 0 ? `Nível máx. ${item.nivel_maximo}: ${ativos.join(', ')}` : 'Normalidade (nível 0)';
       }
     } else {
       valText = d ? (d.status === 'dados_incompletos' ? 'dados incompletos na fonte' : fmt(val)) : 'sem dados';
@@ -967,6 +1013,44 @@ function updateComponentDetail(code, targetBox = null) {
       `;
     }
 
+    // 1b. Alertas Agroclimáticos SIMAGRO-RS
+    const simagroRaw = muniEvid?.simagro_alertas;
+    const simagroItems = Array.isArray(simagroRaw) ? simagroRaw : (simagroRaw ? [simagroRaw] : []);
+    let simagroHtml = '';
+    if (simagroItems.length > 0) {
+      const nivelCores = { 0: '#10b981', 1: '#eab308', 2: '#f97316', 3: '#ef4444' };
+      const nivelNomes = { 0: 'Normalidade', 1: 'Atenção', 2: 'Alerta', 3: 'Alerta Severo' };
+      const indicesLabels = [
+        ['estiagem_agricola', 'Estiagem Agrícola'],
+        ['estiagem', 'Estiagem'],
+        ['prec', 'Precipitação'],
+        ['geada', 'Geada'],
+        ['t_acima', 'Calor'],
+        ['t_abaixo', 'Frio'],
+        ['itu', 'ITU'],
+        ['ci_ovino', 'CI Ovino']
+      ];
+      simagroHtml = simagroItems.map(s => {
+        const chips = indicesLabels
+          .filter(([k]) => (s[k] || 0) > 0)
+          .map(([k, lbl]) => {
+            const nv = s[k];
+            return `<span style="display:inline-block; background:${nivelCores[nv] || '#64748b'}; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.66rem; font-weight:700; margin:2px 4px 2px 0;">${escapeHtml(lbl)}: ${nv} (${nivelNomes[nv] || nv})</span>`;
+          }).join('');
+        return `
+          <div style="background:#ffffff; border:1px solid #cbd5e1; border-left:4px solid ${nivelCores[s.nivel_maximo] || '#10b981'}; border-radius:6px; padding:8px 10px; margin-bottom:6px; font-size:0.72rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <strong>Janela ${escapeHtml(s.janela)} · ${escapeHtml(String(s.data_referencia || ''))}</strong>
+              <span style="font-size:0.66rem; font-weight:750; color:${nivelCores[s.nivel_maximo] || '#10b981'};">Nível máx.: ${s.nivel_maximo} (${nivelNomes[s.nivel_maximo] || ''})</span>
+            </div>
+            <div>${chips || '<span style="color:#15803d;">Todos os 8 índices em normalidade (nível 0).</span>'}</div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      simagroHtml = `<p style="font-size:0.72rem; color:#64748b;">Sem alertas SIMAGRO-RS sincronizados para este município.</p>`;
+    }
+
     // 2. Indicadores AdaptaBrasil
     let adaptaHtml = '';
     if (adapta.length > 0) {
@@ -1063,6 +1147,17 @@ function updateComponentDetail(code, targetBox = null) {
       <div class="evidence-section-block" style="margin-top:12px;">
         <div class="evidence-block-header">
           <span class="evidence-block-title">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6M12 16v6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M2 12h6M16 12h6"/></svg>
+            SIMAGRO-RS · Alertas Agroclimáticos (SEAPI/DDPA)
+          </span>
+          <span style="font-size:0.67rem; color:#64748b;">${simagroItems.length} janela(s)</span>
+        </div>
+        ${simagroHtml}
+      </div>
+
+      <div class="evidence-section-block" style="margin-top:12px;">
+        <div class="evidence-block-header">
+          <span class="evidence-block-title">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
             AdaptaBrasil MCTI · Riscos Climáticos Estruturais
           </span>
@@ -1076,7 +1171,7 @@ function updateComponentDetail(code, targetBox = null) {
       </div>
       <div class="comp-provenance-box" style="margin-top: 6px;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <span>Fontes: MCTI/AdaptaBrasil &amp; INMET/CPTEC · Proveniência SHA-256</span>
+        <span>Fontes: MCTI/AdaptaBrasil, INMET/CPTEC &amp; SEAPI/DDPA/SIMAGRO-RS · Proveniência SHA-256</span>
       </div>
     `;
   }
@@ -1657,7 +1752,7 @@ async function refreshInmetVisualization() {
     }
     updateInmetAlertSelector();
     refreshMetrics();
-    if (layer === 'inmet' || layer === 'adaptabrasil') renderMap();
+    if (layer === 'inmet' || layer === 'simagro' || layer === 'adaptabrasil') renderMap();
     if (current) {
       choose(current);
       if (activeArea === 'E') updateComponentDetail(current);
@@ -1891,7 +1986,8 @@ async function openEvidenceModal(code) {
     evidenciasData.municipios ||= {};
     evidenciasData.municipios[code] = {
       adaptabrasil: dados.adaptabrasil || [],
-      avisos_inmet: dados.avisos_inmet || []
+      avisos_inmet: dados.avisos_inmet || [],
+      simagro_alertas: dados.simagro_alertas || []
     };
     episodiosData ||= { por_municipio: {} };
     episodiosData.por_municipio ||= {};

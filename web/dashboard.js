@@ -256,7 +256,8 @@ async function loadEvidenceSection(code) {
     evidenciasData.municipios ||= {};
     evidenciasData.municipios[code] = {
       adaptabrasil: dados.adaptabrasil || [],
-      avisos_inmet: dados.avisos_inmet || []
+      avisos_inmet: dados.avisos_inmet || [],
+      simagro_alertas: dados.simagro_alertas || []
     };
     episodiosData ||= { por_municipio: {} };
     episodiosData.por_municipio ||= {};
@@ -278,6 +279,9 @@ function renderEvidenceSection(code) {
   const muniEvid = evidenciasData?.municipios?.[code];
   const adapta = muniEvid?.adaptabrasil || [];
   const avisos = muniEvid?.avisos_inmet || [];
+  const simagroList = Array.isArray(muniEvid?.simagro_alertas)
+    ? muniEvid.simagro_alertas
+    : (muniEvid?.simagro_alertas ? [muniEvid.simagro_alertas] : []);
   const eps = episodiosData?.por_municipio?.[code] || [];
 
   // 1. AdaptaBrasil
@@ -372,6 +376,38 @@ function renderEvidenceSection(code) {
         <p style="margin: 2px 0 0; font-size: 0.67rem; opacity: 0.85;">A ausência de alerta meteorológico oficial não comprova ausência de perturbação no território nem garante resiliência.</p>
       </div>
     `;
+  }
+
+  if (simagroList.length > 0) {
+    const nivelCores = { 0: '#10b981', 1: '#eab308', 2: '#f97316', 3: '#ef4444' };
+    const nivelNomes = { 0: 'Normalidade', 1: 'Atenção', 2: 'Alerta', 3: 'Alerta Severo' };
+    const idxMap = [
+      ['estiagem_agricola', 'Estiagem Agrícola'],
+      ['estiagem', 'Estiagem'],
+      ['prec', 'Precipitação'],
+      ['geada', 'Geada'],
+      ['t_acima', 'Calor'],
+      ['t_abaixo', 'Frio'],
+      ['itu', 'ITU'],
+      ['ci_ovino', 'CI Ovino']
+    ];
+    inmetHtml += simagroList.map(s => {
+      const badges = idxMap
+        .filter(([k]) => (s[k] || 0) > 0)
+        .map(([k, lbl]) => {
+          const nv = s[k];
+          return `<span style="display:inline-block;background:${nivelCores[nv] || '#64748b'};color:#fff;padding:1px 6px;border-radius:4px;font-size:0.65rem;font-weight:700;margin:2px 4px 2px 0;">${escapeHtml(lbl)}: ${nv}</span>`;
+        }).join('');
+      return `
+        <div style="background:#ffffff;border:1px solid #cbd5e1;border-left:4px solid ${nivelCores[s.nivel_maximo] || '#10b981'};border-radius:6px;padding:8px 10px;margin-top:6px;font-size:0.72rem;line-height:1.4;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+            <strong style="color:#0f172a;">SIMAGRO-RS (${escapeHtml(s.janela)} · ${escapeHtml(String(s.data_referencia || ''))})</strong>
+            <span style="font-size:0.66rem;font-weight:750;color:${nivelCores[s.nivel_maximo] || '#10b981'};">Nível máx. ${s.nivel_maximo} (${nivelNomes[s.nivel_maximo] || ''})</span>
+          </div>
+          <div>${badges || '<span style="color:#15803d;">Todos os índices em normalidade (nível 0).</span>'}</div>
+        </div>
+      `;
+    }).join('');
   }
 
   boxInmet.innerHTML = inmetHtml;
