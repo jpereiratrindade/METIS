@@ -8,7 +8,7 @@ import os
 import sys
 import threading
 from decimal import Decimal
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -64,7 +64,7 @@ def signed_identity(nonce):
 
 
 def json_default(valor):
-    if isinstance(valor, datetime):
+    if isinstance(valor, (datetime, date)):
         return valor.isoformat()
     if isinstance(valor, Decimal):
         return float(valor)
