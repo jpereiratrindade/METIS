@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "metis": {
+      "command": "/CAMINHO/METIS/scripts/mcp.sh",
+      "args": []
+    },
+    "metis-propostas": {
+      "command": "/CAMINHO/METIS/scripts/mcp.sh",
+      "args": ["--allow-writes"]
+    }
+  },
+  "streamableHttpReference": {
+    "url": "https://<SEU-TUNEL-HTTPS>/mcp",
+    "headers": {
+      "Authorization": "Bearer <METIS_MCP_TOKEN>"
+    },
+    "urlWithPathToken": "https://<SEU-TUNEL-HTTPS>/mcp/<METIS_MCP_TOKEN>"
+  }
+}

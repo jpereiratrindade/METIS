@@ -10,4 +10,5 @@ __pycache__/
 web/results
 web/data
 data/evidencias/*/*.json
+data/evidencias/*/*.geojson
 !data/evidencias/*/.gitkeep

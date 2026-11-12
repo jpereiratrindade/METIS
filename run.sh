@@ -41,6 +41,7 @@ HOST="${METIS_HOST:-${HOST:-0.0.0.0}}"
 PORT="${METIS_PORT:-${PORT:-8080}}"
 DB_CONTAINER="${METIS_DB_CONTAINER:-metis-db}"
 DB_PORT="${METIS_DB_PORT:-5432}"
+SCHEDULER_PID=""
 
 # ------------------------------------------------------------------------------
 # Funções Modulares do Orquestrador
@@ -100,6 +101,9 @@ executar_testes() {
 
   echo -e "\n${BOLD}${BLUE}=== Executando Testes Temporais INMET ===${NC}"
   python3 -m unittest tests/test_inmet_temporal.py
+
+  echo -e "\n${BOLD}${BLUE}=== Executando Testes MCP (stdio + Streamable HTTP) ===${NC}"
+  python3 -m unittest tests/test_mcp.py
 }
 
 executar_checagem() {
@@ -139,22 +143,33 @@ iniciar_servidor_web() {
   fi
   echo -e "${BOLD}============================================================${NC}"
   echo -e " ${GREEN}Segurança:${NC} Servindo exclusivamente diretório 'web/' (raiz do repo protegida)."
+
+  # Se estiver rodando fora do systemd mas o serviço metis.service já estiver ativo,
+  # não tentar abrir segunda instância na mesma porta (evita Errno 98 Address already in use).
+  if [[ -z "${INVOCATION_ID:-}" ]] && command -v systemctl &>/dev/null && systemctl --user is-active --quiet metis.service 2>/dev/null; then
+    echo -e " ${GREEN}✓ Serviço systemd 'metis.service' já está ATIVO e servindo na porta ${PORT}.${NC}"
+    echo -e "   (Para reiniciar o serviço: ${CYAN}systemctl --user restart metis.service${NC} ou ${CYAN}./run.sh restart${NC})"
+    echo -e "   Exibindo logs em tempo real (pressione ${YELLOW}Ctrl+C${NC} para sair dos logs sem derrubar o servidor):"
+    echo
+    exec journalctl --user -u metis.service -f -n 15
+  fi
+
   echo -e " Pressione ${RED}Ctrl+C${NC} para encerrar o servidor web."
   echo
 
-  local scheduler_pid=""
-  if [[ "${METIS_INMET_SCHEDULER_ENABLED:-1}" == "1" ]]; then
-    python3 scripts/agendador_inmet.py &
-    scheduler_pid=$!
-    echo -e " ${GREEN}Agendador INMET:${NC} ativo a cada ${METIS_INMET_INTERVAL_SECONDS:-900}s (PID $scheduler_pid)."
-  fi
   cleanup() {
-    if [[ -n "$scheduler_pid" ]]; then
-      kill "$scheduler_pid" 2>/dev/null || true
-      wait "$scheduler_pid" 2>/dev/null || true
+    if [[ -n "${SCHEDULER_PID:-}" ]]; then
+      kill "$SCHEDULER_PID" 2>/dev/null || true
+      wait "$SCHEDULER_PID" 2>/dev/null || true
     fi
   }
   trap cleanup EXIT INT TERM
+
+  if [[ "${METIS_INMET_SCHEDULER_ENABLED:-1}" == "1" ]]; then
+    python3 scripts/agendador_inmet.py &
+    SCHEDULER_PID=$!
+    echo -e " ${GREEN}Agendador INMET:${NC} ativo a cada ${METIS_INMET_INTERVAL_SECONDS:-900}s (PID $SCHEDULER_PID)."
+  fi
   python3 scripts/api_server.py
 }
 
@@ -170,6 +185,19 @@ case "$CMD" in
     iniciar_banco
     preparar_links_web
     iniciar_servidor_web
+    ;;
+
+  restart)
+    if command -v systemctl &>/dev/null && systemctl --user is-active --quiet metis.service 2>/dev/null; then
+      echo -e "${CYAN}==> Reiniciando serviço systemd 'metis.service'...${NC}"
+      systemctl --user restart metis.service
+      echo -e "${GREEN}✓ Serviço 'metis.service' reiniciado com sucesso.${NC}"
+    else
+      compilar_nucleo
+      iniciar_banco
+      preparar_links_web
+      iniciar_servidor_web
+    fi
     ;;
 
   test|tests)
@@ -230,6 +258,16 @@ case "$CMD" in
     python3 scripts/agendador_inmet.py
     ;;
 
+  mcp)
+    shift
+    exec ./scripts/mcp.sh "$@"
+    ;;
+
+  stress-mcp)
+    shift
+    python3 scripts/stress_eval_mcp.py "$@"
+    ;;
+
   help|-h|--help)
     echo -e "${BOLD}MÉTIS — Orquestrador Unificado do Laboratório${NC}"
     echo
@@ -237,8 +275,10 @@ case "$CMD" in
     echo
     echo "Comandos disponíveis:"
     echo "  (sem argumentos)  Inicia o ecossistema completo: compila C++26, sobe banco PostGIS, migra, importa e abre servidor web"
-    echo "  test              Executa todos os testes automatizados (CTest C++26 e PostGIS)"
+    echo "  test              Executa todos os testes automatizados (CTest C++26, PostGIS, INMET e MCP)"
     echo "  check             Verifica todo o ambiente e valida testes de integridade"
+    echo "  mcp [--allow-writes]  Inicia o servidor MCP em modo stdio (JSON-RPC)"
+    echo "  stress-mcp        Executa rajada de estresse e avaliador de melhorias MCP"
     echo "  sync              Sincroniza evidências climáticas e alertas (AdaptaBrasil MCTI + INMET)"
     echo "  sync-inmet        Sincroniza somente INMET, exporta JSON e processa episódios"
     echo "  schedule-inmet    Executa sincronização INMET periódica em primeiro plano"

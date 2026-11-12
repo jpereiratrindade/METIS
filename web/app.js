@@ -594,6 +594,7 @@ function renderMap() {
     el.setAttribute('d', path);
     el.setAttribute('fill', colorForValue(val));
 
+    const munName = getName(f.properties || {});
     let cls = 'map-municipality';
     if (current === code) cls += ' active';
     if (d && d.status === 'dados_incompletos') cls += ' incomplete';
@@ -604,7 +605,6 @@ function renderMap() {
     el.setAttribute('id', 'mun-' + code);
 
     const title = document.createElementNS(ns, 'title');
-    const munName = getName(f.properties || {});
     let valText = '';
     if (layer === 'inmet') {
       const muniEvid = evidenciasData?.municipios?.[code];

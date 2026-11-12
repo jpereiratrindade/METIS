@@ -1,0 +1,129 @@
+{
+  "recorded_at": "2026-11-11T17:51:25.092245+00:00",
+  "endpoint": "http://127.0.0.1:8080/mcp",
+  "concurrency": 8,
+  "total_calls": 56,
+  "total_wall_seconds": 0.269,
+  "throughput_req_per_sec": 208.08,
+  "cpp_parity": {
+    "status": "PASSED",
+    "checked": 5,
+    "max_abs_diff": 0.0
+  },
+  "db_health": {
+    "observacoes_2017_nao_validas": 5,
+    "episodios_em_aberto": 4609,
+    "propostas_mcp_pendentes": 0,
+    "idade_ultima_coleta_inmet_min": 0.2
+  },
+  "tool_metrics": {
+    "capabilities": {
+      "calls": 4,
+      "errors": 0,
+      "min_ms": 78.32,
+      "p50_ms": 82.2,
+      "p95_ms": 87.32,
+      "max_ms": 87.9,
+      "avg_bytes": 1074,
+      "max_bytes": 1074,
+      "est_max_tokens": 268
+    },
+    "search_municipalities": {
+      "calls": 8,
+      "errors": 0,
+      "min_ms": 1.56,
+      "p50_ms": 53.91,
+      "p95_ms": 102.4,
+      "max_ms": 104.2,
+      "avg_bytes": 1186,
+      "max_bytes": 2069,
+      "est_max_tokens": 517
+    },
+    "municipality_dossier": {
+      "calls": 4,
+      "errors": 0,
+      "min_ms": 2.53,
+      "p50_ms": 6.17,
+      "p95_ms": 29.69,
+      "max_ms": 33.33,
+      "avg_bytes": 7411,
+      "max_bytes": 7411,
+      "est_max_tokens": 1853
+    },
+    "confront_models": {
+      "calls": 4,
+      "errors": 0,
+      "min_ms": 1.0,
+      "p50_ms": 1.07,
+      "p95_ms": 12.53,
+      "max_ms": 14.56,
+      "avg_bytes": 2916,
+      "max_bytes": 2916,
+      "est_max_tokens": 729
+    },
+    "simulate_scenario": {
+      "calls": 12,
+      "errors": 0,
+      "min_ms": 5.8,
+      "p50_ms": 7.42,
+      "p95_ms": 30.49,
+      "max_ms": 31.62,
+      "avg_bytes": 8673,
+      "max_bytes": 8678,
+      "est_max_tokens": 2170
+    },
+    "inmet_alerts": {
+      "calls": 8,
+      "errors": 0,
+      "min_ms": 0.96,
+      "p50_ms": 55.22,
+      "p95_ms": 115.67,
+      "max_ms": 118.17,
+      "avg_bytes": 4866,
+      "max_bytes": 7670,
+      "est_max_tokens": 1918
+    },
+    "investigation_episodes": {
+      "calls": 4,
+      "errors": 0,
+      "min_ms": 8.27,
+      "p50_ms": 8.76,
+      "p95_ms": 15.52,
+      "max_ms": 16.68,
+      "avg_bytes": 13563,
+      "max_bytes": 13563,
+      "est_max_tokens": 3391
+    },
+    "scientific_catalog": {
+      "calls": 8,
+      "errors": 0,
+      "min_ms": 0.39,
+      "p50_ms": 0.59,
+      "p95_ms": 2.58,
+      "max_ms": 3.07,
+      "avg_bytes": 3432,
+      "max_bytes": 5016,
+      "est_max_tokens": 1254
+    },
+    "verify": {
+      "calls": 4,
+      "errors": 0,
+      "min_ms": 62.53,
+      "p50_ms": 62.89,
+      "p95_ms": 72.09,
+      "max_ms": 73.66,
+      "avg_bytes": 453,
+      "max_bytes": 453,
+      "est_max_tokens": 113
+    }
+  },
+  "improvement_findings": [
+    {
+      "severidade": "informativa",
+      "area": "fluxo_cientifico",
+      "achado": "4609 episódio(s) de investigação ainda com desfecho 'em_aberto'.",
+      "recomendacao": "Habilitar revisão assistida no navegador para registrar evidências de impacto pós-evento."
+    }
+  ],
+  "ollama_eval": null
+}

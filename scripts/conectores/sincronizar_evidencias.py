@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "scripts"))
 # Importar conectores
 from conector_adaptabrasil import coletar_indicadores_adaptabrasil
 from conector_inmet import coletar_avisos_inmet
+from conector_simagro import coletar_alertas_simagro
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -45,6 +46,10 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
     if executar_coleta:
         res_adapta = coletar_indicadores_adaptabrasil(db_url, salvar_banco=True)
         res_inmet = coletar_avisos_inmet(db_url, salvar_banco=True)
+        try:
+            coletar_alertas_simagro(db_url, salvar_banco=True, acionamento="manual")
+        except Exception as e_simagro:
+            print(f"[AVISO] Falha ao coletar alertas SIMAGRO-RS: {e_simagro}", file=sys.stderr)
 
     print("\n-> Compilando repositório de evidências a partir do PostgreSQL...")
     os.makedirs(os.path.dirname(OUTPUT_JSON), exist_ok=True)
@@ -157,11 +162,39 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
                     "desatualizado": coleta_row[8],
                 }
 
+            # 3b. Alertas agroclimáticos recentes SIMAGRO-RS (janela 7d)
+            cur.execute("""
+                SELECT codigo_ibge, data_referencia, janela, prec, estiagem,
+                       estiagem_agricola, geada, t_acima, t_abaixo, itu, ci_ovino, nivel_maximo
+                FROM vw_simagro_alertas_recentes
+                WHERE janela = '7d'
+                ORDER BY codigo_ibge;
+            """)
+            dados_simagro = {}
+            simagro_em_alerta = 0
+            for r in cur.fetchall():
+                dados_simagro[r[0]] = {
+                    "data_referencia": r[1].isoformat(),
+                    "janela": r[2],
+                    "prec": r[3],
+                    "estiagem": r[4],
+                    "estiagem_agricola": r[5],
+                    "geada": r[6],
+                    "t_acima": r[7],
+                    "t_abaixo": r[8],
+                    "itu": r[9],
+                    "ci_ovino": r[10],
+                    "nivel_maximo": r[11],
+                }
+                if r[11] >= 2:
+                    simagro_em_alerta += 1
+
     municipios_export = {}
     for ibge in dados_adapta.keys():
         municipios_export[ibge] = {
             "adaptabrasil": dados_adapta.get(ibge, []),
-            "avisos_inmet": dados_inmet_por_muni.get(ibge, [])
+            "avisos_inmet": dados_inmet_por_muni.get(ibge, []),
+            "simagro_alertas": dados_simagro.get(ibge),
         }
 
     payload_final = {
@@ -185,6 +218,12 @@ def sincronizar_todas_evidencias(db_url: str = DEFAULT_DB_URL, executar_coleta: 
                     "validade_minutos": INMET_STALE_MINUTES,
                     "ultima_coleta_auditada": ultima_coleta_inmet,
                     "status_conector": status_con.get("inmet_avisos", {})
+                },
+                "simagro": {
+                    "instituicao": "SEAPI / DDPA / SIMAGRO-RS",
+                    "municipios_cobertos": len(dados_simagro),
+                    "municipios_alerta_alto_7d": simagro_em_alerta,
+                    "status_conector": status_con.get("simagro_alertas", {})
                 }
             }
         },
